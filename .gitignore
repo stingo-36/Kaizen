@@ -41,3 +41,8 @@ example
 # generated native folders
 /ios
 /android
+
+.env
+
+# monthly food sync log
+scripts/foods-sync.log
