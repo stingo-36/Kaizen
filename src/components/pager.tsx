@@ -1,5 +1,5 @@
 import { ComponentRef, ReactNode, useEffect, useRef, useState } from 'react';
-import { Animated, LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { NativeScrollEvent, NativeSyntheticEvent, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { C, themed } from '@/lib/theme';
@@ -8,23 +8,19 @@ import { haptic, s as ui, T } from './ui';
 
 export type Page = { key: string; label: string; render: () => ReactNode };
 
-/** Pill tabs with a sliding highlight. */
+/** Text tabs with an underline under the open one, like WorkNest's own Tracker. */
 export function PagerTabs({ labels, index, onChange }: { labels: string[]; index: number; onChange: (i: number) => void }) {
-  const [w, setW] = useState(0);
-  const [x] = useState(() => new Animated.Value(0));
-  const seg = labels.length ? (w - 8) / labels.length : 0;
-  useEffect(() => {
-    Animated.spring(x, { toValue: index * seg, useNativeDriver: Platform.OS !== 'web', speed: 18, bounciness: 6 }).start();
-  }, [index, seg, x]);
   return (
-    <View style={st.tabs} onLayout={(e: LayoutChangeEvent) => setW(e.nativeEvent.layout.width)} accessibilityRole="tablist">
-      {w > 0 && <Animated.View style={[st.ind, { width: seg, transform: [{ translateX: x }] }]} />}
-      {labels.map((l, i) => (
-        <Pressable key={l} onPress={() => { if (i !== index) { haptic('select'); onChange(i); } }} style={st.tab}
-          accessibilityRole="tab" accessibilityState={{ selected: i === index }} accessibilityLabel={l}>
-          <T size={14} w="s" color={i === index ? C.onInk : C.muted} numberOfLines={1}>{l}</T>
-        </Pressable>
-      ))}
+    <View style={st.tabs} accessibilityRole="tablist">
+      {labels.map((l, i) => {
+        const on = i === index;
+        return (
+          <Pressable key={l} onPress={() => { if (!on) { haptic('select'); onChange(i); } }} hitSlop={8} style={[st.tab, on && st.tabOn]}
+            accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={l}>
+            <T size={14} w={on ? 's' : 'm'} color={on ? C.ink : C.muted} numberOfLines={1}>{l}</T>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
@@ -82,8 +78,8 @@ export function PagerScreen({ header, pages, tabs, initial = 0, index: ctrl, onI
 }
 
 const st = themed(() => StyleSheet.create({
-  head: { paddingHorizontal: 20, paddingTop: 12, gap: 14 },
-  tabs: { flexDirection: 'row', backgroundColor: C.card, borderRadius: 16, padding: 4, borderWidth: 1, borderColor: C.line },
-  ind: { position: 'absolute', top: 4, left: 4, bottom: 4, borderRadius: 12, backgroundColor: C.ink },
-  tab: { flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center', minWidth: 0 },
+  head: { paddingHorizontal: 20, paddingTop: 12, gap: 16 },
+  tabs: { flexDirection: 'row', gap: 20, borderBottomWidth: 1, borderBottomColor: C.line },
+  tab: { paddingBottom: 9, marginBottom: -1, borderBottomWidth: 2, borderBottomColor: 'transparent' },
+  tabOn: { borderBottomColor: C.ink },
 }));

@@ -14,7 +14,8 @@ const ICON: Record<HealthType, LucideIcon> = {
   Steps: Footprints, SleepSession: Bed, TotalCaloriesBurned: Flame, ExerciseSession: Dumbbell, HeartRate: HeartPulse, RestingHeartRate: Activity, Weight: Scale,
 };
 const TONE: Record<HealthType, [string, string]> = {
-  Steps: PASTEL[0], SleepSession: PASTEL[3], TotalCaloriesBurned: PASTEL[4], ExerciseSession: PASTEL[1], HeartRate: PASTEL[4], RestingHeartRate: PASTEL[2], Weight: PASTEL[2],
+  // Tiles take the fixed pastel order by position: green, amber, blue, purple, coral, then around again.
+  Steps: PASTEL[0], SleepSession: PASTEL[1], TotalCaloriesBurned: PASTEL[2], ExerciseSession: PASTEL[3], HeartRate: PASTEL[4], RestingHeartRate: PASTEL[0], Weight: PASTEL[1],
 };
 const SOURCES = ['Google Fit', 'Samsung Health', 'Fitbit', 'Garmin', 'Mi Fitness', 'Oura'];
 function Sources() {

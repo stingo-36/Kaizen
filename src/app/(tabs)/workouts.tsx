@@ -17,6 +17,8 @@ import { C, F, themed, TY } from '@/lib/theme';
 import { activePlan, logVolume, nextDayIdx, prCount, weekLogs } from '@/lib/workout';
 
 export default function Workouts() {
+  // Workouts are the coral area: the Today card is this tab's one featured card.
+  const WINK = PASTEL[4][1];
   const router = useRouter();
   const toast = useToast();
   const { workout: W, profile, setProfile } = useStore();
@@ -65,45 +67,65 @@ export default function Workouts() {
       )}
       {W.session ? (
         <View style={st.hero}>
-          <T size={13} color="rgba(255,255,255,0.9)">Workout in progress</T>
-          <T size={22} w="b" color={C.white}>{plan?.days[W.session.day]?.title ?? 'Workout'}</T>
-          <Btn title="Resume workout" kind="light" icon={Play} onPress={() => router.push('/workout/session')} style={{ marginTop: 12, minHeight: 48 }} />
+          <T size={11} w="s" color={WINK} style={st.label}>Workout in progress</T>
+          <T size={20} w="b" color={WINK}>{plan?.days[W.session.day]?.title ?? 'Workout'}</T>
+          <Btn title="Resume workout" icon={Play} onPress={() => router.push('/workout/session')} style={{ marginTop: 12, minHeight: 48 }} />
         </View>
       ) : doneToday.length ? (
-        <View style={[st.hero, { backgroundColor: PASTEL[0][0] }]}>
+        <View style={st.hero}>
           <Row style={{ justifyContent: 'space-between' }}>
-            <T size={TY.sub} w="s" color={PASTEL[0][1]}>Today’s workout</T>
-            <View style={[st.chip, { backgroundColor: C.glass }]}><T size={11} w="b" color={PASTEL[0][1]}>Done</T></View>
+            <T size={11} w="s" color={WINK} style={st.label}>Today’s workout</T>
+            <View style={st.chip}><T size={11} w="b" color={WINK}>Done</T></View>
           </Row>
           <Row gap={10} style={{ marginTop: 8 }}>
-            <CheckCircle2 size={26} color={PASTEL[0][1]} />
-            <T size={TY.hero} w="b" color={PASTEL[0][1]} numberOfLines={1} style={{ flex: 1 }}>{doneToday[doneToday.length - 1].title}{doneToday.length > 1 ? ` +${doneToday.length - 1}` : ''}</T>
+            <CheckCircle2 size={26} color={WINK} />
+            <T size={TY.hero} w="b" color={WINK} numberOfLines={1} style={{ flex: 1 }}>{doneToday[doneToday.length - 1].title}{doneToday.length > 1 ? ` +${doneToday.length - 1}` : ''}</T>
           </Row>
-          <T size={TY.sub} color={PASTEL[0][1]} style={{ marginTop: 4, opacity: 0.85 }}>
+          <T size={TY.sub} color={WINK} style={{ marginTop: 4 }}>
             {doneToday.reduce((a, l) => a + l.duration, 0)} min · {kcalToday} kcal burned. Recover well, see you next session.
           </T>
         </View>
       ) : plan && day ? (
         <View style={st.hero}>
           <Row style={{ justifyContent: 'space-between' }}>
-            <T size={13} color="rgba(255,255,255,0.9)">Today · Day {nd + 1} of {plan.days.length}</T>
-            <View style={st.chip}><T size={11} w="b" color={C.white}>≈ {estKcal} kcal</T></View>
+            <T size={11} w="s" color={WINK} style={st.label}>Today · Day {nd + 1} of {plan.days.length}</T>
+            <View style={st.chip}><T size={11} w="b" color={WINK}>≈ {estKcal} kcal</T></View>
           </Row>
-          <T size={TY.hero} w="b" color={C.white} style={{ marginTop: 6 }}>{day.title}</T>
-          <T size={13} color="rgba(255,255,255,0.9)" numberOfLines={1}>{day.exercises.length} exercises · ~{profile.minutes} min</T>
+          <T size={TY.hero} w="b" color={WINK} style={{ marginTop: 6 }}>{day.title}</T>
+          <T size={13} color={WINK} numberOfLines={1}>{day.exercises.length} exercises · ~{profile.minutes} min</T>
           <Row gap={10} style={{ marginTop: 14 }}>
             <Btn title="Open workout" kind="light" small onPress={() => openDay(nd)} style={{ flex: 1, minHeight: 46 }} />
-            <Btn title="Start" kind="light" icon={Play} small onPress={() => router.push({ pathname: '/workout/session', params: { day: String(nd), plan: plan.id } })} style={{ flex: 1, minHeight: 46 }} />
+            <Btn title="Start" icon={Play} small onPress={() => router.push({ pathname: '/workout/session', params: { day: String(nd), plan: plan.id } })} style={{ flex: 1, minHeight: 46 }} />
           </Row>
         </View>
       ) : (
         <View style={[st.hero, { gap: 8 }]}>
-          <View style={st.heroIc}><Sparkles size={22} color={C.white} /></View>
-          <T size={22} w="b" color={C.white}>Create your first plan</T>
-          <T size={14} color="rgba(255,255,255,0.9)">Your AI coach builds a weekly plan with strength and cardio from your profile.</T>
+          <View style={st.heroIc}><Sparkles size={22} color={WINK} /></View>
+          <T size={20} w="b" color={WINK}>Create your first plan</T>
+          <T size={14} color={WINK}>Your AI coach builds a weekly plan with strength and cardio from your profile.</T>
           <Btn title="Create a plan" kind="light" icon={Sparkles} onPress={() => router.push('/workout/new')} style={{ marginTop: 6 }} />
         </View>
       )}
+
+      <View style={[st.card, { gap: 10, paddingVertical: 12 }]}>
+        <Row style={{ justifyContent: 'space-between' }}>
+          <T size={11} w="s" color={C.muted} style={st.label}>This week</T>
+          <T size={12} color={C.muted}>{wk.length} of {profile.days} done</T>
+        </Row>
+        <Row gap={2}>
+          {WEEK.map((w, i) => {
+            const dk = ymd(addDays(mon, i)), did = W.logs.some((l) => l.date === dk), isT = dk === k;
+            return (
+              <View key={w + i} style={{ flex: 1, alignItems: 'center', gap: 6 }} accessible accessibilityLabel={`${w}: ${did ? 'trained' : isT ? 'today' : 'no workout'}`}>
+                <View style={[st.wday, did ? { backgroundColor: PASTEL[0][0] } : isT ? { borderWidth: 2, borderColor: C.ink } : { borderWidth: 1.5, borderColor: C.faint, borderStyle: 'dashed' }]}>
+                  {did ? <CheckCircle2 size={15} color={PASTEL[0][1]} /> : null}
+                </View>
+                <T size={11} w="s" color={isT ? C.ink : C.muted}>{w}</T>
+              </View>
+            );
+          })}
+        </Row>
+      </View>
 
       <InsightCard compact />
       {plan && (
@@ -112,7 +134,7 @@ export default function Workouts() {
           {plan.days.map((d, i) => {
             const cardio = d.exercises.every((e) => e.kind === 'cardio');
             return (
-              <LinkRow key={d.title + i} icon={cardio ? HeartPulse : Dumbbell} tone={PASTEL[i % 5]} title={d.title}
+              <LinkRow key={d.title + i} icon={cardio ? HeartPulse : Dumbbell} tone={PASTEL[4]} title={d.title}
                 sub={`${d.exercises.length} exercises${i === nd && !doneToday.length ? ' · today' : ''}`} onPress={() => openDay(i)} />
             );
           })}
@@ -121,7 +143,7 @@ export default function Workouts() {
 
       <Row gap={12}>
         <Stat label="This week" value={`${wk.length}/${profile.days}`} unit=" done" tone={PASTEL[0]} />
-        <Stat label="Burned today" value={kcalToday} unit=" kcal" tone={PASTEL[4]} />
+        <Stat label="Burned today" value={kcalToday} unit=" kcal" tone={PASTEL[1]} />
       </Row>
     </>
   );
@@ -129,7 +151,7 @@ export default function Workouts() {
   /* ---------- Plans and the exercise library ---------- */
   const plansPage = () => (
     <>
-      <LinkRow icon={BookOpen} tone={PASTEL[3]} title="Exercise library" sub="Search 870+ exercises with how-to steps" onPress={() => router.push('/workout/library')} />
+      <LinkRow icon={BookOpen} tone={PASTEL[4]} title="Exercise library" sub="Search 870+ exercises with how-to steps" onPress={() => router.push('/workout/library')} />
       <SectionTitle title="My plans" action="+ New plan" onAction={() => router.push('/workout/new')} />
       {W.plans.length ? W.plans.map((p) => (
         <Tap key={p.id} onPress={() => router.push({ pathname: '/workout/plan', params: { id: p.id } })} style={[st.card, st.planRow]}>
@@ -161,13 +183,13 @@ export default function Workouts() {
         <T size={13} w="s" color={C.accent}>Update</T>
       </Tap>
       <Row gap={12}>
-        <Stat label="This week" value={kcalWeek} unit=" kcal" tone={PASTEL[1]} />
-        <Stat label="All time" value={kcalAll >= 10000 ? `${(kcalAll / 1000).toFixed(1)}k` : kcalAll} unit=" kcal" tone={PASTEL[0]} />
+        <Stat label="This week" value={kcalWeek} unit=" kcal" tone={PASTEL[0]} />
+        <Stat label="All time" value={kcalAll >= 10000 ? `${(kcalAll / 1000).toFixed(1)}k` : kcalAll} unit=" kcal" tone={PASTEL[1]} />
       </Row>
       <Row gap={12}>
-        <Stat label="Volume" value={(volWeek / 1000).toFixed(1)} unit=" t wk" />
-        <Stat label="PRs" value={prCount(W)} />
-        <Stat label="Sessions" value={W.logs.length} />
+        <Stat label="Volume" value={(volWeek / 1000).toFixed(1)} unit=" t wk" tone={PASTEL[2]} />
+        <Stat label="PRs" value={prCount(W)} tone={PASTEL[3]} />
+        <Stat label="Sessions" value={W.logs.length} tone={PASTEL[4]} />
       </Row>
       <Card>
         <Row style={{ justifyContent: 'space-between' }}>
@@ -210,12 +232,14 @@ export default function Workouts() {
 }
 
 const st = themed(() => StyleSheet.create({
-  card: { backgroundColor: C.card, borderRadius: 22, borderWidth: 1, borderColor: C.line, padding: 16 },
+  card: { backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, padding: 14 },
+  label: { letterSpacing: 0.8, textTransform: 'uppercase' },
+  wday: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   weight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   ic: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  hero: { borderRadius: 24, padding: 20, backgroundColor: C.accent },
-  heroIc: { width: 46, height: 46, borderRadius: 15, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' },
-  chip: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: 99, backgroundColor: 'rgba(255,255,255,0.24)' },
+  hero: { borderRadius: 22, padding: 16, backgroundColor: PASTEL[4][0] },
+  heroIc: { width: 44, height: 44, borderRadius: 14, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
+  chip: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: 99, backgroundColor: C.card },
   planRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   active: { paddingVertical: 2, paddingHorizontal: 8, borderRadius: 99, backgroundColor: PASTEL[0][0] },
   wInput: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 56, paddingHorizontal: 16, borderRadius: 16, backgroundColor: C.soft },

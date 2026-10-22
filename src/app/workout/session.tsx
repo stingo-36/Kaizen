@@ -10,7 +10,7 @@ import { kcalForLive, kcalForLogs } from '@/lib/calories';
 import { fmtClock, today, uid } from '@/lib/dates';
 import { cancelAlert, ensurePermission, scheduleRestAlert } from '@/lib/notifications';
 import { useStore } from '@/lib/store';
-import { C, F, themed } from '@/lib/theme';
+import { C, F, PASTEL, themed } from '@/lib/theme';
 import { useNow } from '@/lib/useNow';
 import { findPRs, Intensity, Kind, lastFor, LiveExercise, newSession, Session, SessionLog, sessionToExerciseLogs, timedSeconds } from '@/lib/workout';
 import { goBack } from '@/lib/nav';
@@ -132,12 +132,12 @@ export default function SessionScreen() {
         </Row>
         {resting && (
           <View style={st.rest}>
-            <T size={12} color="rgba(255,255,255,0.7)" center>Rest</T>
-            <T size={42} w="s" color={C.white} center style={{ fontVariant: ['tabular-nums'], lineHeight: 48 }}>{fmtClock(s.restEnd - now + 999)}</T>
+            <T size={11} w="s" color={PASTEL[4][1]} center style={{ letterSpacing: 0.8 }}>REST</T>
+            <T size={42} w="s" color={PASTEL[4][1]} center style={{ fontVariant: ['tabular-nums'], lineHeight: 48 }}>{fmtClock(s.restEnd - now + 999)}</T>
             <Row gap={8} style={{ justifyContent: 'center', marginTop: 6 }}>
-              <Tap style={st.restBtn} onPress={() => adjustRest(-15)}><T size={13} w="b" color={C.white}>−15s</T></Tap>
-              <Tap style={st.restBtn} onPress={() => adjustRest(15)}><T size={13} w="b" color={C.white}>+15s</T></Tap>
-              <Tap style={[st.restBtn, { backgroundColor: C.white }]} onPress={() => adjustRest(0)}><T size={13} w="b" color={C.onWhite}>Skip</T></Tap>
+              <Tap style={st.restBtn} onPress={() => adjustRest(-15)}><T size={13} w="b" color={PASTEL[4][1]}>−15s</T></Tap>
+              <Tap style={st.restBtn} onPress={() => adjustRest(15)}><T size={13} w="b" color={PASTEL[4][1]}>+15s</T></Tap>
+              <Tap style={[st.restBtn, { backgroundColor: C.ink }]} onPress={() => adjustRest(0)}><T size={13} w="b" color={C.onInk}>Skip</T></Tap>
             </Row>
           </View>
         )}
@@ -212,8 +212,8 @@ export default function SessionScreen() {
 const st = themed(() => StyleSheet.create({
   rec: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.accent },
   kcal: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4, paddingHorizontal: 9, borderRadius: 99, backgroundColor: C.accentSoft },
-  rest: { borderRadius: 22, backgroundColor: C.accent, padding: 16 },
-  restBtn: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 99, backgroundColor: 'rgba(255,255,255,0.14)' },
+  rest: { borderRadius: 20, backgroundColor: PASTEL[4][0], padding: 16 },
+  restBtn: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 99, backgroundColor: C.card },
   last: { paddingVertical: 4, paddingHorizontal: 9, borderRadius: 99, backgroundColor: C.soft },
   set: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   input: { flex: 1, minWidth: 0, width: 0, height: 44, borderRadius: 12, borderWidth: 1, borderColor: C.field, backgroundColor: C.bg, textAlign: 'center', fontFamily: F.s, fontSize: 15, color: C.ink },

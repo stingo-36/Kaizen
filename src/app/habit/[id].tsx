@@ -111,17 +111,17 @@ export default function HabitDetail() {
             const done = !off && isDone(h, dk), sk = !off && !done && h.skips[dk], miss = !off && !done && !sk && dk < k;
             return (
               <View key={dk} style={st.cell}>
-                <View style={[st.day, done && { backgroundColor: C.ink }, sk && { backgroundColor: C.soft }, dk === k && { borderWidth: 2, borderColor: C.accent }, off && { opacity: 0.3 }]}>
-                  <T size={13} w={done || dk === k ? 's' : 'r'} color={done ? C.onInk : miss ? C.accent : C.muted}>{i + 1}</T>
+                <View style={[st.day, done && { backgroundColor: C.green }, sk && { backgroundColor: C.soft }, dk === k && { borderWidth: 2, borderColor: C.ink }, off && { opacity: 0.3 }]}>
+                  <T size={13} w={done || dk === k ? 's' : 'r'} color={done ? C.white : miss ? C.danger : C.muted}>{i + 1}</T>
                 </View>
               </View>
             );
           })}
         </View>
         <Row gap={14} style={{ marginTop: 12 }}>
-          <Row gap={6}><View style={[st.leg, { backgroundColor: C.ink }]} /><T size={12} color={C.muted}>Done</T></Row>
+          <Row gap={6}><View style={[st.leg, { backgroundColor: C.green }]} /><T size={12} color={C.muted}>Done</T></Row>
           <Row gap={6}><View style={[st.leg, { backgroundColor: C.soft }]} /><T size={12} color={C.muted}>Skipped</T></Row>
-          <Row gap={6}><View style={[st.leg, { borderWidth: 2, borderColor: C.accent }]} /><T size={12} color={C.muted}>Today</T></Row>
+          <Row gap={6}><View style={[st.leg, { borderWidth: 2, borderColor: C.ink }]} /><T size={12} color={C.muted}>Today</T></Row>
         </Row>
       </Card>
       <Card>

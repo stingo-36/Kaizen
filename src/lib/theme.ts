@@ -3,17 +3,18 @@
    the screens so nothing keeps the old colours. */
 
 const LIGHT = {
-  bg: '#FBFBFB',
+  bg: '#F6F6F4',
   card: '#FFFFFF',
-  soft: '#F3F4F3',
-  ink: '#2F2F2F',
+  soft: '#F3F3F0',
+  ink: '#1F2024',
   /** Text and icons on an ink-coloured surface (primary buttons, selected chips). */
   onInk: '#FFFFFF',
-  muted: '#677782',
-  faint: '#AEB4B7',
-  line: '#ECEDEC',
-  field: '#DDDFDD',
-  track: '#EEF0EF',
+  muted: '#5F6670',
+  /** Hints and outlines; 3:1 on white, so never body text. */
+  faint: '#868D96',
+  line: '#ECECEA',
+  field: '#DCDDD9',
+  track: '#EEEEEB',
   /** Muted modern indigo accent. */
   accent: '#5B5FC7',
   accentSoft: '#E6E7F5',
@@ -26,9 +27,9 @@ const LIGHT = {
   /** Always dark: text on a white button. */
   onWhite: '#2F2F2F',
   /** Tab bar. */
-  bar: '#2F2F2F',
+  bar: '#1F2024',
   barOn: '#FFFFFF',
-  barOnInk: '#2F2F2F',
+  barOnInk: '#1F2024',
   barInk: 'rgba(255,255,255,0.62)',
   /** Frosted circle behind icons on pastel tiles. */
   glass: 'rgba(255,255,255,0.7)',
@@ -36,6 +37,9 @@ const LIGHT = {
   heat1: '#D9DAF2',
   heat2: '#ABADE5',
   heat3: '#8084D6',
+  /** WorkNest Tracker's own colour (teal), outside the five pastels. */
+  tealSoft: '#D6EEEA',
+  teal: '#1D4A45',
 };
 type Palette = typeof LIGHT;
 
@@ -66,6 +70,8 @@ const DARK: Palette = {
   heat1: '#2D2F52',
   heat2: '#44479A',
   heat3: '#6266C9',
+  tealSoft: '#16302D',
+  teal: '#9FD8CF',
 };
 
 export const C: Palette = { ...LIGHT };
@@ -112,21 +118,21 @@ export const F = {
   b: 'Geist_700Bold',
 };
 
-export const R = { card: 22, pill: 999, tile: 14 };
+export const R = { card: 20, pill: 999, tile: 16 };
 
 /** Type scale used across screens. */
 export const TY = {
   /** Tab and screen titles. */
   title: 26,
   /** Hero headlines and big numbers on cards. */
-  hero: 22,
+  hero: 20,
   /** Headings inside cards. */
   head: 16,
   /** List item names. */
-  item: 15,
+  item: 14,
   body: 14,
   sub: 13,
   cap: 12,
 };
 /** Spacing: between sections on a screen, and between cards side by side. */
-export const SP = { section: 22, grid: 12, pad: 18 };
+export const SP = { section: 18, grid: 12, pad: 16 };

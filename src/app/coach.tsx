@@ -8,7 +8,6 @@ import { askCoach, ChatMsg, loadChat, saveChat } from '@/lib/coach-chat';
 import { uid } from '@/lib/dates';
 import { useFood } from '@/lib/food-store';
 import { useHealth } from '@/lib/health-store';
-import { PASTEL } from '@/lib/habits';
 import { goBack } from '@/lib/nav';
 import { useStore } from '@/lib/store';
 import { C, F, themed } from '@/lib/theme';
@@ -71,7 +70,7 @@ export default function Coach() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: C.bg }}>
       <Row style={st.head}>
-        <View style={[st.badge, { backgroundColor: PASTEL[3][0] }]}><Sparkles size={18} color={PASTEL[3][1]} /></View>
+        <View style={[st.badge, { backgroundColor: C.accentTint }]}><Sparkles size={18} color={C.accent} /></View>
         <View style={{ flex: 1, minWidth: 0 }}>
           <T size={18} w="b">Coach</T>
           <T size={12} color={C.muted} numberOfLines={1}>Knows your habits, workouts and food</T>
@@ -83,15 +82,15 @@ export default function Coach() {
         onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })} showsVerticalScrollIndicator={false}>
         {!msgs.length && (
           <View style={{ gap: 14 }}>
-            <View style={[st.hello, { backgroundColor: PASTEL[3][0] }]}>
-              <T size={17} w="s" color={PASTEL[3][1]}>Ask me anything about training, food or your routines.</T>
-              <T size={13} color={PASTEL[3][1]}>I can see your habits, plan, meals and health numbers.</T>
+            <View style={[st.hello, { backgroundColor: C.accentTint }]}>
+              <T size={17} w="s" color={C.ink}>Ask me anything about training, food or your routines.</T>
+              <T size={13} color={C.muted}>I can see your habits, plan, meals and health numbers.</T>
             </View>
             <Row gap={8} style={{ flexWrap: 'wrap' }}>{STARTERS.map((s) => <Chip key={s} label={s} onPress={() => send(s)} />)}</Row>
           </View>
         )}
         {msgs.map((m) => m.role === 'user' ? (
-          <View key={m.id} style={st.me}><T size={15} color={C.white} style={{ lineHeight: 21 }}>{m.text}</T></View>
+          <View key={m.id} style={st.me}><T size={15} color={C.onInk} style={{ lineHeight: 21 }}>{m.text}</T></View>
         ) : (
           <View key={m.id} style={st.coach}><Reply text={m.text} /></View>
         ))}
@@ -122,7 +121,7 @@ const st = themed(() => StyleSheet.create({
   head: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: C.line },
   badge: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   hello: { borderRadius: 22, padding: 18, gap: 8 },
-  me: { alignSelf: 'flex-end', maxWidth: '85%', backgroundColor: C.accent, borderRadius: 20, borderBottomRightRadius: 6, paddingVertical: 10, paddingHorizontal: 14 },
+  me: { alignSelf: 'flex-end', maxWidth: '85%', backgroundColor: C.ink, borderRadius: 20, borderBottomRightRadius: 6, paddingVertical: 10, paddingHorizontal: 14 },
   coach: { alignSelf: 'flex-start', maxWidth: '92%', backgroundColor: C.card, borderRadius: 20, borderBottomLeftRadius: 6, padding: 14, borderWidth: 1, borderColor: C.line },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.accent, marginTop: 8 },
   err: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 16, backgroundColor: C.dangerSoft },

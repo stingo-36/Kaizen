@@ -40,7 +40,7 @@ export default function Done() {
   };
   const discard = () => { setWorkout((w) => ({ ...w, pending: null })); toast('Workout discarded'); router.dismissTo('/workouts'); };
 
-  const tiles: [number, string, string | number][] = [[4, 'Calories', `${pnd.kcal}`], [1, 'Volume', `${(logVolume(pnd) / 1000).toFixed(1)}t`], [2, cardioMin ? 'Cardio' : 'Sets', cardioMin ? `${cardioMin}m` : sets]];
+  const tiles: [number, string, string | number][] = [[0, 'Calories', `${pnd.kcal}`], [1, 'Volume', `${(logVolume(pnd) / 1000).toFixed(1)}t`], [2, cardioMin ? 'Cardio' : 'Sets', cardioMin ? `${cardioMin}m` : sets]];
   return (
     <Screen>
       <View style={{ alignItems: 'center', gap: 4, paddingTop: 10 }}>

@@ -7,10 +7,9 @@ import { AppHeader } from '@/components/header';
 import { SPEND_TONE } from '@/components/spend-card';
 import { Btn, Card, IconBtn, Input, Row, Screen, SectionTitle, T, Tap, haptic, useToast } from '@/components/ui';
 import { shortDay, timeOf, TxnRow } from '@/components/txn-row';
-import { toneOf } from '@/lib/spend-style';
 import { inr, monthName, shiftMonth, SPENDWISE_URL, thisMonth } from '@/lib/spend';
 import { useSpend } from '@/lib/spend-store';
-import { C, SP, themed, TY } from '@/lib/theme';
+import { C, PASTEL, SP, themed, TY } from '@/lib/theme';
 
 const host = SPENDWISE_URL.replace(/^https?:\/\//, '');
 
@@ -59,16 +58,15 @@ function Connect({ again }: { again?: boolean }) {
   );
 }
 
-/** One of the four summary cards. */
-function Tile({ icon: Icon, tone, label, value, note }: { icon: typeof Wallet; tone: [string, string]; label: string; value: string; note: string }) {
+/** One of the four summary cards: label, icon and amount. */
+function Tile({ icon: Icon, tone, label, value }: { icon: typeof Wallet; tone: [string, string]; label: string; value: string }) {
   return (
-    <View style={[st.tile, { backgroundColor: tone[0] }]} accessible accessibilityLabel={`${label}: ${value}. ${note}`}>
-      <View style={st.tileIc}><Icon size={17} color={tone[1]} /></View>
-      <View style={{ gap: 2 }}>
-        <T size={TY.cap} w="s" color={tone[1]} numberOfLines={1} style={{ opacity: 0.85 }}>{label}</T>
-        <T size={TY.hero} w="b" color={tone[1]} numberOfLines={1} adjustsFontSizeToFit>{value}</T>
-        <T size={11} color={tone[1]} numberOfLines={1} style={{ opacity: 0.75 }}>{note}</T>
-      </View>
+    <View style={[st.tile, { backgroundColor: tone[0] }]} accessible accessibilityLabel={`${label}: ${value}`}>
+      <Row style={{ justifyContent: 'space-between' }}>
+        <T size={10.5} w="s" color={tone[1]} numberOfLines={1} style={{ letterSpacing: 0.8, textTransform: 'uppercase', flex: 1 }}>{label}</T>
+        <View style={st.tileIc}><Icon size={15} color={tone[1]} /></View>
+      </Row>
+      <T size={20} w="b" color={tone[1]} numberOfLines={1} adjustsFontSizeToFit>{value}</T>
     </View>
   );
 }
@@ -87,7 +85,6 @@ export default function Spending() {
   // Older SpendWise servers don't send these totals; fall back where it makes sense.
   const card = s?.creditCardSpend ?? s?.recent.filter((r) => r.isCreditCard).reduce((a, r) => a + r.amount, 0) ?? 0;
   const balance = s?.moneyIn != null ? s.moneyIn - (s.accountOutflow ?? s.totalSpend) : s?.budget ? s.budget - spentVsBudget : null;
-  const balanceNote = s?.moneyIn != null ? 'money in minus money out' : s?.budget ? `left of ${inr(s.budget)} budget` : 'update SpendWise';
 
   return (
     <Screen tabs>
@@ -111,18 +108,15 @@ export default function Spending() {
               : <T size={TY.body} color={C.muted}>{error || 'No data for this month.'}</T>
           ) : (
             <View style={{ gap: SP.section }}>
+              {/* The four cards follow the fixed pastel order: green, amber, blue, purple. */}
               <View style={{ gap: SP.grid }}>
                 <Row gap={SP.grid} style={{ alignItems: 'stretch' }}>
-                  <Tile icon={Wallet} tone={toneOf('#6E5BC6')} label="Total spent" value={inr(s.totalSpend)}
-                    note={s.deltaPct != null ? `${Math.abs(s.deltaPct)}% ${s.deltaPct <= 0 ? 'less' : 'more'} than ${monthName(shiftMonth(month, -1)).slice(0, 3)}` : isNow && s.todaySpend > 0 ? `${inr(s.todaySpend)} today` : 'this month'} />
-                  <Tile icon={ArrowDownLeft} tone={toneOf('#1F8A70')} label="Money in" value={s.moneyIn != null ? inr(s.moneyIn) : '–'}
-                    note={s.moneyIn != null ? 'into your bank account' : 'update SpendWise'} />
+                  <Tile icon={Wallet} tone={PASTEL[0]} label="Total spend" value={inr(s.totalSpend)} />
+                  <Tile icon={ArrowDownLeft} tone={PASTEL[1]} label="Money in" value={s.moneyIn != null ? inr(s.moneyIn) : '–'} />
                 </Row>
                 <Row gap={SP.grid} style={{ alignItems: 'stretch' }}>
-                  <Tile icon={PiggyBank} tone={toneOf(balance != null && balance < 0 ? '#D2534B' : '#3D7FC1')} label="Balance left"
-                    value={balance == null ? '–' : balance < 0 ? `−${inr(-balance)}` : inr(balance)} note={balanceNote} />
-                  <Tile icon={CreditCard} tone={toneOf('#C9A22B')} label="Credit card used" value={inr(card)}
-                    note={s.creditCardSpend != null ? `${s.totalSpend ? Math.round((card / s.totalSpend) * 100) : 0}% of spend` : 'from recent payments'} />
+                  <Tile icon={PiggyBank} tone={PASTEL[2]} label="Balance left" value={balance == null ? '–' : balance < 0 ? `−${inr(-balance)}` : inr(balance)} />
+                  <Tile icon={CreditCard} tone={PASTEL[3]} label="Card used" value={inr(card)} />
                 </Row>
               </View>
 
@@ -164,8 +158,8 @@ const st = themed(() => StyleSheet.create({
   server: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 14, backgroundColor: C.soft },
   ro: { paddingVertical: 3, paddingHorizontal: 8, borderRadius: 99, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
   month: { justifyContent: 'space-between', backgroundColor: C.card, borderRadius: 99, borderWidth: 1, borderColor: C.line, padding: 4 },
-  tile: { flex: 1, minWidth: 0, minHeight: 128, borderRadius: 22, padding: 16, justifyContent: 'space-between', gap: 12 },
-  tileIc: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.glass, alignItems: 'center', justifyContent: 'center' },
+  tile: { flex: 1, minWidth: 0, minHeight: 100, borderRadius: 20, padding: 14, justifyContent: 'space-between', gap: 10 },
+  tileIc: { width: 30, height: 30, borderRadius: 15, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
   all: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 14, borderTopWidth: 1, borderTopColor: C.line },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 20, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
 }));

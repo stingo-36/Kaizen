@@ -1,27 +1,31 @@
 import { useRouter } from 'expo-router';
-import { Plus, Trash2 } from '@/components/ico';
+import { LucideIcon, Moon, Plus, Sun, Sunrise, Trash2, Utensils } from '@/components/ico';
 import { StyleSheet, View } from 'react-native';
 
 import { BarChart } from '@/components/charts';
 import { AppHeader } from '@/components/header';
 import { PagerScreen } from '@/components/pager';
-import { Bar, Card, Gauge, IconBtn, Row, Stat, T, Tap, useToast } from '@/components/ui';
+import { Bar, Card, IconBtn, Ring, Row, SectionTitle, Stat, T, Tap, useToast } from '@/components/ui';
+import { logKcal } from '@/lib/calories';
 import { addDays, monIndex, parse, today, WEEK, ymd } from '@/lib/dates';
-import { amountText, macrosOf, mealFor, MEALS, sumMacros, targets } from '@/lib/food';
+import { amountText, macrosOf, Meal, mealFor, MEALS, sumMacros, targets } from '@/lib/food';
 import { useFood } from '@/lib/food-store';
 import { PASTEL } from '@/lib/habits';
 import { useStore } from '@/lib/store';
 import { C, themed } from '@/lib/theme';
 
+const MEAL_ICON: Record<Meal, LucideIcon> = { breakfast: Sunrise, lunch: Sun, dinner: Moon, snacks: Utensils };
+
 export default function Food() {
   const router = useRouter();
   const toast = useToast();
-  const { profile } = useStore();
+  const { profile, workout: W } = useStore();
   const { food, setFood } = useFood();
   const k = today(), entries = food.days[k] ?? [];
   const tot = sumMacros(entries), goal = targets(profile);
   const left = goal.kcal - tot.kcal;
   const add = (meal = mealFor()) => router.push({ pathname: '/food/add', params: { meal } });
+  const burned = W.logs.filter((l) => l.date === k).reduce((a, l) => a + logKcal(profile, l), 0);
 
   const remove = (id: string) => {
     const before = food.days[k] ?? [];
@@ -32,49 +36,67 @@ export default function Food() {
 
   const todayPage = () => (
     <>
-      <Card style={{ alignItems: 'center', paddingVertical: 18, gap: 14 }}>
-        <Gauge value={goal.kcal ? tot.kcal / goal.kcal : 0} size={180}>
-          <T size={32} w="b">{Math.abs(left)}</T>
-          <T size={13} color={C.muted}>{left >= 0 ? 'kcal left' : 'kcal over'}</T>
-        </Gauge>
-        <Row gap={14} style={{ alignSelf: 'stretch', marginTop: -18 }}>
-          {([['Protein', tot.p, goal.p, PASTEL[2][1]], ['Carbs', tot.c, goal.c, '#C99A1C'], ['Fat', tot.f, goal.f, C.accent]] as const).map(([l, v, g, col]) => (
-            <View key={l} style={{ flex: 1, gap: 6 }}>
-              <T size={12} w="s" color={C.muted}>{l}</T>
-              <Bar value={g ? v / g : 0} color={col} />
-              <T size={12} w="s">{Math.round(v)}<T size={11} color={C.muted}> / {g} g</T></T>
-            </View>
-          ))}
+      {/* Food is the amber area: the calorie ring uses it, macros keep their own colours. */}
+      <Card style={{ gap: 12 }}>
+        <Row gap={16}>
+          <Ring value={goal.kcal ? tot.kcal / goal.kcal : 0} size={96} stroke={10} color={PASTEL[1][1]} track={PASTEL[1][0]}>
+            <T size={19} w="b">{tot.kcal.toLocaleString()}</T>
+            <T size={11} color={C.muted}>of {goal.kcal.toLocaleString()}</T>
+          </Ring>
+          <View style={{ flex: 1, minWidth: 0, gap: 10 }}>
+            {([['Protein', tot.p, goal.p, PASTEL[2][1]], ['Carbs', tot.c, goal.c, PASTEL[1][1]], ['Fat', tot.f, goal.f, PASTEL[4][1]]] as const).map(([l, v, g, col]) => (
+              <View key={l} style={{ gap: 5 }}>
+                <Row style={{ justifyContent: 'space-between' }}><T size={12.5} w="s">{l}</T><T size={12} color={C.muted}>{Math.round(v)} / {g} g</T></Row>
+                <Bar value={g ? v / g : 0} color={col} height={6} />
+              </View>
+            ))}
+          </View>
         </Row>
-        <T size={12} color={C.muted}>{tot.kcal} eaten · goal {goal.kcal} kcal ({profile.goal.toLowerCase()})</T>
+        <T size={12} color={C.muted}>{left >= 0 ? `${left} kcal left` : `${-left} kcal over`} · goal set for {profile.goal.toLowerCase()}</T>
       </Card>
 
-      {MEALS.map(([m, label]) => {
-        const list = entries.filter((e) => e.meal === m), mk = sumMacros(list).kcal;
-        return (
-          <Card key={m} style={{ paddingVertical: 6 }}>
-            <Row style={{ justifyContent: 'space-between', paddingVertical: 8 }}>
-              <View><T size={16} w="s">{label}</T><T size={12} color={C.muted}>{list.length ? `${mk} kcal` : 'Nothing logged'}</T></View>
-              <Tap onPress={() => add(m)} scale={0.92} style={st.addBtn} accessibilityLabel={`Add food to ${label}`}>
-                <Plus size={16} color={C.onInk} strokeWidth={2.4} /><T size={13} w="s" color={C.onInk}>Add</T>
-              </Tap>
-            </Row>
-            {list.map((e) => {
-              const mm = macrosOf(e);
-              return (
-                <Row key={e.id} style={st.entry}>
+      <View style={{ gap: 8 }}>
+        <SectionTitle title="Meals" />
+        <View style={st.meals}>
+          {MEALS.map(([m, label], mi) => {
+            const list = entries.filter((e) => e.meal === m), mk = sumMacros(list).kcal, Icon = MEAL_ICON[m];
+            return (
+              <View key={m} style={mi > 0 ? st.mealRule : undefined}>
+                <Row style={{ paddingVertical: 12 }}>
+                  <View style={[st.mealIc, { backgroundColor: PASTEL[1][0] }]}><Icon size={17} color={PASTEL[1][1]} /></View>
                   <View style={{ flex: 1, minWidth: 0 }}>
-                    <T size={14} w="s" numberOfLines={1}>{e.item.name}</T>
-                    <T size={12} color={C.muted} numberOfLines={1}>{amountText(e)} · P {mm.p} · C {mm.c} · F {mm.f}</T>
+                    <T size={14} w="m">{label}</T>
+                    <T size={12} color={C.muted} numberOfLines={1}>{list.length ? list.map((e) => e.item.name).join(', ') : 'Nothing logged yet'}</T>
                   </View>
-                  <T size={14} w="s">{mm.kcal}</T>
-                  <IconBtn icon={Trash2} size={32} label={`Remove ${e.item.name}`} onPress={() => remove(e.id)} />
+                  {list.length ? <T size={13} w="s">{mk}</T> : null}
+                  <Tap onPress={() => add(m)} scale={0.9} style={[st.addBtn, !list.length && { backgroundColor: C.ink, borderColor: C.ink }]} accessibilityLabel={`Add food to ${label}`}>
+                    <Plus size={14} color={list.length ? C.ink : C.onInk} strokeWidth={2.4} />
+                  </Tap>
                 </Row>
-              );
-            })}
-          </Card>
-        );
-      })}
+                {list.map((e) => {
+                  const mm = macrosOf(e);
+                  return (
+                    <Row key={e.id} style={st.entry}>
+                      <View style={{ flex: 1, minWidth: 0 }}>
+                        <T size={13.5} w="m" numberOfLines={1}>{e.item.name}</T>
+                        <T size={12} color={C.muted} numberOfLines={1}>{amountText(e)} · P {mm.p} · C {mm.c} · F {mm.f}</T>
+                      </View>
+                      <T size={13} w="s">{mm.kcal}</T>
+                      <IconBtn icon={Trash2} size={32} label={`Remove ${e.item.name}`} onPress={() => remove(e.id)} />
+                    </Row>
+                  );
+                })}
+              </View>
+            );
+          })}
+        </View>
+      </View>
+
+      {/* Tiles follow the fixed pastel order: green, then amber. */}
+      <Row gap={12}>
+        <Stat label="Burned in workouts" value={burned} unit=" kcal" tone={PASTEL[0]} onPress={() => router.navigate('/workouts')} />
+        <Stat label="Eaten per day" value={avg} unit=" kcal" tone={PASTEL[1]} />
+      </Row>
     </>
   );
 
@@ -87,9 +109,9 @@ export default function Food() {
   const weekPage = () => (
     <>
       <Row gap={12}>
-        <Stat label="Avg per day" value={avg} unit=" kcal" tone={PASTEL[1]} />
-        <Stat label="Avg protein" value={avgP} unit=" g" tone={PASTEL[2]} />
-        <Stat label="Days logged" value={`${logged.length}/7`} tone={PASTEL[0]} />
+        <Stat label="Avg per day" value={avg} unit=" kcal" tone={PASTEL[0]} />
+        <Stat label="Avg protein" value={avgP} unit=" g" tone={PASTEL[1]} />
+        <Stat label="Days logged" value={`${logged.length}/7`} tone={PASTEL[2]} />
       </Row>
       <Card>
         <Row style={{ justifyContent: 'space-between' }}><T size={16} w="s">Last 7 days</T><T size={12} color={C.muted}>goal {goal.kcal} kcal</T></Row>
@@ -104,11 +126,14 @@ export default function Food() {
 
   return (
     <PagerScreen tabs header={<AppHeader title="Food" subtitle={`${tot.kcal} of ${goal.kcal} kcal today`} right={<IconBtn icon={Plus} dark label="Add food" onPress={() => add()} />} />}
-      pages={[{ key: 'today', label: 'Today', render: todayPage }, { key: 'week', label: 'Week', render: weekPage }]} />
+      pages={[{ key: 'today', label: 'Today', render: todayPage }, { key: 'week', label: 'This week', render: weekPage }]} />
   );
 }
 
 const st = themed(() => StyleSheet.create({
-  addBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 99, backgroundColor: C.ink },
-  entry: { paddingVertical: 10, borderTopWidth: 1, borderTopColor: C.line, gap: 8 },
+  meals: { backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, paddingHorizontal: 14 },
+  mealRule: { borderTopWidth: 1, borderTopColor: C.line },
+  mealIc: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  addBtn: { width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: C.field, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
+  entry: { paddingVertical: 8, paddingLeft: 48, gap: 8 },
 }));

@@ -27,7 +27,7 @@ export function T({ size = 15, w = 'r', color = C.ink, center, style, ...rest }:
   return <Text {...rest} style={[{ fontFamily: F[w], fontSize: size, color, letterSpacing: ls, lineHeight: Math.round(size * 1.3) }, center && { textAlign: 'center' }, style]} />;
 }
 export const Label = ({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) => (
-  <T size={12} w="s" color={C.muted} style={[{ letterSpacing: 0.6, textTransform: 'uppercase' }, style]}>{children}</T>
+  <T size={11} w="s" color={C.muted} style={[{ letterSpacing: 0.8, textTransform: 'uppercase' }, style]}>{children}</T>
 );
 
 /* ---------- layout ---------- */
@@ -222,9 +222,9 @@ export function Sheet({ open, onClose, title, subtitle, children }: { open: bool
 }
 
 export const s = themed(() => StyleSheet.create({
-  screen: { paddingHorizontal: 20, paddingTop: 12, gap: SP.section },
+  screen: { paddingHorizontal: 20, paddingTop: 16, gap: SP.section },
   card: { backgroundColor: C.card, borderRadius: R.card, padding: SP.pad, borderWidth: 1, borderColor: C.line },
-  btn: { minHeight: 54, borderRadius: R.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 20 },
+  btn: { minHeight: 50, borderRadius: R.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 20 },
   btnSm: { minHeight: 38, paddingHorizontal: 16 },
   iconBtn: { borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' },
   chip: { paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: C.field, backgroundColor: C.card },
@@ -237,10 +237,10 @@ export const s = themed(() => StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(20,20,20,0.4)' },
   sheet: { maxHeight: '88%', backgroundColor: C.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 12, gap: 6 },
   grab: { alignSelf: 'center', width: 40, height: 5, borderRadius: 99, backgroundColor: C.field, marginBottom: 10 },
-  tile: { flex: 1, minWidth: 0, minHeight: 138, borderRadius: 24, padding: 16, justifyContent: 'space-between', gap: 12 },
+  tile: { flex: 1, minWidth: 0, minHeight: 120, borderRadius: R.tile, padding: 14, justifyContent: 'space-between', gap: 10 },
   tileIc: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.glass, alignItems: 'center', justifyContent: 'center' },
-  linkRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 20, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
-  linkIc: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  linkRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: R.card, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
+  linkIc: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
 }));
 
 /* ---------- tab header with profile avatar (shown on every tab) ---------- */
@@ -262,16 +262,16 @@ export function TabHeader({ title, subtitle, right, onAvatar, initial }: { title
 export function Stat({ label, value, unit, tone, onPress }: { label: string; value: string | number; unit?: string; tone?: [string, string]; onPress?: () => void }) {
   const bg = tone?.[0] ?? C.card, ink = tone?.[1] ?? C.ink;
   return (
-    <Tap onPress={onPress} scale={onPress ? 0.97 : 1} style={{ flex: 1, minWidth: 0, borderRadius: 20, padding: 14, gap: 6, backgroundColor: bg, borderWidth: tone ? 0 : 1, borderColor: C.line }}>
-      <T size={12} w="s" color={tone ? ink : C.muted} numberOfLines={1}>{label}</T>
-      <T size={20} w="b" color={ink} numberOfLines={1}>{value}{unit ? <T size={12} w="m" color={ink}>{unit}</T> : null}</T>
+    <Tap onPress={onPress} scale={onPress ? 0.97 : 1} style={{ flex: 1, minWidth: 0, borderRadius: R.tile, padding: 12, gap: 4, backgroundColor: bg, borderWidth: tone ? 0 : 1, borderColor: C.line }}>
+      <T size={11.5} w="s" color={tone ? ink : C.muted} numberOfLines={1}>{label}</T>
+      <T size={18} w="b" color={ink} numberOfLines={1} adjustsFontSizeToFit>{value}{unit ? <T size={11.5} w="m" color={ink}>{unit}</T> : null}</T>
     </Tap>
   );
 }
 export const SectionTitle = ({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) => (
-  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: -4 }}>
-    <T size={16} w="s">{title}</T>
-    {action ? <Pressable onPress={onAction} hitSlop={10}><T size={13} w="s" color={C.accent}>{action}</T></Pressable> : null}
+  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: -8 }}>
+    <T size={11} w="s" color={C.muted} style={{ letterSpacing: 0.8, textTransform: 'uppercase' }}>{title}</T>
+    {action ? <Pressable onPress={onAction} hitSlop={10}><T size={12.5} w="s" color={C.accent}>{action}</T></Pressable> : null}
   </View>
 );
 

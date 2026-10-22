@@ -3,11 +3,12 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { dayKey } from '@/lib/worknest';
 import { useWorkNest } from '@/lib/worknest-store';
-import { C, PASTEL, themed } from '@/lib/theme';
+import { C, themed } from '@/lib/theme';
 import { Briefcase, Check, ChevronRight } from './ico';
 import { haptic, LinkRow, Row, T, useToast } from './ui';
 
-export const NEST_TONE = PASTEL[2];
+// WorkNest's own colour: teal, outside the five pastels.
+export const nestTone = (): [string, string] => [C.tealSoft, C.teal];
 const SHOWN = 4;
 
 /** Home card: today's WorkNest to-dos (work, due today or overdue), tickable right here. */
@@ -18,8 +19,8 @@ export function TrackerCard() {
   const open = () => router.navigate('/tracker');
 
   if (status === 'loading') return null;
-  if (status === 'off') return <LinkRow icon={Briefcase} tone={NEST_TONE} title="Connect WorkNest" sub="See today’s to-dos here" onPress={open} />;
-  if (status === 'expired') return <LinkRow icon={Briefcase} tone={NEST_TONE} title="Reconnect WorkNest" sub="Sign in again to see your to-dos" onPress={open} />;
+  if (status === 'off') return <LinkRow icon={Briefcase} tone={nestTone()} title="Connect WorkNest" sub="See today’s to-dos here" onPress={open} />;
+  if (status === 'expired') return <LinkRow icon={Briefcase} tone={nestTone()} title="Reconnect WorkNest" sub="Sign in again to see your to-dos" onPress={open} />;
 
   const today = dayKey();
   // Ones ticked today stay listed (struck through), so a mis-tap can be undone on the spot.
@@ -37,7 +38,7 @@ export function TrackerCard() {
     <View style={st.card}>
       <Pressable onPress={open} accessibilityRole="button" accessibilityLabel={`Today’s to-dos: ${left} left. Open Tracker`}>
         <Row gap={10}>
-          <View style={[st.ic, { backgroundColor: NEST_TONE[0] }]}><Briefcase size={15} color={NEST_TONE[1]} /></View>
+          <View style={[st.ic, { backgroundColor: nestTone()[0] }]}><Briefcase size={15} color={nestTone()[1]} /></View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <T size={14} w="s">Today’s to-dos</T>
             <T size={11.5} color={C.muted}>{todays.length ? (left ? `${left} left${personal ? ` · ${personal} personal` : ''}` : 'All done') : 'Nothing due today'}</T>

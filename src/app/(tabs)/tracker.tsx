@@ -2,7 +2,7 @@ import { ReactNode, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { AppHeader } from '@/components/header';
-import { NEST_TONE } from '@/components/tracker-card';
+import { nestTone } from '@/components/tracker-card';
 import { ArrowUp, Briefcase, CalendarClock, Check, ChevronDown, ChevronUp, Flag, LogOut, Plus, RefreshCw, ShieldCheck } from '@/components/ico';
 import { Btn, IconBtn, Input, Row, Screen, Sheet, T, Tap, haptic, useToast } from '@/components/ui';
 import { C, F, PASTEL, themed } from '@/lib/theme';
@@ -40,7 +40,7 @@ function Connect({ again }: { again?: boolean }) {
   return (
     <View style={[st.card, { gap: 14, padding: 16 }]}>
       <Row gap={10}>
-        <View style={[st.badge, { backgroundColor: NEST_TONE[0] }]}><Briefcase size={18} color={NEST_TONE[1]} /></View>
+        <View style={[st.badge, { backgroundColor: nestTone()[0] }]}><Briefcase size={18} color={nestTone()[1]} /></View>
         <T size={17} w="s" style={{ flex: 1 }}>{again ? 'Sign in to WorkNest again' : 'Connect WorkNest'}</T>
       </Row>
       <T size={13} color={C.muted} style={{ lineHeight: 18 }}>

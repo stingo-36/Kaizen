@@ -96,7 +96,7 @@ export default function PlanScreen() {
           <View style={[st.badge, { backgroundColor: C.accentSoft }]}><T size={11} w="b" color={C.accent}>≈ {kcalForPlanDay(profile, dd.exercises)} kcal</T></View>
         </Row>
         {dd.exercises.map((e, i) => {
-          const [bg, ink] = e.kind === 'cardio' ? PASTEL[4] : PASTEL[i % 4];
+          const [bg, ink] = PASTEL[4];
           return (
             <View key={e.id} style={[st.ex, { borderTopWidth: 1, borderTopColor: C.line }]}>
               <View style={[st.n, { backgroundColor: bg }]}>{e.kind === 'cardio' ? <HeartPulse size={15} color={ink} /> : <T size={13} w="b" color={ink}>{i + 1}</T>}</View>
