@@ -3,7 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react
 
 import { AppHeader } from '@/components/header';
 import { NEST_TONE } from '@/components/tracker-card';
-import { ArrowUp, Briefcase, Check, ChevronDown, ChevronUp, Flag, LogOut, Plus, RefreshCw, ShieldCheck } from '@/components/ico';
+import { ArrowUp, Briefcase, CalendarClock, Check, ChevronDown, ChevronUp, Flag, LogOut, Plus, RefreshCw, ShieldCheck } from '@/components/ico';
 import { Btn, IconBtn, Input, Row, Screen, Sheet, T, Tap, haptic, useToast } from '@/components/ui';
 import { C, F, PASTEL, themed } from '@/lib/theme';
 import { addDays, dayKey, dayLabel, NestEntry, WORKNEST_URL } from '@/lib/worknest';
@@ -16,7 +16,6 @@ const FS = { title: 14, meta: 12, label: 10.5 };
 
 type View_ = 'todo' | 'followups' | 'notes';
 type Scope = 'work' | 'personal';
-type Due = 'today' | 'tomorrow' | 'none';
 
 function Connect({ again }: { again?: boolean }) {
   const { connect, link } = useWorkNest();
@@ -99,17 +98,44 @@ function ScopeToggle({ value, onChange, work, personal }: { value: Scope; onChan
 }
 
 /* ---------- adding ---------- */
-/** One line to type in; date chips and the person field only appear once you start. */
+/** "Today", "Tomorrow", "Mon 26 Oct" or "No date" for the add box's date pill. */
+function dueText(due: string | null) {
+  if (!due) return 'No date';
+  const today = dayKey();
+  return due === today ? 'Today' : due === addDays(today, 1) ? 'Tomorrow' : dayLabel(due);
+}
+
+/** Pick a due day: quick choices, then the next two weeks. A plain list, so it ships without a native date picker. */
+function DuePicker({ open, value, onPick, onClose }: { open: boolean; value: string | null; onPick: (d: string | null) => void; onClose: () => void }) {
+  const today = dayKey();
+  const days = Array.from({ length: 14 }, (_, i) => addDays(today, i + 2));
+  const pick = (d: string | null) => { haptic('select'); onPick(d); onClose(); };
+  const chip = (d: string | null, label: string) => (
+    <Pressable key={label} onPress={() => pick(d)} accessibilityRole="radio" accessibilityState={{ checked: value === d }}
+      style={[st.mini, { paddingVertical: 7, paddingHorizontal: 12 }, value === d && { backgroundColor: C.ink, borderColor: C.ink }]}>
+      <T size={12.5} w="s" color={value === d ? C.onInk : C.ink}>{label}</T>
+    </Pressable>
+  );
+  return (
+    <Sheet open={open} onClose={onClose} title="Due date">
+      <View style={st.chips}>{chip(today, 'Today')}{chip(addDays(today, 1), 'Tomorrow')}{chip(null, 'No date')}</View>
+      <T size={10.5} w="s" color={C.muted} style={{ letterSpacing: 0.8, marginTop: 6 }}>LATER</T>
+      <View style={st.chips}>{days.map((d) => chip(d, dayLabel(d)))}</View>
+    </Sheet>
+  );
+}
+
+/** One line to type in, with a date pill (Today by default) like WorkNest's add box. */
 function Composer({ view, scope }: { view: View_; scope: Scope }) {
   const { add } = useWorkNest();
   const toast = useToast();
   const [text, setText] = useState('');
   const [person, setPerson] = useState('');
-  const [due, setDue] = useState<Due>('today');
+  const [due, setDue] = useState<string | null>(dayKey());
+  const [picking, setPicking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const sticky = view === 'todo' && scope === 'personal';
-  const typing = text.length > 0 || person.length > 0;
 
   const submit = async () => {
     const subject = text.trim();
@@ -122,10 +148,10 @@ function Composer({ view, scope }: { view: View_; scope: Scope }) {
         view === 'followups' ? { kind: 'FollowUp', person: person.trim(), subject }
           : view === 'notes' ? { kind: 'Note', subject }
           : sticky ? { kind: 'Task', personal: true, subject }
-          : { kind: 'Task', subject, dueDate: due === 'today' ? today : due === 'tomorrow' ? addDays(today, 1) : null },
+          : { kind: 'Task', subject, dueDate: due && due < today ? today : due },
       );
       haptic('success');
-      setText(''); setPerson('');
+      setText(''); setPerson(''); setDue(dayKey());
       toast(view === 'followups' ? 'Follow-up added' : view === 'notes' ? 'Note added' : sticky ? 'Sticky note added' : 'To-do added');
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Couldn’t add it');
@@ -144,21 +170,18 @@ function Composer({ view, scope }: { view: View_; scope: Scope }) {
         <TextInput value={text} onChangeText={(v) => { setText(v); setErr(''); }} placeholder={placeholder} placeholderTextColor={sticky ? PASTEL[1][1] : C.faint}
           multiline={sticky} onSubmitEditing={sticky ? undefined : submit} returnKeyType={sticky ? 'default' : 'done'}
           style={[st.fieldText, sticky && { color: PASTEL[1][1], minHeight: 54, textAlignVertical: 'top' }]} accessibilityLabel={placeholder} />
+        {view === 'todo' && scope === 'work' && (
+          <Pressable onPress={() => setPicking(true)} accessibilityRole="button" accessibilityLabel={`Due: ${dueText(due)}. Change`} hitSlop={6} style={st.datePill}>
+            <CalendarClock size={13} color={due ? C.accent : C.muted} />
+            <T size={12} w="s" color={due ? C.accent : C.muted}>{dueText(due)}</T>
+          </Pressable>
+        )}
         <Pressable onPress={busy ? undefined : submit} accessibilityRole="button" accessibilityLabel="Add" hitSlop={8}
           style={[st.send, { backgroundColor: text.trim() ? C.ink : C.track }, sticky && { marginBottom: 4 }]}>
           {busy ? <ActivityIndicator size="small" color={C.onInk} /> : <ArrowUp size={14} color={text.trim() ? C.onInk : C.faint} />}
         </Pressable>
       </View>
-      {view === 'todo' && scope === 'work' && typing && (
-        <Row gap={6}>
-          {([['today', 'Today'], ['tomorrow', 'Tomorrow'], ['none', 'No date']] as const).map(([v, l]) => (
-            <Pressable key={v} onPress={() => { haptic('select'); setDue(v); }} accessibilityRole="radio" accessibilityState={{ checked: due === v }}
-              style={[st.mini, due === v && { backgroundColor: C.ink, borderColor: C.ink }]}>
-              <T size={11.5} w="s" color={due === v ? C.onInk : C.muted}>{l}</T>
-            </Pressable>
-          ))}
-        </Row>
-      )}
+      <DuePicker open={picking} value={due} onPick={setDue} onClose={() => setPicking(false)} />
       {err ? <T size={12} color={C.danger}>{err}</T> : null}
     </View>
   );
@@ -392,6 +415,8 @@ const st = themed(() => StyleSheet.create({
   field: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 42, paddingLeft: 12, paddingRight: 5, borderRadius: 12, borderWidth: 1, borderColor: C.line, backgroundColor: C.card },
   fieldText: { flex: 1, minWidth: 0, fontFamily: F.r, fontSize: 14, color: C.ink, paddingVertical: 9, paddingHorizontal: 0 },
   send: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  datePill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 5, paddingHorizontal: 9, borderRadius: 99, backgroundColor: C.accentTint },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   mini: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: 99, borderWidth: 1, borderColor: C.field },
   area: { minHeight: 90, borderRadius: 14, padding: 12, fontFamily: F.m, fontSize: 14, textAlignVertical: 'top' },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 11 },

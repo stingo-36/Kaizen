@@ -1,13 +1,11 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import { Activity, ArrowRight, AtSign, Dumbbell, Eye, EyeOff, Footprints, Lock, LucideIcon, Mail, Sparkles, User, Utensils, Wallet } from '@/components/ico';
+import { Activity, AtSign, Dumbbell, Eye, EyeOff, Footprints, ListChecks, Lock, LucideIcon, Mail, Sparkles, User, Utensils, Wallet } from '@/components/ico';
 import { ComponentRef, ReactNode, useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { C, F, themed } from '@/lib/theme';
+import { C, F, PASTEL, themed } from '@/lib/theme';
 import { useKeyboardHeight } from '@/lib/useKeyboard';
-import { Btn, Ring, Segmented, T, Tap } from './ui';
+import { Btn, T, Tap } from './ui';
 
 export function Field({ icon: Icon, value, onChange, placeholder, secure, autoComplete, onSubmit }: {
   icon: LucideIcon; value: string; onChange: (v: string) => void; placeholder: string; secure?: boolean;
@@ -17,7 +15,7 @@ export function Field({ icon: Icon, value, onChange, placeholder, secure, autoCo
   const [focus, setFocus] = useState(false);
   return (
     <View style={[st.field, focus && { borderColor: C.ink }]}>
-      <Icon size={18} color={C.muted} strokeWidth={1.9} />
+      <Icon size={17} color={focus ? C.ink : C.muted} strokeWidth={1.9} />
       <TextInput value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={C.faint} style={st.input}
         secureTextEntry={secure && !show} autoCapitalize={autoComplete === 'name' ? 'words' : 'none'} autoCorrect={false} autoComplete={autoComplete}
         keyboardType={autoComplete === 'email' ? 'email-address' : 'default'}
@@ -28,80 +26,72 @@ export function Field({ icon: Icon, value, onChange, placeholder, secure, autoCo
   );
 }
 
-/* Today at a glance: a ring per tracked area beside the day's numbers, each dot matching its ring. */
-const RINGS = [
-  { value: 0.8, color: '#9BE7BE' },
-  { value: 0.6, color: '#FFC3A6' },
-  { value: 0.72, color: '#FFE38F' },
+/* What Pulse covers, shown as a strip of the same pastel tones the app uses for each area. */
+const AREAS: { icon: LucideIcon; label: string; tone: number }[] = [
+  { icon: ListChecks, label: 'Habits', tone: 0 },
+  { icon: Dumbbell, label: 'Workouts', tone: 4 },
+  { icon: Utensils, label: 'Food', tone: 1 },
+  { icon: Footprints, label: 'Steps', tone: 2 },
+  { icon: Wallet, label: 'Spend', tone: 3 },
 ];
-const STATS: { icon: LucideIcon; label: string; value: string; dot?: string }[] = [
-  { icon: Activity, label: 'Habits', value: '4 of 5', dot: RINGS[0].color },
-  { icon: Dumbbell, label: 'Workout', value: '45 min', dot: RINGS[1].color },
-  { icon: Utensils, label: 'Food', value: '1,240 kcal', dot: RINGS[2].color },
-  { icon: Footprints, label: 'Steps', value: '6,812' },
-  { icon: Wallet, label: 'Spent', value: '₹840' },
-];
-function DayRings() {
-  const size = 138, stroke = 11, gap = 4;
-  return (
-    <View style={st.visual} accessible accessibilityLabel="Example day: 4 of 5 habits, push workout, 1,240 kcal, 6,812 steps, ₹840 spent">
-      <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-        {RINGS.map((r, i) => (
-          <View key={i} style={{ position: 'absolute' }}>
-            <Ring value={r.value} size={size - i * 2 * (stroke + gap)} stroke={stroke} color={r.color} track="rgba(255,255,255,0.16)" />
-          </View>
-        ))}
-        <T size={10} w="s" color="rgba(255,255,255,0.8)" style={{ letterSpacing: 1 }}>TODAY</T>
-      </View>
-      <View style={st.stats}>
-        {STATS.map(({ icon: Icon, label, value, dot }) => (
-          <View key={label} style={st.stat}>
-            {dot ? <View style={[st.dot, { backgroundColor: dot }]} /> : <Icon size={13} color="rgba(255,255,255,0.75)" />}
-            <T size={12} color="rgba(255,255,255,0.75)" style={{ width: 54 }}>{label}</T>
-            <T size={13} w="s" color={C.white} numberOfLines={1} style={{ flexShrink: 1 }}>{value}</T>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-}
 
 export function AuthShell({ mode, children }: { mode: 'login' | 'register'; children: ReactNode }) {
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const kb = useKeyboardHeight();
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
-  const sheetY = useRef(0);
+  const formY = useRef(0);
   // With the keyboard up, slide the form to the top so the fields and button sit above it.
   useEffect(() => {
-    if (kb) setTimeout(() => scroll.current?.scrollTo({ y: Math.max(0, sheetY.current - insets.top - 8), animated: true }), 50);
-  }, [kb, insets.top]);
+    if (kb) setTimeout(() => scroll.current?.scrollTo({ y: Math.max(0, formY.current - 12), animated: true }), 50);
+  }, [kb]);
+  const login = mode === 'login';
   return (
-    <View style={{ flex: 1, backgroundColor: '#4A4FB0' }}>
-      <ScrollView ref={scroll} contentContainerStyle={{ flexGrow: 1, paddingBottom: kb }} keyboardShouldPersistTaps="handled" bounces={false}>
-        <LinearGradient colors={['#6A6ED0', '#4A4FB0']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[st.top, { paddingTop: insets.top + 18 }]}>
-          <View style={st.blob} />
-          <View style={st.brand}><View style={st.mark}><Activity size={19} color={C.white} /></View><T size={18} w="b" color={C.white}>Pulse</T></View>
-          <DayRings />
-          <T size={34} w="b" color={C.white} style={{ lineHeight: 37 }}>{mode === 'login' ? 'Your whole day,\nin one place.' : 'Build a better\nroutine.'}</T>
-          <T size={15} color="rgba(255,255,255,0.88)" style={{ marginTop: 8 }}>{mode === 'login' ? 'Habits, workouts, meals, steps and spending. Log in to pick up where you left off.' : 'One app for your habits, workouts, meals, steps and spending.'}</T>
-        </LinearGradient>
-        <View style={[st.sheet, { paddingBottom: (kb ? 16 : insets.bottom) + 24 }]} onLayout={(e) => { sheetY.current = e.nativeEvent.layout.y; }}>
-          <Segmented options={[['login', 'Log in'], ['register', 'Sign up']]} value={mode} onChange={(v) => v !== mode && router.replace(v === 'login' ? '/login' : '/register')} />
-          {children}
+    <View style={{ flex: 1, backgroundColor: C.bg }}>
+      <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" bounces={false} showsVerticalScrollIndicator={false}
+        contentContainerStyle={[st.page, { paddingTop: insets.top + 20, paddingBottom: (kb || insets.bottom) + 24 }]}>
+        <View style={st.brand}>
+          <View style={st.mark}><Activity size={17} color={C.white} /></View>
+          <T size={17} w="b">Pulse</T>
         </View>
+
+        <View style={{ gap: 8, marginTop: 36 }}>
+          <T size={28} w="b" style={{ lineHeight: 33 }}>{login ? 'Welcome back' : 'Create your account'}</T>
+          <T size={14.5} color={C.muted} style={{ lineHeight: 21 }}>
+            {login ? 'Log in to pick up your day where you left off.' : 'Habits, workouts, meals, steps and spending, all in one place.'}
+          </T>
+        </View>
+
+        <View style={st.areas} accessible accessibilityLabel="Pulse tracks habits, workouts, food, steps and spending">
+          {AREAS.map(({ icon: Icon, label, tone }) => (
+            <View key={label} style={st.area}>
+              <View style={[st.areaIc, { backgroundColor: PASTEL[tone][0] }]}><Icon size={17} color={PASTEL[tone][1]} /></View>
+              <T size={11} w="m" color={C.muted} numberOfLines={1}>{label}</T>
+            </View>
+          ))}
+        </View>
+
+        <View style={st.form} onLayout={(e) => { formY.current = e.nativeEvent.layout.y; }}>{children}</View>
       </ScrollView>
     </View>
   );
 }
 
+/** Quiet secondary option under the main button: fills in the shared demo account. */
 export function DemoCard({ onPress }: { onPress: () => void }) {
   return (
-    <Tap onPress={onPress} style={st.demo} accessibilityRole="button" accessibilityLabel="Fill in the demo account">
-      <View style={st.demoIc}><Sparkles size={17} color={C.white} /></View>
-      <View style={{ flex: 1 }}><T size={14} w="s">Try the demo</T><T size={13} color={C.muted}>test1 · test1</T></View>
-      <ArrowRight size={18} color={C.accent} />
+    <Tap onPress={onPress} style={st.demo} scale={0.98} accessibilityRole="button" accessibilityLabel="Fill in the demo account">
+      <Sparkles size={15} color={C.accent} />
+      <T size={13.5} w="s" color={C.ink}>Try the demo account</T>
     </Tap>
+  );
+}
+
+/** "or" between the main action and the demo option. */
+export function OrRule() {
+  return (
+    <View style={st.or}>
+      <View style={st.rule} /><T size={11.5} color={C.faint}>or</T><View style={st.rule} />
+    </View>
   );
 }
 
@@ -109,17 +99,16 @@ export const AuthIcons = { AtSign, Lock, User, Mail };
 export { Btn };
 
 const st = themed(() => StyleSheet.create({
-  top: { paddingHorizontal: 24, paddingBottom: 48, overflow: 'hidden' },
-  blob: { position: 'absolute', width: 300, height: 300, borderRadius: 150, right: -120, top: -130, backgroundColor: 'rgba(255,255,255,0.12)' },
-  brand: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  mark: { width: 36, height: 36, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' },
-  visual: { flexDirection: 'row', alignItems: 'center', gap: 18, marginTop: 22, marginBottom: 22 },
-  stats: { flex: 1, minWidth: 0, gap: 7, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)' },
-  stat: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  dot: { width: 9, height: 9, borderRadius: 5, marginHorizontal: 2 },
-  sheet: { flex: 1, backgroundColor: C.bg, borderTopLeftRadius: 30, borderTopRightRadius: 30, marginTop: -26, padding: 22, gap: 14 },
-  field: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 54, paddingHorizontal: 16, borderRadius: 16, backgroundColor: C.card, borderWidth: 1.5, borderColor: C.line },
-  input: { flex: 1, fontFamily: F.r, fontSize: 16, color: C.ink, paddingVertical: 14 },
-  demo: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: C.card, borderWidth: 1, borderColor: C.accent, borderStyle: 'dashed' },
-  demoIc: { width: 36, height: 36, borderRadius: 11, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' },
+  page: { flexGrow: 1, paddingHorizontal: 24, maxWidth: 480, width: '100%', alignSelf: 'center' },
+  brand: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  mark: { width: 32, height: 32, borderRadius: 10, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' },
+  areas: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 28, paddingVertical: 14, paddingHorizontal: 8, borderRadius: 18, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
+  area: { flex: 1, minWidth: 0, alignItems: 'center', gap: 6 },
+  areaIc: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  form: { gap: 12, marginTop: 28 },
+  field: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 50, paddingHorizontal: 14, borderRadius: 14, backgroundColor: C.card, borderWidth: 1.5, borderColor: C.line },
+  input: { flex: 1, minWidth: 0, fontFamily: F.r, fontSize: 15, color: C.ink, paddingVertical: 12 },
+  or: { flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 2 },
+  rule: { flex: 1, height: 1, backgroundColor: C.line },
+  demo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 46, borderRadius: 999, backgroundColor: C.accentTint, borderWidth: 1, borderColor: C.accentSoft },
 }));

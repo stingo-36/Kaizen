@@ -29,10 +29,10 @@ export default function Register() {
       <Field icon={AuthIcons.Lock} value={f.pw} onChange={set('pw')} placeholder="Password (8+ characters)" secure autoComplete="new-password" />
       <Field icon={AuthIcons.Lock} value={f.pw2} onChange={set('pw2')} placeholder="Confirm password" secure autoComplete="new-password" onSubmit={submit} />
       {err ? <T size={13} color={C.danger}>{err}</T> : null}
-      <Btn title="Create account" icon={ArrowRight} onPress={submit} busy={busy} />
-      <Row gap={4} style={{ justifyContent: 'center' }}>
-        <T size={14} color={C.muted}>Already have an account?</T>
-        <Pressable onPress={() => router.replace('/login')} hitSlop={8}><T size={14} w="s" color={C.accent}>Log in</T></Pressable>
+      <Btn title="Create account" icon={ArrowRight} onPress={submit} busy={busy} style={{ minHeight: 50, marginTop: 4 }} />
+      <Row gap={4} style={{ justifyContent: 'center', marginTop: 10 }}>
+        <T size={13.5} color={C.muted}>Already have an account?</T>
+        <Pressable onPress={() => router.replace('/login')} hitSlop={8}><T size={13.5} w="s" color={C.accent}>Log in</T></Pressable>
       </Row>
     </AuthShell>
   );
