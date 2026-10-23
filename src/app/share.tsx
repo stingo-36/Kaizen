@@ -167,7 +167,7 @@ export default function Share() {
     const gone = removeShots && picked.length ? await deleteScreenshots(picked) : true;
     toast(removeShots && picked.length ? (gone ? 'Saved to WorkNest · screenshots deleted' : 'Saved to WorkNest · screenshots kept') : 'Saved to WorkNest');
     clearSharedPayloads();
-    router.replace({ pathname: '/tracker', params: { view: 'resources' } });
+    router.replace('/tracker/saved');
   };
 
   const close = () => { clearSharedPayloads(); goBack('/tracker'); };

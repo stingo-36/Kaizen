@@ -5,8 +5,8 @@ import { Linking, Pressable, ScrollView, StyleSheet, TextInput, View } from 'rea
 import { NestResource } from '@/lib/worknest';
 import { useWorkNest } from '@/lib/worknest-store';
 import { C, F, themed } from '@/lib/theme';
-import { Bookmark, ChevronRight, ExternalLink, Plus, Search } from './ico';
-import { Btn, haptic, Row, Sheet, T } from './ui';
+import { Bookmark, ChevronRight, Globe, Instagram, LucideIcon, Search, Youtube } from './ico';
+import { haptic, Row, T, Tap } from './ui';
 
 /* WorkNest Resources on the phone: read from WorkNest, added from shared reels and screenshots (app/share.tsx). */
 
@@ -54,42 +54,54 @@ export function Md({ text, size = 14, color = C.ink }: { text: string; size?: nu
   );
 }
 
-const host = (url: string) => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; } };
+export const host = (url: string) => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; } };
 
-function ResourceRow({ r, first, onPress }: { r: NestResource; first?: boolean; onPress: () => void }) {
+/** Where a saved item came from, as an icon and its colours: Instagram, YouTube, any website, or nothing. */
+export function sourceOf(r: NestResource): { icon: LucideIcon; tone: [string, string] } {
+  const h = r.url ? host(r.url) : '';
+  if (/instagram\.com$/.test(h)) return { icon: Instagram, tone: [C.accentSoft, C.accent] };
+  if (/youtube\.com$|youtu\.be$/.test(h)) return { icon: Youtube, tone: ['#FCEBEA', '#C0392B'] };
+  if (h) return { icon: Globe, tone: [C.tealSoft, C.teal] };
+  return { icon: Bookmark, tone: [C.soft, C.muted] };
+}
+
+/** The names a saved list holds ("Wappalyzer, JSON Viewer Pro, VisBug"), or the description's first line. */
+export function preview(md: string) {
+  const items = md.split('\n').map((l) => l.match(/^\s*(?:\d+[.)]|[-*•])\s+\*\*([^*]+)\*\*/)?.[1]).filter(Boolean) as string[];
+  if (items.length) return { text: items.join(', '), count: items.length };
+  return { text: plain(md.split('\n').find((l) => l.trim()) ?? ''), count: 0 };
+}
+
+function ResourceCard({ r, onPress }: { r: NestResource; onPress: () => void }) {
+  const { icon: Icon, tone } = sourceOf(r);
+  const p = preview(r.description);
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${r.title}. ${r.type}. Open`} style={[st.row, !first && st.rule]}>
-      <View style={st.ic}><Bookmark size={15} color={C.accent} /></View>
-      <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-        <T size={14} w="m" numberOfLines={2} style={{ lineHeight: 19 }}>{r.title}</T>
-        {r.description ? <T size={12} color={C.muted} numberOfLines={2} style={{ lineHeight: 16 }}>{plain(r.description)}</T> : null}
-        <T size={10.5} w="s" color={C.faint} style={{ letterSpacing: 0.4 }} numberOfLines={1}>
-          {[r.type, r.url ? host(r.url) : null, ...r.tags.slice(0, 2).map((t) => `#${t}`)].filter(Boolean).join(' · ').toUpperCase()}
-        </T>
-      </View>
-    </Pressable>
+    <Tap onPress={onPress} scale={0.98} accessibilityLabel={`${r.title}. ${r.type}. Open`} style={st.res}>
+      <Row gap={10}>
+        <View style={[st.src, { backgroundColor: tone[0] }]}><Icon size={17} color={tone[1]} /></View>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <T size={14} w="s" numberOfLines={2} style={{ lineHeight: 19 }}>{r.title}</T>
+          <T size={12} color={C.muted} numberOfLines={1}>{[r.type, r.url ? host(r.url) : null].filter(Boolean).join(' · ')}</T>
+        </View>
+        {r.favorite ? <Bookmark size={14} color={C.accent} weight="fill" /> : null}
+      </Row>
+      {p.text ? <T size={12.5} color={C.muted} numberOfLines={2} style={{ lineHeight: 17 }}>{p.text}</T> : null}
+      {p.count || r.tags.length ? (
+        <Row gap={6} style={{ flexWrap: 'wrap' }}>
+          {p.count ? <View style={st.pill}><T size={11} w="m" color={C.muted}>{p.count} {p.count > 1 ? 'items' : 'item'}</T></View> : null}
+          {r.tags.slice(0, 3).map((t) => <View key={t} style={st.pill}><T size={11} w="m" color={C.muted}>#{t}</T></View>)}
+        </Row>
+      ) : null}
+    </Tap>
   );
 }
 
-/** One resource in full: description with tappable links, tags, and its link. */
-function ResourceSheet({ r, onClose }: { r: NestResource | null; onClose: () => void }) {
-  return (
-    <Sheet open={!!r} onClose={onClose} title={r?.title ?? ''} subtitle={r ? [r.type, r.url ? host(r.url) : null].filter(Boolean).join(' · ') : undefined}>
-      {r?.description ? <Md text={r.description} /> : <T size={13} color={C.muted}>No description.</T>}
-      {r?.tags.length ? <T size={12} color={C.muted}>{r.tags.map((t) => `#${t}`).join('  ')}</T> : null}
-      {r?.url ? <Btn title="Open link" icon={ExternalLink} kind="ghost" small onPress={() => open(r.url!)} /> : null}
-      <T size={11} color={C.faint} center>Edit or delete it on WorkNest’s Resources page.</T>
-    </Sheet>
-  );
-}
-
-/** Tracker → Resources: search, filter by type, open one. "Add" opens the save screen. */
+/** Tracker → Saved: search, filter by type, tap one to open its page. */
 export function ResourcesView() {
   const router = useRouter();
   const { resources, resourcesError, loadResources } = useWorkNest();
   const [q, setQ] = useState('');
   const [type, setType] = useState<string | null>(null);
-  const [openR, setOpenR] = useState<NestResource | null>(null);
 
   const types = useMemo(() => [...new Set(resources.map((r) => r.type))], [resources]);
   const shown = useMemo(() => {
@@ -100,15 +112,10 @@ export function ResourcesView() {
 
   return (
     <View style={{ gap: 12 }}>
-      <Row gap={8}>
-        <View style={[st.search, { flex: 1 }]}>
-          <Search size={14} color={C.faint} />
-          <TextInput value={q} onChangeText={setQ} placeholder="Search resources" placeholderTextColor={C.faint} style={st.searchText} accessibilityLabel="Search resources" />
-        </View>
-        <Pressable onPress={() => { haptic('light'); router.push('/share'); }} accessibilityRole="button" accessibilityLabel="Add a resource from screenshots or a link" style={st.add}>
-          <Plus size={16} color={C.onInk} />
-        </Pressable>
-      </Row>
+      <View style={st.search}>
+        <Search size={14} color={C.faint} />
+        <TextInput value={q} onChangeText={setQ} placeholder="Search saved" placeholderTextColor={C.faint} style={st.searchText} accessibilityLabel="Search saved" />
+      </View>
       {types.length > 1 ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
           {[null, ...types].map((t) => (
@@ -125,17 +132,15 @@ export function ResourcesView() {
       ) : null}
 
       {shown.length ? (
-        <View style={st.card}>{shown.map((r, i) => <ResourceRow key={r.id} r={r} first={i === 0} onPress={() => setOpenR(r)} />)}</View>
+        <View style={{ gap: 10 }}>{shown.map((r) => <ResourceCard key={r.id} r={r} onPress={() => router.push(`/tracker/saved/${r.id}`)} />)}</View>
       ) : resources.length ? (
         <T size={13} color={C.muted} center style={{ paddingVertical: 20 }}>Nothing matches.</T>
       ) : (
         <View style={st.empty}>
           <T size={14} w="s" center>Save reels and links here</T>
-          <T size={12.5} color={C.muted} center style={{ lineHeight: 18 }}>In Instagram, tap Share → Kaizen on a reel, add screenshots of the names or links, and Kaizen saves the list to your WorkNest Resources.</T>
-          <Btn title="Add from screenshots" icon={Plus} small kind="ghost" onPress={() => router.push('/share')} />
+          <T size={12.5} color={C.muted} center style={{ lineHeight: 18 }}>In Instagram, tap Share → Kaizen on a reel, add screenshots of the names or links, and Kaizen saves the list to your WorkNest Resources. Or tap + to add one.</T>
         </View>
       )}
-      <ResourceSheet r={openR} onClose={() => setOpenR(null)} />
     </View>
   );
 }
@@ -145,7 +150,7 @@ export function RecentResourcesCard() {
   const router = useRouter();
   const { status, resources } = useWorkNest();
   if (status !== 'on' || !resources.length) return null;
-  const openTab = () => router.navigate({ pathname: '/tracker', params: { view: 'resources' } });
+  const openTab = () => router.push('/tracker/saved');
   return (
     <View style={st.home}>
       <Pressable onPress={openTab} accessibilityRole="button" accessibilityLabel={`Recently saved: ${resources.length}. Open Resources`}>
@@ -170,13 +175,13 @@ export function RecentResourcesCard() {
 
 const st = themed(() => StyleSheet.create({
   card: { backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, overflow: 'hidden' },
-  row: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 12, paddingHorizontal: 12 },
-  rule: { borderTopWidth: 1, borderTopColor: C.line },
+  res: { gap: 8, padding: 14, borderRadius: 16, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
+  src: { width: 36, height: 36, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  pill: { paddingVertical: 3, paddingHorizontal: 8, borderRadius: 99, backgroundColor: C.soft },
   ic: { width: 28, height: 28, borderRadius: 9, backgroundColor: C.accentTint, alignItems: 'center', justifyContent: 'center' },
   dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: C.accent },
   search: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 40, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, borderColor: C.line, backgroundColor: C.card },
   searchText: { flex: 1, minWidth: 0, fontFamily: F.r, fontSize: 14, color: C.ink, paddingVertical: 8 },
-  add: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' },
   chip: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 99, borderWidth: 1, borderColor: C.field, backgroundColor: C.card },
   empty: { gap: 10, padding: 18, borderRadius: 16, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, alignItems: 'center' },
   home: { gap: 10, padding: 14, borderRadius: 20, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },

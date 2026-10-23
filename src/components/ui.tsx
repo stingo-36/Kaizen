@@ -31,8 +31,11 @@ export const Label = ({ children, style }: { children: ReactNode; style?: StyleP
 );
 
 /* ---------- layout ---------- */
-/** `footer` stays pinned at the bottom (above the keyboard) while the content scrolls, for a screen's main action. */
-export function Screen({ children, tabs, scroll = true, style, footer }: { children: ReactNode; tabs?: boolean; scroll?: boolean; style?: StyleProp<ViewStyle>; footer?: ReactNode }) {
+/**
+ * `footer` stays pinned at the bottom (above the keyboard) while the content scrolls, for a screen's main action.
+ * `overlay` floats above the content (e.g. a + button); place it with absolute positioning.
+ */
+export function Screen({ children, tabs, scroll = true, style, footer, overlay }: { children: ReactNode; tabs?: boolean; scroll?: boolean; style?: StyleProp<ViewStyle>; footer?: ReactNode; overlay?: ReactNode }) {
   const insets = useSafeAreaInsets();
   const kb = useKeyboardHeight();
   const pad = { paddingBottom: footer ? 20 : kb ? kb + 24 : (tabs ? 110 : 32) + insets.bottom };
@@ -45,6 +48,7 @@ export function Screen({ children, tabs, scroll = true, style, footer }: { child
           <View style={[s.screen, { flex: 1 }, pad, style]}>{children}</View>
         )}
         {footer ? <View style={[s.footer, { paddingBottom: kb ? kb + 10 : insets.bottom + 12 }]}>{footer}</View> : null}
+        {overlay}
       </FocusReplay>
     </SafeAreaView>
   );

@@ -3,8 +3,9 @@ import { AppState } from 'react-native';
 
 import { useStore } from './store';
 import {
-  addEntry, addResource, clearLink, connectWorkNest, fetchEntries, fetchResources, loadLink, NestAuthError, NestEntry, NestLink, NestResource, NewEntry,
-  NewResource, patchEntry, readCache, readResourceCache, ResourceList, writeCache, writeResourceCache,
+  addEntry, addResource, addUpdate, clearLink, connectWorkNest, EntryPatch, fetchEntries, fetchEntry, fetchResources, loadLink, NestAuthError, NestEntry,
+  NestEntryDetail, NestLink, NestOptions, NestResource, NewEntry, NewResource, NewUpdate, NO_OPTIONS, patchEntry, readCache, readResourceCache, ResourceList,
+  starResource, writeCache, writeResourceCache,
 } from './worknest';
 
 /* WorkNest Tracker and Resources state shared by Home, the Tracker tab and the share screen.
@@ -18,6 +19,14 @@ type Ctx = {
   add: (entry: NewEntry) => Promise<void>;
   setDone: (id: string, done: boolean) => Promise<void>;
   edit: (id: string, subject: string) => Promise<void>;
+  /** Star/unstar or move the due date (null clears it). */
+  change: (id: string, patch: EntryPatch) => Promise<void>;
+  /** One entry with its whole history, fresh from WorkNest. */
+  getEntry: (id: string) => Promise<NestEntryDetail>;
+  /** Adds to an entry's history; returns the updated entry and refreshes the lists. */
+  addToEntry: (id: string, update: NewUpdate) => Promise<NestEntryDetail>;
+  /** Channels, people and note tags for the add forms. */
+  options: NestOptions;
   resources: NestResource[];
   /** The user's resource types from WorkNest (Profile → Dropdown lists). */
   resourceTypes: string[];
@@ -25,6 +34,7 @@ type Ctx = {
   resourcesError: string;
   loadResources: () => Promise<void>;
   saveResource: (r: NewResource) => Promise<void>;
+  starRes: (id: string, favorite: boolean) => Promise<void>;
 };
 const NestCtx = createContext<Ctx | null>(null);
 export const useWorkNest = () => {
@@ -38,6 +48,8 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<Status>('loading');
   const [link, setLink] = useState<NestLink | null>(null);
   const [entries, setEntries] = useState<NestEntry[]>([]);
+  const [options, setOptions] = useState<NestOptions>(NO_OPTIONS);
+  const optionsRef = useRef<NestOptions>(NO_OPTIONS);
   const [at, setAt] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -45,9 +57,10 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
   const [lib, setLib] = useState<ResourceList>({ resources: [], types: [] });
   const [resourcesError, setResourcesError] = useState('');
 
-  const fresh = useCallback((list: NestEntry[]) => {
+  const fresh = useCallback((list: NestEntry[], opts?: NestOptions | null) => {
+    if (opts) { optionsRef.current = opts; setOptions(opts); }
     setEntries(list); setAt(Date.now()); setStatus('on'); setError('');
-    writeCache(list);
+    writeCache(list, optionsRef.current);
   }, []);
   /** Runs a call that returns the new list; a dead token flips the screen to "sign in again". */
   const run = useCallback(async (fn: (l: NestLink) => Promise<NestEntry[]>) => {
@@ -60,11 +73,14 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
   }, [fresh]);
 
   const load = useCallback(async () => {
+    const l = linkRef.current;
+    if (!l) return;
     setBusy(true);
-    try { await run(fetchEntries); } catch (e) {
-      setError(e instanceof Error ? e.message : 'Couldn’t load your Tracker');
+    try { const r = await fetchEntries(l); fresh(r.entries, r.options); } catch (e) {
+      if (e instanceof NestAuthError) setStatus('expired');
+      else setError(e instanceof Error ? e.message : 'Couldn’t load your Tracker');
     } finally { setBusy(false); }
-  }, [run]);
+  }, [fresh]);
 
   const freshLib = useCallback((list: ResourceList) => { setLib(list); setResourcesError(''); writeResourceCache(list); }, []);
   const loadResources = useCallback(async () => {
@@ -73,6 +89,17 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
     try { freshLib(await fetchResources(l)); } catch (e) {
       if (e instanceof NestAuthError) { setStatus('expired'); return; }
       setResourcesError(e instanceof Error ? e.message : 'Couldn’t load your resources');
+    }
+  }, [freshLib]);
+  const starRes = useCallback(async (id: string, favorite: boolean) => {
+    const l = linkRef.current;
+    if (!l) return;
+    // The star flips at once; the server's library replaces it, or it flips back if that fails.
+    setLib((x) => ({ ...x, resources: x.resources.map((r) => (r.id === id ? { ...r, favorite } : r)) }));
+    try { freshLib(await starResource(l, id, favorite)); } catch (e) {
+      setLib((x) => ({ ...x, resources: x.resources.map((r) => (r.id === id ? { ...r, favorite: !favorite } : r)) }));
+      if (e instanceof NestAuthError) { setStatus('expired'); return; }
+      throw e;
     }
   }, [freshLib]);
   const connect = useCallback(async (email: string, password: string) => {
@@ -86,6 +113,7 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
   const disconnect = useCallback(async () => {
     linkRef.current = null;
     setLink(null); setEntries([]); setAt(null); setError(''); setStatus('off');
+    optionsRef.current = NO_OPTIONS; setOptions(NO_OPTIONS);
     setLib({ resources: [], types: [] }); setResourcesError('');
     await clearLink();
   }, []);
@@ -100,6 +128,23 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
   }, [entries, run]);
 
   const edit = useCallback((id: string, subject: string) => run((l) => patchEntry(l, id, { subject })), [run]);
+  const change = useCallback((id: string, patch: EntryPatch) => run((l) => patchEntry(l, id, patch)), [run]);
+
+  /** Calls that return one entry rather than the list; a dead token flips the screen to "sign in again". */
+  const one = useCallback(async (fn: (l: NestLink) => Promise<NestEntryDetail>) => {
+    const l = linkRef.current;
+    if (!l) throw new Error('Connect WorkNest first');
+    try { return await fn(l); } catch (e) {
+      if (e instanceof NestAuthError) { setStatus('expired'); throw new Error('Sign in to WorkNest again'); }
+      throw e;
+    }
+  }, []);
+  const getEntry = useCallback((id: string) => one((l) => fetchEntry(l, id)), [one]);
+  const addToEntry = useCallback(async (id: string, update: NewUpdate) => {
+    const entry = await one((l) => addUpdate(l, id, update));
+    load();
+    return entry;
+  }, [one, load]);
 
   const saveResource = useCallback(async (r: NewResource) => {
     const l = linkRef.current;
@@ -117,7 +162,10 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
       if (!live) return;
       linkRef.current = l;
       setLink(l);
-      if (cache) { setEntries(cache.entries); setAt(cache.at); }
+      if (cache) {
+        setEntries(cache.entries); setAt(cache.at);
+        if (cache.options) { optionsRef.current = cache.options; setOptions(cache.options); }
+      }
       if (libCache) setLib(libCache);
       setStatus(l ? 'on' : 'off');
       if (l) { load(); loadResources(); }
@@ -135,8 +183,8 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
 
   return (
     <NestCtx.Provider value={{
-      status, link, entries, at, busy, error, connect, disconnect, load, add, setDone, edit,
-      resources: lib.resources, resourceTypes: lib.types, resourcesError, loadResources, saveResource,
+      status, link, entries, at, busy, error, connect, disconnect, load, add, setDone, edit, change, getEntry, addToEntry, options,
+      resources: lib.resources, resourceTypes: lib.types, resourcesError, loadResources, saveResource, starRes,
     }}>{children}</NestCtx.Provider>
   );
 }

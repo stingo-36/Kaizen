@@ -32,6 +32,15 @@ export type NestEntry = {
   lastUpdate: { note: string; fromThem: boolean; occurredAt: string } | null;
 };
 
+/** What the add forms offer, from the user's WorkNest Profile lists. Missing on a WorkNest without them yet. */
+export type NestOptions = { channels: string[]; people: string[]; noteTags: string[] };
+export const NO_OPTIONS: NestOptions = { channels: [], people: [], noteTags: [] };
+
+/** One line of an entry's history: what you said, or (follow-ups) their reply. */
+export type NestUpdate = { id: string; note: string; channel: string; fromThem: boolean; occurredAt: string };
+/** An entry with its whole history, newest first. */
+export type NestEntryDetail = Omit<NestEntry, 'lastUpdate'> & { ticketKey: string | null; createdAt: string; updates: NestUpdate[] };
+
 /** A WorkNest Resources entry. `description` is Markdown, as the Resources page writes it. */
 export type NestResource = {
   id: string; title: string; description: string; type: string; url: string | null; tags: string[]; favorite: boolean;
@@ -97,16 +106,33 @@ export async function connectWorkNest(email: string, password: string): Promise<
 }
 
 export const fetchEntries = (link: NestLink) =>
-  call<{ entries: NestEntry[] }>(`${link.url}/api/mobile/tracker`, authed(link)).then((r) => r.entries);
+  call<{ entries: NestEntry[]; options?: NestOptions }>(`${link.url}/api/mobile/tracker`, authed(link))
+    .then((r) => ({ entries: r.entries, options: r.options ?? null }));
 
-export type NewEntry = { kind: NestKind; subject: string; personal?: boolean; person?: string; note?: string; dueDate?: string | null };
+/** The same fields as WorkNest's add forms: who/where for a follow-up, body/date/tags for a note, a star for any. */
+export type NewEntry = {
+  kind: NestKind; subject: string; personal?: boolean; person?: string; note?: string; dueDate?: string | null;
+  channel?: string; occurredAt?: string | null; tags?: string[]; pinned?: boolean;
+};
 /** Adds an entry; WorkNest answers with the whole fresh list. */
 export const addEntry = (link: NestLink, entry: NewEntry) =>
   call<{ entries: NestEntry[] }>(`${link.url}/api/mobile/tracker`, authed(link, { method: 'POST', body: JSON.stringify(entry) })).then((r) => r.entries);
 
-/** Tick/untick, or rewrite a sticky note's text. */
-export const patchEntry = (link: NestLink, id: string, patch: { status: 'Open' | 'Done' } | { subject: string }) =>
+/** One change at a time: tick/untick, a sticky note's text, star/unstar, or the due date (null clears it). */
+export type EntryPatch = { status: 'Open' | 'Done' } | { subject: string } | { pinned: boolean } | { dueDate: string | null };
+export const patchEntry = (link: NestLink, id: string, patch: EntryPatch) =>
   call<{ entries: NestEntry[] }>(`${link.url}/api/mobile/tracker/${encodeURIComponent(id)}`, authed(link, { method: 'PATCH', body: JSON.stringify(patch) })).then((r) => r.entries);
+
+export const fetchEntry = (link: NestLink, id: string) =>
+  call<{ entry: NestEntryDetail }>(`${link.url}/api/mobile/tracker/${encodeURIComponent(id)}`, authed(link)).then((r) => r.entry);
+
+/** "I followed up" / "they replied" on a follow-up, or a note on a to-do or note. */
+export type NewUpdate = { note: string; channel?: string; fromThem?: boolean };
+export const addUpdate = (link: NestLink, id: string, update: NewUpdate) =>
+  call<{ entry: NestEntryDetail }>(`${link.url}/api/mobile/tracker/${encodeURIComponent(id)}/updates`, authed(link, { method: 'POST', body: JSON.stringify(update) })).then((r) => r.entry);
+
+export const starResource = (link: NestLink, id: string, favorite: boolean) =>
+  call<ResourceList>(`${link.url}/api/mobile/resources/${encodeURIComponent(id)}`, authed(link, { method: 'PATCH', body: JSON.stringify({ favorite }) })).then(({ resources, types }) => ({ resources, types }));
 
 export const fetchResources = (link: NestLink) =>
   call<ResourceList>(`${link.url}/api/mobile/resources`, authed(link)).then(({ resources, types }) => ({ resources, types }));
@@ -120,15 +146,20 @@ export async function readResourceCache(): Promise<ResourceList | null> {
 export const writeResourceCache = (list: ResourceList) => AsyncStorage.setItem(RES_CACHE_KEY, JSON.stringify(list)).catch(() => {});
 
 /* Last list, so the Tracker shows instantly and offline. */
-export async function readCache(): Promise<{ entries: NestEntry[]; at: number } | null> {
+export async function readCache(): Promise<{ entries: NestEntry[]; at: number; options?: NestOptions } | null> {
   try { return JSON.parse((await AsyncStorage.getItem(CACHE_KEY)) || 'null'); } catch { return null; }
 }
-export const writeCache = (entries: NestEntry[]) =>
-  AsyncStorage.setItem(CACHE_KEY, JSON.stringify({ entries, at: Date.now() })).catch(() => {});
+export const writeCache = (entries: NestEntry[], options: NestOptions) =>
+  AsyncStorage.setItem(CACHE_KEY, JSON.stringify({ entries, options, at: Date.now() })).catch(() => {});
 
 /* ---------- dates (plain calendar days, the phone's own clock) ---------- */
 export const dayKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 export const addDays = (key: string, n: number) => { const [y, m, d] = key.split('-').map(Number); return dayKey(new Date(y, m - 1, d + n)); };
+/** "Today", "Tomorrow", "Yesterday" or "Fri 23 Oct". */
+export const dayName = (key: string) => {
+  const today = dayKey();
+  return key === today ? 'Today' : key === addDays(today, 1) ? 'Tomorrow' : key === addDays(today, -1) ? 'Yesterday' : dayLabel(key);
+};
 /** "Fri 23 Oct". */
 export const dayLabel = (key: string) => {
   const [y, m, d] = key.split('-').map(Number);

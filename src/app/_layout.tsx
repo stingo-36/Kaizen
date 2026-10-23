@@ -53,6 +53,12 @@ function RootStack() {
         <Stack.Screen name="spend/transactions" />
         <Stack.Screen name="health" />
         <Stack.Screen name="share" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="tracker/todo" />
+        <Stack.Screen name="tracker/followups" />
+        <Stack.Screen name="tracker/notes" />
+        <Stack.Screen name="tracker/saved/index" />
+        <Stack.Screen name="tracker/saved/[id]" />
+        <Stack.Screen name="tracker/entry/[id]" />
       </Stack.Protected>
       <Stack.Protected guard={!me}>
         <Stack.Screen name="login" options={{ animation: 'fade' }} />
