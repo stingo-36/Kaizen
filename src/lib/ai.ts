@@ -60,3 +60,36 @@ export async function ask(messages: Msg[], temperature = 0.4): Promise<any> {
 }
 /** Plain-text answer. Pass `onText` to get the reply as it's written (called with the whole text so far). */
 export const askText = (messages: Msg[], temperature = 0.6, onText?: (soFar: string) => void) => call(messages, { temperature, onText });
+
+export type ResourceDraft = {
+  resource: { title: string; type: string; url: string | null; description: string; tags: string[] };
+  items: { name: string; what: string; url: string | null; suggested: boolean }[];
+  source: { site: string; author: string | null; caption: string | null } | null;
+  /** True when the link gave a topic but nothing to list, so screenshots would add the details. */
+  needsScreenshots: boolean;
+};
+
+/** Turns a shared link and screenshots (JPEG data URLs) into a WorkNest resource. The server never stores the images. */
+export async function draftResource(input: { link: string | null; images: string[]; types: string[] }): Promise<ResourceDraft> {
+  let auth: string;
+  try { auth = await token(); } catch (e) {
+    throw new Error((e as Error).message === 'signed-out' ? 'Sign in again to save resources.' : 'No internet connection. Check your connection and try again.');
+  }
+  const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 120000);
+  try {
+    const res = await streamFetch(URL, {
+      method: 'POST', signal: ctrl.signal,
+      headers: { Authorization: `Bearer ${auth}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'resource', ...input }),
+    });
+    const data: any = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.resource) throw new Error(data?.error || 'The screenshots couldn’t be read this time. Try again.');
+    return data as ResourceDraft;
+  } catch (e) {
+    if (ctrl.signal.aborted) throw new Error('Reading took too long. Try again.');
+    if (e instanceof TypeError) throw new Error('No internet connection. Check your connection and try again.');
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
+}

@@ -1,7 +1,7 @@
 # Pulse Coach function
 
-Every AI call in the app (coach chat, daily tip, weekly insight, workout plans, exercise help) goes through this
-Neon Function, so the OpenRouter key stays on the server. It accepts only signed-in Pulse users (Neon Auth JWT),
+Every AI call in the app (coach chat, daily tip, weekly insight, workout plans, exercise help, and turning a shared
+reel plus screenshots into a WorkNest resource) goes through this Neon Function, so the OpenRouter key stays on the server. It accepts only signed-in Pulse users (Neon Auth JWT),
 caps message size, and limits each user to 40 calls per 10 minutes.
 
 - Project: Pulse (`jolly-field-54618531`), branch `main` (`br-young-salad-a1ehycin`)
@@ -11,6 +11,9 @@ caps message size, and limits each user to 40 calls per 10 minutes.
 
 Set in `index.ts` (or the `OPENROUTER_MODELS` env var, comma-separated, at most 3). The first is the paid
 `minimax/minimax-m3.1-flash`; while the OpenRouter account has no credit, OpenRouter skips it and uses the free ones.
+
+Screenshots for resources use the image-reading models in `VISION_MODELS` (or `OPENROUTER_VISION_MODELS`). They are
+passed to the model and dropped; the function stores nothing.
 
 ## Redeploy
 

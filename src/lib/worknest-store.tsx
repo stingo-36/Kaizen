@@ -3,10 +3,12 @@ import { AppState } from 'react-native';
 
 import { useStore } from './store';
 import {
-  addEntry, clearLink, connectWorkNest, fetchEntries, loadLink, NestAuthError, NestEntry, NestLink, NewEntry, patchEntry, readCache, writeCache,
+  addEntry, addResource, clearLink, connectWorkNest, fetchEntries, fetchResources, loadLink, NestAuthError, NestEntry, NestLink, NestResource, NewEntry,
+  NewResource, patchEntry, readCache, readResourceCache, ResourceList, writeCache, writeResourceCache,
 } from './worknest';
 
-/* WorkNest Tracker state shared by Home and the Tracker tab. The cached list shows first, then a fresh one loads. */
+/* WorkNest Tracker and Resources state shared by Home, the Tracker tab and the share screen.
+   Cached lists show first, then fresh ones load. */
 type Status = 'loading' | 'off' | 'on' | 'expired';
 type Ctx = {
   status: Status; link: NestLink | null; entries: NestEntry[]; at: number | null; busy: boolean; error: string;
@@ -16,6 +18,13 @@ type Ctx = {
   add: (entry: NewEntry) => Promise<void>;
   setDone: (id: string, done: boolean) => Promise<void>;
   edit: (id: string, subject: string) => Promise<void>;
+  resources: NestResource[];
+  /** The user's resource types from WorkNest (Profile → Dropdown lists). */
+  resourceTypes: string[];
+  /** Set when Resources couldn't load, e.g. a WorkNest that doesn't have the phone Resources API yet. */
+  resourcesError: string;
+  loadResources: () => Promise<void>;
+  saveResource: (r: NewResource) => Promise<void>;
 };
 const NestCtx = createContext<Ctx | null>(null);
 export const useWorkNest = () => {
@@ -33,6 +42,8 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const linkRef = useRef<NestLink | null>(null);
+  const [lib, setLib] = useState<ResourceList>({ resources: [], types: [] });
+  const [resourcesError, setResourcesError] = useState('');
 
   const fresh = useCallback((list: NestEntry[]) => {
     setEntries(list); setAt(Date.now()); setStatus('on'); setError('');
@@ -55,17 +66,27 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
     } finally { setBusy(false); }
   }, [run]);
 
+  const freshLib = useCallback((list: ResourceList) => { setLib(list); setResourcesError(''); writeResourceCache(list); }, []);
+  const loadResources = useCallback(async () => {
+    const l = linkRef.current;
+    if (!l) return;
+    try { freshLib(await fetchResources(l)); } catch (e) {
+      if (e instanceof NestAuthError) { setStatus('expired'); return; }
+      setResourcesError(e instanceof Error ? e.message : 'Couldn’t load your resources');
+    }
+  }, [freshLib]);
   const connect = useCallback(async (email: string, password: string) => {
     const l = await connectWorkNest(email, password);
     linkRef.current = l;
     setLink(l);
     setStatus('on');
-    await load();
-  }, [load]);
+    await Promise.all([load(), loadResources()]);
+  }, [load, loadResources]);
 
   const disconnect = useCallback(async () => {
     linkRef.current = null;
     setLink(null); setEntries([]); setAt(null); setError(''); setStatus('off');
+    setLib({ resources: [], types: [] }); setResourcesError('');
     await clearLink();
   }, []);
 
@@ -80,20 +101,30 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
 
   const edit = useCallback((id: string, subject: string) => run((l) => patchEntry(l, id, { subject })), [run]);
 
+  const saveResource = useCallback(async (r: NewResource) => {
+    const l = linkRef.current;
+    if (!l) throw new Error('Connect WorkNest first');
+    try { freshLib(await addResource(l, r)); } catch (e) {
+      if (e instanceof NestAuthError) { setStatus('expired'); throw new Error('Sign in to WorkNest again to save resources'); }
+      throw e;
+    }
+  }, [freshLib]);
+
   useEffect(() => {
     let live = true;
     (async () => {
-      const [l, cache] = await Promise.all([loadLink(), readCache()]);
+      const [l, cache, libCache] = await Promise.all([loadLink(), readCache(), readResourceCache()]);
       if (!live) return;
       linkRef.current = l;
       setLink(l);
       if (cache) { setEntries(cache.entries); setAt(cache.at); }
+      if (libCache) setLib(libCache);
       setStatus(l ? 'on' : 'off');
-      if (l) load();
+      if (l) { load(); loadResources(); }
     })();
-    const sub = AppState.addEventListener('change', (s) => { if (s === 'active') load(); });
+    const sub = AppState.addEventListener('change', (s) => { if (s === 'active') { load(); loadResources(); } });
     return () => { live = false; sub.remove(); };
-  }, [load]);
+  }, [load, loadResources]);
 
   // The link belongs to whoever is signed in to Pulse on this phone: drop it when they log out.
   const prevMe = useRef(me);
@@ -103,6 +134,9 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
   }, [me, disconnect]);
 
   return (
-    <NestCtx.Provider value={{ status, link, entries, at, busy, error, connect, disconnect, load, add, setDone, edit }}>{children}</NestCtx.Provider>
+    <NestCtx.Provider value={{
+      status, link, entries, at, busy, error, connect, disconnect, load, add, setDone, edit,
+      resources: lib.resources, resourceTypes: lib.types, resourcesError, loadResources, saveResource,
+    }}>{children}</NestCtx.Provider>
   );
 }

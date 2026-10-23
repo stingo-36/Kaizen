@@ -1,8 +1,10 @@
+import { useLocalSearchParams } from 'expo-router';
 import { ReactNode, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Swipeable, { SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 
 import { AppHeader } from '@/components/header';
+import { ResourcesView } from '@/components/resources';
 import { nestTone } from '@/components/tracker-card';
 import { ArrowUp, Briefcase, CalendarClock, Check, ChevronDown, ChevronUp, Flag, LogOut, Plus, RefreshCw, ShieldCheck } from '@/components/ico';
 import { Btn, IconBtn, Input, Row, Screen, Sheet, T, Tap, haptic, useToast } from '@/components/ui';
@@ -15,7 +17,7 @@ const host = WORKNEST_URL.replace(/^https?:\/\//, '');
 /* A list screen, so it runs a size below the rest of Pulse: 14 for titles, 12 for detail, 10.5 for labels. */
 const FS = { title: 14, meta: 12, label: 10.5 };
 
-type View_ = 'todo' | 'followups' | 'notes';
+type View_ = 'todo' | 'followups' | 'notes' | 'resources';
 type Scope = 'work' | 'personal';
 
 function Connect({ again }: { again?: boolean }) {
@@ -67,7 +69,8 @@ function Connect({ again }: { again?: boolean }) {
 /** Text tabs with an underline, like WorkNest's own Tracker header. */
 function Tabs({ value, onChange, items }: { value: View_; onChange: (v: View_) => void; items: [View_, string, number][] }) {
   return (
-    <Row gap={18} style={st.tabs}>
+    // Scrolls sideways on narrow phones, where four labels with counts don't fit.
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={st.tabs} contentContainerStyle={{ gap: 18 }}>
       {items.map(([v, label, n]) => {
         const on = v === value;
         return (
@@ -77,7 +80,7 @@ function Tabs({ value, onChange, items }: { value: View_; onChange: (v: View_) =
           </Pressable>
         );
       })}
-    </Row>
+    </ScrollView>
   );
 }
 
@@ -387,8 +390,12 @@ const Empty = ({ text }: { text: string }) => <T size={13} color={C.muted} cente
 
 export default function Tracker() {
   const toast = useToast();
-  const { status, link, entries, at, busy, error, load, setDone, disconnect } = useWorkNest();
-  const [view, setView] = useState<View_>('todo');
+  const { status, link, entries, at, busy, error, load, setDone, disconnect, resources, loadResources } = useWorkNest();
+  const params = useLocalSearchParams<{ view?: View_ }>();
+  const [view, setView] = useState<View_>(params.view ?? 'todo');
+  // Opened from Home's "Recently saved" card or after saving a resource: follow the new ?view=.
+  const [seenView, setSeenView] = useState(params.view);
+  if (params.view !== seenView) { setSeenView(params.view); if (params.view) setView(params.view); }
   const [scope, setScope] = useState<Scope>('work');
 
   const lists = useMemo(() => ({
@@ -413,7 +420,7 @@ export default function Tracker() {
   return (
     <Screen tabs style={{ gap: 16 }}>
       <AppHeader title="Tracker" subtitle={status === 'on' ? (dueToday ? `${dueToday} to-do${dueToday > 1 ? 's' : ''} for today` : 'Nothing due today') : 'From WorkNest'}
-        right={status === 'on' ? <IconBtn icon={RefreshCw} label="Refresh" onPress={load} /> : undefined} />
+        right={status === 'on' ? <IconBtn icon={RefreshCw} label="Refresh" onPress={() => { load(); loadResources(); }} /> : undefined} />
 
       {status === 'loading' ? (
         <Row gap={8}><ActivityIndicator color={C.accent} /><T size={13} color={C.muted}>Loading…</T></Row>
@@ -426,12 +433,13 @@ export default function Tracker() {
               ['todo', 'To-do', openCount(lists.work) + openCount(lists.personal)],
               ['followups', 'Follow-ups', openCount(lists.followups)],
               ['notes', 'Notes', lists.notes.length],
+              ['resources', 'Resources', resources.length],
             ]} />
             {view === 'todo' && <ScopeToggle value={scope} onChange={setScope} work={openCount(lists.work)} personal={openCount(lists.personal)} />}
-            <Composer view={view} scope={scope} />
+            {view !== 'resources' && <Composer view={view} scope={scope} />}
           </View>
 
-          {view === 'todo' ? (
+          {view === 'resources' ? <ResourcesView /> : view === 'todo' ? (
             scope === 'work' ? <WorkTodos list={lists.work} toggle={toggle} /> : <Stickies list={lists.personal} toggle={toggle} />
           ) : view === 'followups' ? (
             lists.followups.length ? (

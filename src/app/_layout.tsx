@@ -52,6 +52,7 @@ function RootStack() {
         <Stack.Screen name="food/add" />
         <Stack.Screen name="spend/transactions" />
         <Stack.Screen name="health" />
+        <Stack.Screen name="share" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
       </Stack.Protected>
       <Stack.Protected guard={!me}>
         <Stack.Screen name="login" options={{ animation: 'fade' }} />

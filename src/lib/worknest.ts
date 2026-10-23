@@ -4,11 +4,12 @@ import { Platform } from 'react-native';
 
 import { normalizeUrl } from './spend';
 
-/* WorkNest link: Pulse shows the user's WorkNest Tracker (to-dos, follow-ups, notes) and can add to it.
+/* WorkNest link: Pulse shows the user's WorkNest Tracker (to-dos, follow-ups, notes) and Resources, and can add to both.
    The two apps keep separate accounts. Connecting trades the WorkNest email and password for a
    Tracker-only token once; only the token is kept (Keychain/Keystore), never the password. */
 const LINK_KEY = 'pulse.worknest.link';
 const CACHE_KEY = 'pulse.worknest.cache';
+const RES_CACHE_KEY = 'pulse.worknest.resources';
 
 export type NestLink = { url: string; email: string; token: string };
 
@@ -31,6 +32,14 @@ export type NestEntry = {
   lastUpdate: { note: string; fromThem: boolean; occurredAt: string } | null;
 };
 
+/** A WorkNest Resources entry. `description` is Markdown, as the Resources page writes it. */
+export type NestResource = {
+  id: string; title: string; description: string; type: string; url: string | null; tags: string[]; favorite: boolean;
+  createdAt: string; updatedAt: string;
+};
+export type NewResource = { title: string; description: string; type: string; url: string | null; tags: string[] };
+export type ResourceList = { resources: NestResource[]; types: string[] };
+
 /** Thrown when WorkNest no longer accepts the saved token, so the user has to connect again. */
 export class NestAuthError extends Error {}
 
@@ -44,7 +53,7 @@ export async function loadLink(): Promise<NestLink | null> {
   try { return JSON.parse((await secure.get(LINK_KEY)) || 'null'); } catch { return null; }
 }
 export async function clearLink() {
-  await Promise.all([secure.del(LINK_KEY), AsyncStorage.removeItem(CACHE_KEY)]).catch(() => {});
+  await Promise.all([secure.del(LINK_KEY), AsyncStorage.removeItem(CACHE_KEY), AsyncStorage.removeItem(RES_CACHE_KEY)]).catch(() => {});
 }
 
 /** The WorkNest server Pulse talks to. Fixed: users only sign in, they don't pick a server. */
@@ -98,6 +107,17 @@ export const addEntry = (link: NestLink, entry: NewEntry) =>
 /** Tick/untick, or rewrite a sticky note's text. */
 export const patchEntry = (link: NestLink, id: string, patch: { status: 'Open' | 'Done' } | { subject: string }) =>
   call<{ entries: NestEntry[] }>(`${link.url}/api/mobile/tracker/${encodeURIComponent(id)}`, authed(link, { method: 'PATCH', body: JSON.stringify(patch) })).then((r) => r.entries);
+
+export const fetchResources = (link: NestLink) =>
+  call<ResourceList>(`${link.url}/api/mobile/resources`, authed(link)).then(({ resources, types }) => ({ resources, types }));
+/** Saves a resource; WorkNest answers with the fresh library. */
+export const addResource = (link: NestLink, resource: NewResource) =>
+  call<ResourceList>(`${link.url}/api/mobile/resources`, authed(link, { method: 'POST', body: JSON.stringify(resource) })).then(({ resources, types }) => ({ resources, types }));
+
+export async function readResourceCache(): Promise<ResourceList | null> {
+  try { return JSON.parse((await AsyncStorage.getItem(RES_CACHE_KEY)) || 'null'); } catch { return null; }
+}
+export const writeResourceCache = (list: ResourceList) => AsyncStorage.setItem(RES_CACHE_KEY, JSON.stringify(list)).catch(() => {});
 
 /* Last list, so the Tracker shows instantly and offline. */
 export async function readCache(): Promise<{ entries: NestEntry[]; at: number } | null> {

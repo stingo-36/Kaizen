@@ -2,7 +2,7 @@
   "expo": {
     "name": "Pulse",
     "slug": "pulse",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "pulse",
@@ -63,7 +63,32 @@
             "minSdkVersion": 26
           }
         }
-      ]
+      ],
+      [
+        "expo-sharing",
+        {
+          "android": {
+            "enabled": true,
+            "singleShareMimeTypes": [
+              "text/plain",
+              "image/*"
+            ],
+            "multipleShareMimeTypes": [
+              "image/*"
+            ]
+          }
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Pulse shows your recent screenshots so you can turn them into a saved resource.",
+          "granularPermissions": [
+            "photo"
+          ]
+        }
+      ],
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { AppHeader } from '@/components/header';
 import { HabitIcon } from '@/components/icons';
 import { InsightCard } from '@/components/insight-card';
+import { RecentResourcesCard } from '@/components/resources';
 import { TrackerCard } from '@/components/tracker-card';
 import { Btn, IconBtn, Ring, Row, Screen, Sheet, T, Tap } from '@/components/ui';
 import { kcalForPlanDay, logKcal } from '@/lib/calories';
@@ -132,6 +133,7 @@ export default function Home() {
       )}
 
       <TrackerCard />
+      <RecentResourcesCard />
 
       {/* Tiles follow the fixed pastel order: first green, then amber. */}
       <Row gap={12} style={{ alignItems: 'stretch' }}>
