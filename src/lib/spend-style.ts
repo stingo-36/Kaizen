@@ -28,8 +28,3 @@ export function categoryStyle(name: string | null | undefined, isExpense = true)
   const dark = scheme() === 'dark';
   return { solid, icon, soft: dark ? mix(solid, C.card, 0.78) : mix(solid, '#FFFFFF', 0.86), ink: dark ? mix(solid, '#FFFFFF', 0.35) : mix(solid, '#000000', 0.28) };
 }
-
-/** A deeper pastel card tone built from a SpendWise colour: [background, text]. */
-export function toneOf(solid: string): [string, string] {
-  return scheme() === 'dark' ? [mix(solid, C.card, 0.62), mix(solid, '#FFFFFF', 0.55)] : [mix(solid, '#FFFFFF', 0.7), mix(solid, '#000000', 0.5)];
-}

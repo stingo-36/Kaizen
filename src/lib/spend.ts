@@ -128,10 +128,3 @@ export const monthName = (m: string, withYear = false) => {
   return new Date(y, mo - 1, 1).toLocaleDateString('en-IN', withYear ? { month: 'long', year: 'numeric' } : { month: 'long' });
 };
 export const inr = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`;
-/** ₹8.2k, ₹1.4L — for tight spots like chips. */
-export const inrShort = (n: number) => {
-  const a = Math.abs(n);
-  if (a >= 1e5) return `₹${(n / 1e5).toFixed(a >= 1e6 ? 0 : 1).replace(/\.0$/, '')}L`;
-  if (a >= 1e3) return `₹${(n / 1e3).toFixed(a >= 1e4 ? 0 : 1).replace(/\.0$/, '')}k`;
-  return inr(n);
-};

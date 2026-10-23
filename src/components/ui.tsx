@@ -254,8 +254,6 @@ export const s = themed(() => StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(20,20,20,0.4)' },
   sheet: { maxHeight: '88%', backgroundColor: C.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 12, gap: 6 },
   grab: { alignSelf: 'center', width: 40, height: 5, borderRadius: 99, backgroundColor: C.field, marginBottom: 10 },
-  tile: { flex: 1, minWidth: 0, minHeight: 128, borderRadius: R.tile, padding: 16, justifyContent: 'space-between', gap: 14 },
-  tileIc: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.glass, alignItems: 'center', justifyContent: 'center' },
   linkRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: R.card, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
   linkIc: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
 }));
@@ -301,23 +299,6 @@ export function BackHeader({ title, onBack, right }: { title: string; onBack: ()
       <T size={17} w="s" numberOfLines={1} style={{ flex: 1, textAlign: 'center' }}>{title}</T>
       {right ?? <View style={{ width: 42 }} />}
     </View>
-  );
-}
-
-/** Big pastel button that opens a section: icon, label, headline number and a short line. */
-export function NavTile({ icon: Icon, tone, label, value, sub, onPress, style }: { icon: LucideIcon; tone: [string, string]; label: string; value: string; sub?: string; onPress: () => void; style?: StyleProp<ViewStyle> }) {
-  return (
-    <Tap onPress={() => { haptic('select'); onPress(); }} accessibilityLabel={`${label}: ${value}${sub ? `, ${sub}` : ''}. Open`} style={[s.tile, { backgroundColor: tone[0] }, style]}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <View style={s.tileIc}><Icon size={19} color={tone[1]} strokeWidth={2} /></View>
-        <ChevronRight size={18} color={tone[1]} style={{ opacity: 0.6 }} />
-      </View>
-      <View style={{ gap: 2 }}>
-        <T size={13} w="s" color={tone[1]} style={{ opacity: 0.8 }}>{label}</T>
-        <T size={TY.hero} w="b" color={tone[1]} numberOfLines={1} adjustsFontSizeToFit>{value}</T>
-        {sub ? <T size={12} w="m" color={tone[1]} numberOfLines={1} style={{ opacity: 0.8 }}>{sub}</T> : null}
-      </View>
-    </Tap>
   );
 }
 

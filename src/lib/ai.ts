@@ -6,7 +6,6 @@ import { token } from './cloud';
 
 const URL = process.env.EXPO_PUBLIC_COACH_URL || 'https://br-young-salad-a1ehycin-coach.compute.c-1.ap-southeast-1.aws.neon.tech/';
 
-export const aiReady = () => true;
 type Msg = { role: 'system' | 'user' | 'assistant'; content: string };
 
 async function call(messages: Msg[], opts: { json?: boolean; temperature: number; onText?: (soFar: string) => void }): Promise<string> {

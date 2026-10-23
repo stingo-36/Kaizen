@@ -23,7 +23,6 @@ export const ICONS = [
   'dumbbell', 'salad', 'brain', 'bike', 'pill', 'pen-line',
   'cigarette-off', 'phone-off', 'wine-off', 'candy-off', 'bed', 'sun',
 ] as const;
-export type IconKey = (typeof ICONS)[number];
 export const isQuitIcon = (i: number) => /-off$/.test(ICONS[i] ?? '');
 
 /** Pastel card tones (background, ink); they live in theme so dark mode can swap them. */
@@ -80,11 +79,6 @@ export function rate(h: Habit, from: string, to: string) {
 }
 export const totalDone = (h: Habit) => Object.keys(h.log).filter((k) => isDone(h, k)).length;
 export const cleanDays = (h: Habit) => Math.max(0, Math.floor((Date.now() - new Date(h.quitStart ?? Date.now()).getTime()) / DAY));
-export function cleanLabel(h: Habit) {
-  const ms = Date.now() - new Date(h.quitStart ?? Date.now()).getTime();
-  const d = Math.floor(ms / DAY), hr = Math.floor((ms % DAY) / 36e5);
-  return d ? `${d} day${d === 1 ? '' : 's'} clean` : `${hr} hour${hr === 1 ? '' : 's'} clean`;
-}
 export function scheduleText(h: Habit) {
   if (h.type === 'quit') return `Quitting since ${new Date(h.quitStart ?? Date.now()).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`;
   const d = [...h.days].sort();

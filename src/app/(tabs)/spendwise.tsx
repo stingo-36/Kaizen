@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { AppHeader } from '@/components/header';
-import { SPEND_TONE } from '@/components/spend-card';
 import { Btn, Card, IconBtn, Input, Row, Screen, SectionTitle, T, Tap, haptic, useToast } from '@/components/ui';
 import { shortDay, timeOf, TxnRow } from '@/components/txn-row';
 import { inr, monthName, shiftMonth, SPENDWISE_URL, thisMonth } from '@/lib/spend';
 import { useSpend } from '@/lib/spend-store';
 import { C, PASTEL, SP, themed, TY } from '@/lib/theme';
+
+/** SpendWise's colour across the app: the purple pastel. */
+const SPEND_TONE = PASTEL[3];
 
 const host = SPENDWISE_URL.replace(/^https?:\/\//, '');
 

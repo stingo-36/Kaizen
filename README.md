@@ -1,56 +1,36 @@
-# Welcome to your Expo app 👋
+# Kaizen
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A personal life app (Expo, Android first): habits, workouts, food, health from Health Connect, spending from
+SpendWise, the WorkNest Tracker (to-dos, follow-ups, notes, saved resources) and an AI coach.
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Run it
 
 ```bash
-npm run reset-project
+npm install
+npx expo start --web --port 8082   # web preview
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+Phones run the installed APK and get updates over the air.
 
-### Other setup steps
+```bash
+npm run publish:phone                                                   # over-the-air update (JavaScript only)
+npx eas-cli@latest build --platform android --profile preview            # new APK (needed after native changes)
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Run `npx tsc --noEmit` and `npx expo lint` before publishing.
 
-## Learn more
+## Where things live
 
-To learn more about developing your project with Expo, look at the following resources:
+- `src/app/`: screens (Expo Router). `(tabs)/` is the bottom bar, `tracker/` the Tracker section pages, `share.tsx`
+  the screen that opens when a reel or screenshots are shared to Kaizen.
+- `src/components/`: shared UI (`ui.tsx`), Tracker pieces (`tracker/`), icons (`ico.tsx`).
+- `src/lib/`: data and API clients: Neon auth and data (`cloud.ts`), WorkNest (`worknest.ts`), SpendWise
+  (`spend.ts`), AI (`ai.ts`).
+- `server/coach/`: the Neon Function that makes every AI call, so no AI key ships in the app. See its README.
+- `scripts/sync-foods.mjs`: monthly food database sync (`npm run foods:sync`).
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Environment
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+`.env` holds `OPENROUTER_KEY` (server only, deployed into the coach function). `.env.local` holds the SpendWise
+and WorkNest Vercel bypass keys and `DATABASE_URL` for scripts. Both are gitignored; the bypass keys are also set
+on EAS for builds.
