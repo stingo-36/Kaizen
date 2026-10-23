@@ -38,6 +38,8 @@ export default function Coach() {
   const [msgs, setMsgs] = useState<ChatMsg[]>([]);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
+  // The reply as it streams in; null until the first words arrive.
+  const [live, setLive] = useState<string | null>(null);
   const [err, setErr] = useState('');
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
 
@@ -46,15 +48,15 @@ export default function Coach() {
 
   const ask = async (history: ChatMsg[]) => {
     if (!me) return;
-    setErr(''); setBusy(true);
+    setErr(''); setBusy(true); setLive(null);
     try {
-      const reply = await askCoach(history, { habits, W, p: profile, food, health });
+      const reply = await askCoach(history, { habits, W, p: profile, food, health }, setLive);
       const all = [...history, makeMsg('assistant', reply)];
       setMsgs(all); saveChat(me, all);
     } catch (e) {
       setErr((e as Error).message); saveChat(me, history);
     }
-    setBusy(false);
+    setLive(null); setBusy(false);
   };
   const send = (q = text) => {
     const t = q.trim();
@@ -94,7 +96,8 @@ export default function Coach() {
         ) : (
           <View key={m.id} style={st.coach}><Reply text={m.text} /></View>
         ))}
-        {busy && <Row gap={8} style={st.coach}><ActivityIndicator size="small" color={C.accent} /><T size={14} color={C.muted}>Thinking…</T></Row>}
+        {busy && (live ? <View style={st.coach}><Reply text={live} /></View>
+          : <Row gap={8} style={st.coach}><ActivityIndicator size="small" color={C.accent} /><T size={14} color={C.muted}>Thinking…</T></Row>)}
         {err ? (
           <View style={st.err}>
             <T size={13} color={C.danger} style={{ flex: 1 }}>{err}</T>

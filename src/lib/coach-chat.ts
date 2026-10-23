@@ -31,7 +31,10 @@ function context(habits: Habit[], W: WorkoutData, p: Profile, food: FoodData, h:
   return lines.join('\n');
 }
 
-export async function askCoach(history: ChatMsg[], data: { habits: Habit[]; W: WorkoutData; p: Profile; food: FoodData; health: HealthSummary }) {
+/** Light clean-up for display: no bold or headings. Safe to run on a half-written reply. */
+export const tidyReply = (t: string) => t.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*\*/g, '').replace(/^#+\s*/gm, '').trim();
+
+export async function askCoach(history: ChatMsg[], data: { habits: Habit[]; W: WorkoutData; p: Profile; food: FoodData; health: HealthSummary }, onText?: (soFar: string) => void) {
   const reply = await askText([
     {
       role: 'system',
@@ -42,6 +45,6 @@ If something could be a medical issue, suggest seeing a doctor.
 ${context(data.habits, data.W, data.p, data.food, data.health)}`,
     },
     ...history.slice(-12).map((m) => ({ role: m.role, content: m.text })),
-  ]);
-  return reply.replace(/\*\*(.*?)\*\*/g, '$1').replace(/^#+\s*/gm, '').trim();
+  ], 0.6, onText && ((t) => onText(tidyReply(t))));
+  return tidyReply(reply);
 }

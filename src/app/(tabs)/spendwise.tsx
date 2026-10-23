@@ -158,7 +158,7 @@ const st = themed(() => StyleSheet.create({
   server: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 14, backgroundColor: C.soft },
   ro: { paddingVertical: 3, paddingHorizontal: 8, borderRadius: 99, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
   month: { justifyContent: 'space-between', backgroundColor: C.card, borderRadius: 99, borderWidth: 1, borderColor: C.line, padding: 4 },
-  tile: { flex: 1, minWidth: 0, minHeight: 100, borderRadius: 20, padding: 14, justifyContent: 'space-between', gap: 10 },
+  tile: { flex: 1, minWidth: 0, minHeight: 108, borderRadius: 20, padding: 16, justifyContent: 'space-between', gap: 14 },
   tileIc: { width: 30, height: 30, borderRadius: 15, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
   all: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 14, borderTopWidth: 1, borderTopColor: C.line },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 20, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },

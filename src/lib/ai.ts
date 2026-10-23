@@ -1,50 +1,62 @@
-/* OpenRouter client. The key comes from mobile/.env (EXPO_PUBLIC_OPENROUTER_KEY), which is gitignored.
-   Note: any key bundled into a mobile app can be extracted from it. Before a public release, move these
-   calls behind a server (for example a Neon Function) so the key never ships to phones. */
-const KEY = process.env.EXPO_PUBLIC_OPENROUTER_KEY ?? '';
-const MODEL = process.env.EXPO_PUBLIC_OPENROUTER_MODEL || 'minimax/minimax-m3.1-flash:free';
-/** Free models tried in order by OpenRouter when the first is busy or rate-limited. */
-const FALLBACKS = ['google/gemma-4-31b-it:free', 'google/gemma-4-26b-a4b-it:free'];
+/* AI calls go through Pulse's own Neon Function (mobile/server/coach), which holds the OpenRouter key and
+   picks the models, so no key ships in the app. The function checks the signed-in user's token on every call. */
+import { fetch as streamFetch } from 'expo/fetch';
 
-export const aiReady = () => !!KEY;
+import { token } from './cloud';
+
+const URL = process.env.EXPO_PUBLIC_COACH_URL || 'https://br-young-salad-a1ehycin-coach.compute.c-1.ap-southeast-1.aws.neon.tech/';
+
+export const aiReady = () => true;
 type Msg = { role: 'system' | 'user' | 'assistant'; content: string };
 
-async function call(messages: Msg[], json: boolean, temperature: number): Promise<string> {
-  if (!KEY) throw new Error('The AI coach isn’t set up. Add EXPO_PUBLIC_OPENROUTER_KEY to mobile/.env and restart the app.');
-  let lastErr = 'The AI coach is busy. Try again in a moment.';
-  for (let attempt = 0; attempt < 3; attempt++) {
-    let res: Response;
-    // Free models can be slow; give up after 90 s so the app never waits forever.
-    const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 90000);
-    try {
-      res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST', signal: ctrl.signal,
-        headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json', 'X-Title': 'Pulse' },
-        // Low reasoning effort keeps replies fast (long hidden reasoning made plans take over a minute).
-        body: JSON.stringify({ model: MODEL, models: [MODEL, ...FALLBACKS], messages, temperature, reasoning: { effort: 'low' }, ...(json ? { response_format: { type: 'json_object' } } : {}) }),
-      });
-    } catch {
-      clearTimeout(timer);
-      throw new Error(ctrl.signal.aborted ? 'The AI coach took too long. Try again.' : 'No internet connection. Check your connection and try again.');
-    }
-    clearTimeout(timer);
-    const data: any = await res.json().catch(() => ({}));
-    const txt: string | undefined = data?.choices?.[0]?.message?.content;
-    if (res.ok && txt) return txt;
-    lastErr = data?.error?.message || lastErr;
-    // Only rate limits and upstream hiccups are worth retrying.
-    if (res.ok || !(res.status === 429 || res.status >= 500)) break;
-    await new Promise((r) => setTimeout(r, 1200 * (attempt + 1)));
+async function call(messages: Msg[], opts: { json?: boolean; temperature: number; onText?: (soFar: string) => void }): Promise<string> {
+  let auth: string;
+  try { auth = await token(); } catch (e) {
+    throw new Error((e as Error).message === 'signed-out' ? 'Sign in again to use the coach.' : 'No internet connection. Check your connection and try again.');
   }
-  throw new Error(/rate|limit|busy|timeout/i.test(lastErr) ? 'The AI coach is busy right now. Try again in a minute.' : lastErr);
+  // Free models can be slow; give up after 90 s so the app never waits forever.
+  const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 90000);
+  try {
+    const res = await streamFetch(URL, {
+      method: 'POST', signal: ctrl.signal,
+      headers: { Authorization: `Bearer ${auth}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages, temperature: opts.temperature, json: !!opts.json, stream: !!opts.onText }),
+    });
+    if (!res.ok) {
+      const data: any = await res.json().catch(() => ({}));
+      throw new Error(data?.error || 'The AI coach is busy right now. Try again in a minute.');
+    }
+    if (!opts.onText) {
+      const data: any = await res.json().catch(() => ({}));
+      if (!data?.text) throw new Error('The AI coach is busy right now. Try again in a minute.');
+      return data.text;
+    }
+    // Streamed: plain text that grows as the model writes.
+    const reader = res.body!.getReader(), dec = new TextDecoder();
+    let text = '';
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      text += dec.decode(value, { stream: true });
+      opts.onText(text);
+    }
+    if (!text.trim()) throw new Error('The AI coach is busy right now. Try again in a minute.');
+    return text;
+  } catch (e) {
+    if (ctrl.signal.aborted) throw new Error('The AI coach took too long. Try again.');
+    if (e instanceof TypeError) throw new Error('No internet connection. Check your connection and try again.');
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /** Ask for JSON and parse it (tolerates code fences and stray text around the object). */
 export async function ask(messages: Msg[], temperature = 0.4): Promise<any> {
-  const txt = await call(messages, true, temperature);
+  const txt = await call(messages, { json: true, temperature });
   const t = txt.replace(/```(?:json)?/gi, ''), a = t.indexOf('{'), b = t.lastIndexOf('}');
   if (a < 0 || b < a) throw new Error('The AI reply couldn’t be read. Try again.');
   try { return JSON.parse(t.slice(a, b + 1)); } catch { throw new Error('The AI reply couldn’t be read. Try again.'); }
 }
-/** Plain-text answer. */
-export const askText = (messages: Msg[], temperature = 0.6) => call(messages, false, temperature);
+/** Plain-text answer. Pass `onText` to get the reply as it's written (called with the whole text so far). */
+export const askText = (messages: Msg[], temperature = 0.6, onText?: (soFar: string) => void) => call(messages, { temperature, onText });

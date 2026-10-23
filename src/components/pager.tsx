@@ -3,7 +3,7 @@ import { NativeScrollEvent, NativeSyntheticEvent, Pressable, ScrollView, StyleSh
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { C, themed } from '@/lib/theme';
-import { Stagger } from './motion';
+import { FocusReplay, Stagger, VisitBump } from './motion';
 import { haptic, s as ui, T } from './ui';
 
 export type Page = { key: string; label: string; render: () => ReactNode };
@@ -37,10 +37,16 @@ export function PagerScreen({ header, pages, tabs, initial = 0, index: ctrl, onI
   const [own, setOwn] = useState(initial);
   const index = ctrl ?? own;
   const [seen, setSeen] = useState<Set<number>>(() => new Set([index]));
+  // How often each page has been opened, so its animations replay when you come back to it.
+  const [opens, setOpens] = useState<Record<number, number>>({});
   const ref = useRef<ComponentRef<typeof ScrollView>>(null);
   const settling = useRef(false);
 
-  const set = (i: number) => { setOwn(i); onIndex?.(i); setSeen((p) => (p.has(i) ? p : new Set(p).add(i))); };
+  const set = (i: number) => {
+    setOwn(i); onIndex?.(i);
+    setSeen((p) => (p.has(i) ? p : new Set(p).add(i)));
+    setOpens((o) => ({ ...o, [i]: (o[i] ?? 0) + 1 }));
+  };
   const go = (i: number) => { settling.current = true; set(i); ref.current?.scrollTo({ x: i * w, animated: true }); setTimeout(() => { settling.current = false; }, 400); };
 
   // Keep the scroll position in step when the index changes from outside or the width changes.
@@ -56,23 +62,25 @@ export function PagerScreen({ header, pages, tabs, initial = 0, index: ctrl, onI
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: C.bg }}>
-      <View style={st.head}>
-        {header}
-        {pages.length > 1 && <PagerTabs labels={pages.map((p) => p.label)} index={index} onChange={go} />}
-      </View>
-      <View style={{ flex: 1 }} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
-        {w > 0 && (
-          <ScrollView ref={ref} horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={onScroll} scrollEventThrottle={32}
-            directionalLockEnabled nestedScrollEnabled keyboardShouldPersistTaps="handled">
-            {pages.map((p, i) => (
-              <ScrollView key={p.key} style={{ width: w }} contentContainerStyle={[ui.screen, { paddingTop: 16 }, pad]} showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled" nestedScrollEnabled>
-                {seen.has(i) || i === index ? <Stagger>{p.render()}</Stagger> : null}
-              </ScrollView>
-            ))}
-          </ScrollView>
-        )}
-      </View>
+      <FocusReplay>
+        <View style={st.head}>
+          {header}
+          {pages.length > 1 && <PagerTabs labels={pages.map((p) => p.label)} index={index} onChange={go} />}
+        </View>
+        <View style={{ flex: 1 }} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
+          {w > 0 && (
+            <ScrollView ref={ref} horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={onScroll} scrollEventThrottle={32}
+              directionalLockEnabled nestedScrollEnabled keyboardShouldPersistTaps="handled">
+              {pages.map((p, i) => (
+                <ScrollView key={p.key} style={{ width: w }} contentContainerStyle={[ui.screen, { paddingTop: 16 }, pad]} showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+                  {seen.has(i) || i === index ? <VisitBump extra={opens[i] ?? 0}><Stagger>{p.render()}</Stagger></VisitBump> : null}
+                </ScrollView>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+      </FocusReplay>
     </SafeAreaView>
   );
 }

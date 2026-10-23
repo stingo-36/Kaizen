@@ -1,5 +1,6 @@
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import Swipeable, { SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 
 import { AppHeader } from '@/components/header';
 import { nestTone } from '@/components/tracker-card';
@@ -158,6 +159,8 @@ function Composer({ view, scope }: { view: View_; scope: Scope }) {
     } finally { setBusy(false); }
   };
 
+  const pointy = isPointy(text) || /^\s*[*•]/.test(text);
+  const type = (v: string) => { setText(continuePoints(text, v)); setErr(''); };
   const placeholder = view === 'followups' ? 'What did you tell them?' : view === 'notes' ? 'New note title' : sticky ? 'Jot a personal to-do…' : 'Add a to-do…';
   return (
     <View style={{ gap: 8 }}>
@@ -165,25 +168,77 @@ function Composer({ view, scope }: { view: View_; scope: Scope }) {
         <TextInput value={person} onChangeText={(v) => { setPerson(v); setErr(''); }} placeholder="Who? e.g. Ashwini" placeholderTextColor={C.faint}
           style={[st.field, st.fieldText]} accessibilityLabel="Person" />
       )}
-      <View style={[st.field, sticky && { backgroundColor: PASTEL[1][0], borderColor: 'transparent', alignItems: 'flex-end' }]}>
-        <Plus size={15} color={sticky ? PASTEL[1][1] : C.faint} style={sticky ? { marginBottom: 9 } : undefined} />
-        <TextInput value={text} onChangeText={(v) => { setText(v); setErr(''); }} placeholder={placeholder} placeholderTextColor={sticky ? PASTEL[1][1] : C.faint}
-          multiline={sticky} onSubmitEditing={sticky ? undefined : submit} returnKeyType={sticky ? 'default' : 'done'}
+      <View style={[st.field, (sticky || pointy) && { alignItems: 'flex-end' }, sticky && { backgroundColor: PASTEL[1][0], borderColor: 'transparent' }]}>
+        <Plus size={15} color={sticky ? PASTEL[1][1] : C.faint} style={sticky || pointy ? { marginBottom: 13 } : undefined} />
+        <TextInput value={text} onChangeText={type} placeholder={placeholder} placeholderTextColor={sticky ? PASTEL[1][1] : C.faint}
+          multiline submitBehavior={sticky || pointy ? 'newline' : 'submit'} onSubmitEditing={sticky || pointy ? undefined : submit} returnKeyType={sticky || pointy ? 'default' : 'done'}
           style={[st.fieldText, sticky && { color: PASTEL[1][1], minHeight: 54, textAlignVertical: 'top' }]} accessibilityLabel={placeholder} />
         {view === 'todo' && scope === 'work' && (
-          <Pressable onPress={() => setPicking(true)} accessibilityRole="button" accessibilityLabel={`Due: ${dueText(due)}. Change`} hitSlop={6} style={st.datePill}>
+          <Pressable onPress={() => setPicking(true)} accessibilityRole="button" accessibilityLabel={`Due: ${dueText(due)}. Change`} hitSlop={6} style={[st.datePill, pointy && { marginBottom: 7 }]}>
             <CalendarClock size={13} color={due ? C.accent : C.muted} />
             <T size={12} w="s" color={due ? C.accent : C.muted}>{dueText(due)}</T>
           </Pressable>
         )}
         <Pressable onPress={busy ? undefined : submit} accessibilityRole="button" accessibilityLabel="Add" hitSlop={8}
-          style={[st.send, { backgroundColor: text.trim() ? C.ink : C.track }, sticky && { marginBottom: 4 }]}>
+          style={[st.send, { backgroundColor: text.trim() ? C.ink : C.track }, (sticky || pointy) && { marginBottom: 6 }]}>
           {busy ? <ActivityIndicator size="small" color={C.onInk} /> : <ArrowUp size={14} color={text.trim() ? C.onInk : C.faint} />}
         </Pressable>
       </View>
       <DuePicker open={picking} value={due} onPick={setDue} onClose={() => setPicking(false)} />
       {err ? <T size={12} color={C.danger}>{err}</T> : null}
     </View>
+  );
+}
+
+/* ---------- point-wise text ---------- */
+/** A line written as a point: "* milk", "*milk", "- milk", "• milk", or numbered: "1. milk", "2) eggs". */
+const POINT = /^\s*(?:[*•]\s*|-\s+|\d{1,2}[.)]\s+)(?=\S)/;
+const NUMBER = /^\s*(\d{1,2})[.)]\s+/;
+const isPointy = (text: string) => text.split('\n').some((l) => POINT.test(l));
+
+/** Text where lines starting with * (or - / •) show as bullet points and "1." lines as a numbered list; other lines stay plain. */
+function Points({ text, size, w = 'm', color, lineHeight, max, done }: { text: string; size: number; w?: 'r' | 'm' | 's'; color: string; lineHeight: number; max?: number; done?: boolean }) {
+  const strike = done ? { textDecorationLine: 'line-through' as const } : null;
+  if (!isPointy(text)) return <T size={size} w={w} color={color} numberOfLines={max} style={[{ lineHeight }, strike]}>{text}</T>;
+  const lines = text.split('\n').filter((l) => l.trim()).slice(0, max);
+  return (
+    <View style={{ gap: 3 }}>
+      {lines.map((l, i) => POINT.test(l) ? (
+        <Row key={i} gap={7} style={{ alignItems: 'flex-start' }}>
+          {NUMBER.test(l)
+            ? <T size={size} w="s" color={color} style={{ lineHeight, minWidth: size }}>{NUMBER.exec(l)![1]}.</T>
+            : <View style={[st.point, { backgroundColor: color, marginTop: lineHeight / 2 - 2 }]} />}
+          <T size={size} w={w} color={color} style={[{ flex: 1, lineHeight }, strike]}>{l.replace(POINT, '')}</T>
+        </Row>
+      ) : <T key={i} size={size} w={w} color={color} style={[{ lineHeight }, strike]}>{l.trim()}</T>)}
+    </View>
+  );
+}
+
+/** Typing Enter after a point starts the next one (numbered lists count up); Enter on an empty point ends the list. */
+function continuePoints(prev: string, next: string) {
+  if (next.length !== prev.length + 1 || !next.endsWith('\n')) return next;
+  const last = prev.split('\n').pop() ?? '';
+  if (!/^\s*(?:[*•-]|\d{1,2}[.)])/.test(last)) return next;
+  if (!POINT.test(last)) return prev.slice(0, prev.length - last.length);
+  const n = NUMBER.exec(last);
+  return n ? `${next}${Number(n[1]) + 1}. ` : `${next}* `;
+}
+
+/** Swipe a row right to tick it off (or reopen it), as an alternative to its circle. */
+function SwipeToggle({ done, onToggle, children }: { done: boolean; onToggle: () => void; children: ReactNode }) {
+  const ref = useRef<SwipeableMethods>(null);
+  return (
+    <Swipeable ref={ref} friction={1.4} leftThreshold={72} overshootLeft={false} dragOffsetFromLeft={12}
+      onSwipeableWillOpen={() => { onToggle(); setTimeout(() => ref.current?.close(), 180); }}
+      renderLeftActions={() => (
+        <View style={[st.swipe, { backgroundColor: done ? C.soft : C.green }]}>
+          {done ? <RefreshCw size={15} color={C.ink} /> : <Check size={16} color={C.white} />}
+          <T size={12} w="s" color={done ? C.ink : C.white}>{done ? 'Reopen' : 'Done'}</T>
+        </View>
+      )}>
+      {children}
+    </Swipeable>
   );
 }
 
@@ -199,21 +254,27 @@ function CheckDot({ done, onPress, label, color = C.field }: { done: boolean; on
 
 function EntryRow({ e, first, meta, metaTone, onToggle }: { e: NestEntry; first?: boolean; meta?: string; metaTone?: string; onToggle?: () => void }) {
   const done = e.status === 'Done';
-  return (
+  const row = (
     <View style={[st.row, !first && st.rule]}>
       {onToggle ? <CheckDot done={done} onPress={onToggle} label={`${done ? 'Reopen' : 'Mark done'}: ${e.subject}`} /> : <View style={st.bullet} />}
       <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
         {meta ? <T size={FS.label} w="s" color={metaTone ?? C.muted} style={{ letterSpacing: 0.5, lineHeight: 13 }} numberOfLines={1}>{meta.toUpperCase()}</T> : null}
-        <T size={FS.title} w="m" color={done ? C.muted : C.ink} style={[{ lineHeight: 19 }, done && { textDecorationLine: 'line-through' }]}>{e.subject}</T>
-        {e.lastUpdate ? (
+        <Points text={e.subject} size={FS.title} color={done ? C.muted : C.ink} lineHeight={19} done={done} />
+        {e.lastUpdate ? (isPointy(e.lastUpdate.note) ? (
+          <View style={{ gap: 2 }}>
+            <T size={FS.meta} w="m" color={C.muted} style={{ lineHeight: 16 }}>{e.lastUpdate.fromThem ? 'Reply:' : 'Latest:'}</T>
+            <Points text={e.lastUpdate.note} size={FS.meta} w="r" color={C.muted} lineHeight={16} max={5} />
+          </View>
+        ) : (
           <T size={FS.meta} color={C.muted} numberOfLines={2} style={{ lineHeight: 16 }}>
             <T size={FS.meta} w="m" color={C.muted}>{e.lastUpdate.fromThem ? 'Reply: ' : 'Latest: '}</T>{e.lastUpdate.note}
           </T>
-        ) : null}
+        )) : null}
       </View>
       {e.pinned ? <Flag size={13} color={PASTEL[1][1]} style={{ marginTop: 3 }} /> : null}
     </View>
   );
+  return onToggle ? <SwipeToggle done={done} onToggle={onToggle}>{row}</SwipeToggle> : row;
 }
 
 /** A small caps label, then rows on one card. */
@@ -307,14 +368,14 @@ function Stickies({ list, toggle }: { list: NestEntry[]; toggle: (e: NestEntry) 
           return (
             <Tap key={e.id} onPress={() => { setOpen(e); setDraft(e.subject); }} accessibilityLabel={`Sticky note: ${e.subject}. Edit`}
               style={[st.sticky, { backgroundColor: tone[0], transform: [{ rotate: i % 2 ? '0.8deg' : '-0.8deg' }] }, done && { opacity: 0.5 }]}>
-              <T size={13} w="m" color={tone[1]} numberOfLines={6} style={[{ lineHeight: 18 }, done && { textDecorationLine: 'line-through' }]}>{e.subject}</T>
+              <Points text={e.subject} size={13} color={tone[1]} lineHeight={18} max={6} done={done} />
               <CheckDot done={done} color={tone[1]} onPress={() => toggle(e)} label={`${done ? 'Reopen' : 'Mark done'}: ${e.subject}`} />
             </Tap>
           );
         })}
       </View>
       <Sheet open={!!open} onClose={() => setOpen(null)} title="Sticky note" subtitle="Personal · only you see this">
-        <TextInput value={draft} onChangeText={setDraft} multiline autoFocus style={[st.area, { backgroundColor: PASTEL[1][0], color: PASTEL[1][1] }]} accessibilityLabel="Sticky note text" />
+        <TextInput value={draft} onChangeText={(v) => setDraft(continuePoints(draft, v))} multiline autoFocus style={[st.area, { backgroundColor: PASTEL[1][0], color: PASTEL[1][1] }]} accessibilityLabel="Sticky note text" />
         <Btn title="Save" onPress={save} busy={busy} small />
         {open && <Btn title={open.status === 'Done' ? 'Reopen' : 'Mark done'} kind="ghost" small onPress={() => { toggle(open); setOpen(null); }} />}
       </Sheet>
@@ -405,7 +466,7 @@ export default function Tracker() {
 }
 
 const st = themed(() => StyleSheet.create({
-  card: { backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, paddingHorizontal: 12 },
+  card: { backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, overflow: 'hidden' },
   badge: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   server: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 9, paddingHorizontal: 12, borderRadius: 12, backgroundColor: C.soft },
   tabs: { borderBottomWidth: 1, borderBottomColor: C.line },
@@ -419,10 +480,13 @@ const st = themed(() => StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   mini: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: 99, borderWidth: 1, borderColor: C.field },
   area: { minHeight: 90, borderRadius: 14, padding: 12, fontFamily: F.m, fontSize: 14, textAlignVertical: 'top' },
-  row: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 11 },
+  // Rows carry the card's side padding and background, so the swipe action shows behind them edge to edge.
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 11, paddingHorizontal: 12, backgroundColor: C.card },
   rule: { borderTopWidth: 1, borderTopColor: C.line },
+  swipe: { width: 110, flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 16 },
   dot: { width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
   bullet: { width: 5, height: 5, borderRadius: 3, backgroundColor: C.faint, marginTop: 7, marginHorizontal: 6 },
+  point: { width: 4, height: 4, borderRadius: 2, opacity: 0.7 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   sticky: { width: '47%', flexGrow: 1, minHeight: 104, borderRadius: 14, padding: 12, gap: 10, justifyContent: 'space-between' },
   out: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', paddingVertical: 6 },

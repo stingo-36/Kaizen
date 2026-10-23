@@ -72,8 +72,8 @@ export async function signOut() {
   await persist();
 }
 
-/** Short-lived (15 min) JWT for the Data API, refreshed a minute before it expires. */
-async function token() {
+/** Short-lived (15 min) JWT for the Data API and the coach function, refreshed a minute before it expires. */
+export async function token() {
   if (jwt && jwt.exp - 60 > Date.now() / 1000) return jwt.token;
   const res = await fetch(`${AUTH}/token`, { headers: { ...originHeader(), ...authHeaders() }, credentials: 'include' });
   if (res.status === 401) throw new Error('signed-out');

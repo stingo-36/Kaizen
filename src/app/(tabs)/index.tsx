@@ -27,7 +27,7 @@ const hm = (min: number) => `${Math.floor(min / 60)}h ${String(min % 60).padStar
 /** One ring in the Today card. Each area keeps its own colour across the app. */
 function DayRing({ tone, value, text, label, onPress }: { tone: [string, string]; value: number; text: string; label: string; onPress: () => void }) {
   return (
-    <Tap onPress={onPress} scale={0.94} style={{ flex: 1, alignItems: 'center', gap: 6 }} accessibilityLabel={`${label}: ${text}. Open`}>
+    <Tap onPress={onPress} scale={0.94} style={{ flex: 1, alignItems: 'center', gap: 8 }} accessibilityLabel={`${label}: ${text}. Open`}>
       <Ring value={value} size={54} stroke={6} color={tone[1]} track={tone[0]}><T size={12} w="b">{text}</T></Ring>
       <T size={11.5} w="m" color={C.muted}>{label}</T>
     </Tap>
@@ -39,9 +39,9 @@ function Tile({ tone, icon: Icon, label, value, sub, onPress }: { tone: [string,
   return (
     <Tap onPress={onPress} style={[st.tile, { backgroundColor: tone[0] }]} accessibilityLabel={`${label}: ${value}, ${sub}. Open`}>
       <Row gap={8}><View style={st.tileIc}><Icon size={13} color={tone[1]} /></View><T size={12} w="s" color={tone[1]}>{label}</T></Row>
-      <View>
+      <View style={{ gap: 2 }}>
         <T size={20} w="b" color={tone[1]} numberOfLines={1} adjustsFontSizeToFit>{value}</T>
-        <T size={11.5} color={tone[1]} numberOfLines={1}>{sub}</T>
+        <T size={12} color={tone[1]} numberOfLines={1} style={{ opacity: 0.85 }}>{sub}</T>
       </View>
     </Tap>
   );
@@ -82,7 +82,7 @@ export default function Home() {
 
       <View style={st.card}>
         <T size={11} w="s" color={C.muted} style={st.label}>Today</T>
-        <Row gap={4} style={{ alignItems: 'flex-start' }}>
+        <Row gap={8} style={{ alignItems: 'flex-start' }}>
           <DayRing tone={PASTEL[0]} value={due.length ? done / due.length : 0} text={due.length ? `${done}/${due.length}` : '–'} label="Habits" onPress={() => router.navigate('/habits')} />
           <DayRing tone={PASTEL[4]} value={profile.minutes ? minsToday / profile.minutes : 0} text={`${minsToday}m`} label="Workout" onPress={() => router.navigate('/workouts')} />
           <DayRing tone={PASTEL[1]} value={goal ? eaten / goal : 0} text={goal ? `${Math.round((eaten / goal) * 100)}%` : '–'} label="Food" onPress={() => router.navigate('/food')} />
@@ -161,11 +161,11 @@ export default function Home() {
 
 const st = themed(() => StyleSheet.create({
   dot: { position: 'absolute', top: 9, right: 10, width: 9, height: 9, borderRadius: 5, backgroundColor: C.accent, borderWidth: 2, borderColor: C.bg },
-  card: { gap: 10, paddingVertical: 14, paddingHorizontal: 12, borderRadius: 20, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
+  card: { gap: 14, paddingVertical: 16, paddingHorizontal: 14, borderRadius: 20, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
   label: { letterSpacing: 0.8, textTransform: 'uppercase', paddingHorizontal: 4 },
-  hero: { borderRadius: 22, padding: 16, gap: 12 },
+  hero: { borderRadius: 22, padding: 18, gap: 14 },
   chip: { paddingVertical: 4, paddingHorizontal: 9, borderRadius: 99, backgroundColor: C.card },
-  tile: { flex: 1, minWidth: 0, borderRadius: 16, padding: 14, gap: 10 },
+  tile: { flex: 1, minWidth: 0, minHeight: 112, borderRadius: 16, padding: 16, gap: 14, justifyContent: 'space-between' },
   tileIc: { width: 26, height: 26, borderRadius: 13, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
   ic: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
 }));

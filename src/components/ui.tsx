@@ -11,7 +11,7 @@ import Svg, { Circle, G } from 'react-native-svg';
 
 import { C, F, R, SP, themed, TY } from '@/lib/theme';
 import { useKeyboardHeight } from '@/lib/useKeyboard';
-import { Stagger } from './motion';
+import { FocusReplay, Stagger, useVisit } from './motion';
 
 export const haptic = (kind: 'light' | 'success' | 'select' = 'light') => {
   if (Platform.OS === 'web') return;
@@ -37,11 +37,13 @@ export function Screen({ children, tabs, scroll = true, style }: { children: Rea
   const pad = { paddingBottom: kb ? kb + 24 : (tabs ? 110 : 32) + insets.bottom };
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: C.bg }}>
-      {scroll ? (
-        <ScrollView contentContainerStyle={[s.screen, pad, style]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled"><Stagger>{children}</Stagger></ScrollView>
-      ) : (
-        <View style={[s.screen, { flex: 1 }, pad, style]}>{children}</View>
-      )}
+      <FocusReplay>
+        {scroll ? (
+          <ScrollView contentContainerStyle={[s.screen, pad, style]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled"><Stagger>{children}</Stagger></ScrollView>
+        ) : (
+          <View style={[s.screen, { flex: 1 }, pad, style]}>{children}</View>
+        )}
+      </FocusReplay>
     </SafeAreaView>
   );
 }
@@ -123,10 +125,20 @@ export function Input({ label, value, onChange, placeholder, unit, keyboard, sec
 /* ---------- data viz primitives ---------- */
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v || 0));
 const EASE = { duration: 700, easing: Easing.out(Easing.cubic) };
+/** Animated 0–1 fill: grows from empty on every visit to the screen, and glides between values in between. */
+function useFill(value: number, duration = EASE.duration) {
+  const visit = useVisit();
+  const v = useSharedValue(0);
+  const seen = useRef(visit);
+  useEffect(() => {
+    if (seen.current !== visit) { seen.current = visit; v.value = 0; }
+    v.value = withTiming(value, { ...EASE, duration });
+  }, [value, visit, duration, v]);
+  return v;
+}
 /** Progress bar that fills smoothly whenever its value changes. */
 export function Bar({ value, color = C.accent, height = 6, track = C.track }: { value: number; color?: string; height?: number; track?: string }) {
-  const v = useSharedValue(0);
-  useEffect(() => { v.value = withTiming(clamp01(value), EASE); }, [value, v]);
+  const v = useFill(clamp01(value));
   const fill = useAnimatedStyle(() => ({ width: `${v.value * 100}%` }));
   return (
     <View style={{ height, borderRadius: 99, backgroundColor: track, overflow: 'hidden' }}>
@@ -137,8 +149,7 @@ export function Bar({ value, color = C.accent, height = 6, track = C.track }: { 
 const ACircle = Reanimated.createAnimatedComponent(Circle);
 export function Ring({ value, size = 36, stroke = 4, color = C.accent, track = C.track, children }: { value: number; size?: number; stroke?: number; color?: string; track?: string; children?: ReactNode }) {
   const r = (size - stroke) / 2, c = 2 * Math.PI * r;
-  const v = useSharedValue(0);
-  useEffect(() => { v.value = withTiming(clamp01(value), EASE); }, [value, v]);
+  const v = useFill(clamp01(value));
   const ring = useAnimatedProps(() => ({ strokeDashoffset: c * (1 - v.value) }));
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
@@ -156,8 +167,7 @@ export function Ring({ value, size = 36, stroke = 4, color = C.accent, track = C
 /** 270° dial, open at the bottom. */
 export function Gauge({ value, size = 190, children }: { value: number; size?: number; children?: ReactNode }) {
   const stroke = 14, r = size / 2 - stroke, c = 2 * Math.PI * r, arc = c * 0.75;
-  const v = useSharedValue(0);
-  useEffect(() => { v.value = withTiming(Math.max(0.001, clamp01(value)), { ...EASE, duration: 900 }); }, [value, v]);
+  const v = useFill(Math.max(0.001, clamp01(value)), 900);
   const dial = useAnimatedProps(() => ({ strokeDasharray: `${arc * v.value} ${c}` }));
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
@@ -237,7 +247,7 @@ export const s = themed(() => StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(20,20,20,0.4)' },
   sheet: { maxHeight: '88%', backgroundColor: C.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 12, gap: 6 },
   grab: { alignSelf: 'center', width: 40, height: 5, borderRadius: 99, backgroundColor: C.field, marginBottom: 10 },
-  tile: { flex: 1, minWidth: 0, minHeight: 120, borderRadius: R.tile, padding: 14, justifyContent: 'space-between', gap: 10 },
+  tile: { flex: 1, minWidth: 0, minHeight: 128, borderRadius: R.tile, padding: 16, justifyContent: 'space-between', gap: 14 },
   tileIc: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.glass, alignItems: 'center', justifyContent: 'center' },
   linkRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: R.card, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
   linkIc: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
@@ -262,9 +272,9 @@ export function TabHeader({ title, subtitle, right, onAvatar, initial }: { title
 export function Stat({ label, value, unit, tone, onPress }: { label: string; value: string | number; unit?: string; tone?: [string, string]; onPress?: () => void }) {
   const bg = tone?.[0] ?? C.card, ink = tone?.[1] ?? C.ink;
   return (
-    <Tap onPress={onPress} scale={onPress ? 0.97 : 1} style={{ flex: 1, minWidth: 0, borderRadius: R.tile, padding: 12, gap: 4, backgroundColor: bg, borderWidth: tone ? 0 : 1, borderColor: C.line }}>
-      <T size={11.5} w="s" color={tone ? ink : C.muted} numberOfLines={1}>{label}</T>
-      <T size={18} w="b" color={ink} numberOfLines={1} adjustsFontSizeToFit>{value}{unit ? <T size={11.5} w="m" color={ink}>{unit}</T> : null}</T>
+    <Tap onPress={onPress} scale={onPress ? 0.97 : 1} style={{ flex: 1, minWidth: 0, minHeight: 88, alignSelf: 'stretch', justifyContent: 'space-between', borderRadius: R.tile, paddingVertical: 14, paddingHorizontal: 14, gap: 10, backgroundColor: bg, borderWidth: tone ? 0 : 1, borderColor: C.line }}>
+      <T size={12} w="s" color={tone ? ink : C.muted} numberOfLines={2} style={{ lineHeight: 16, opacity: tone ? 0.85 : 1 }}>{label}</T>
+      <T size={20} w="b" color={ink} numberOfLines={1} adjustsFontSizeToFit>{value}{unit ? <T size={12} w="m" color={ink}>{unit}</T> : null}</T>
     </Tap>
   );
 }
