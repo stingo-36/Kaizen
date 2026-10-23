@@ -3,6 +3,7 @@ import { ComponentRef, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { FocusReplay, Stagger } from '@/components/motion';
 import { Chip, IconBtn, Row, T, Tap, haptic } from '@/components/ui';
 import { askCoach, ChatMsg, loadChat, saveChat } from '@/lib/coach-chat';
 import { uid } from '@/lib/dates';
@@ -82,6 +83,7 @@ export default function Coach() {
       </Row>
       <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: 20, gap: 12 }} keyboardShouldPersistTaps="handled"
         onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })} showsVerticalScrollIndicator={false}>
+        <FocusReplay><Stagger step={50}>
         {!msgs.length && (
           <View style={{ gap: 14 }}>
             <View style={[st.hello, { backgroundColor: C.accentTint }]}>
@@ -92,7 +94,7 @@ export default function Coach() {
           </View>
         )}
         {msgs.map((m) => m.role === 'user' ? (
-          <View key={m.id} style={st.me}><T size={15} color={C.onInk} style={{ lineHeight: 21 }}>{m.text}</T></View>
+          <View key={m.id} style={st.me}><T size={15} color={C.white} style={{ lineHeight: 21 }}>{m.text}</T></View>
         ) : (
           <View key={m.id} style={st.coach}><Reply text={m.text} /></View>
         ))}
@@ -108,12 +110,13 @@ export default function Coach() {
             ) : null}
           </View>
         ) : null}
+        </Stagger></FocusReplay>
       </ScrollView>
       <View style={[st.bar, { marginBottom: kb ? kb + 8 : insets.bottom + 12 }]}>
         <TextInput value={text} onChangeText={setText} placeholder="Ask your coach…" placeholderTextColor={C.faint} style={st.input} multiline maxLength={500}
           submitBehavior="submit" returnKeyType="send" onSubmitEditing={() => send()} accessibilityLabel="Message to coach" />
         <Tap onPress={() => send()} scale={0.9} style={[st.send, (!text.trim() || busy) && { opacity: 0.4 }]} accessibilityLabel="Send">
-          <ArrowUp size={20} color={C.onInk} strokeWidth={2.4} />
+          <ArrowUp size={20} color={C.white} strokeWidth={2.4} />
         </Tap>
       </View>
     </SafeAreaView>
@@ -124,12 +127,12 @@ const st = themed(() => StyleSheet.create({
   head: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: C.line },
   badge: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   hello: { borderRadius: 22, padding: 18, gap: 8 },
-  me: { alignSelf: 'flex-end', maxWidth: '85%', backgroundColor: C.ink, borderRadius: 20, borderBottomRightRadius: 6, paddingVertical: 10, paddingHorizontal: 14 },
-  coach: { alignSelf: 'flex-start', maxWidth: '92%', backgroundColor: C.card, borderRadius: 20, borderBottomLeftRadius: 6, padding: 14, borderWidth: 1, borderColor: C.line },
+  me: { alignSelf: 'flex-end', maxWidth: '85%', backgroundColor: C.accent, borderRadius: 20, borderBottomRightRadius: 6, paddingVertical: 10, paddingHorizontal: 14 },
+  coach: { alignSelf: 'flex-start', maxWidth: '92%', backgroundColor: C.card, borderRadius: 20, borderBottomLeftRadius: 6, padding: 14 },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.accent, marginTop: 8 },
   err: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 16, backgroundColor: C.dangerSoft },
   retry: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 12, borderRadius: 99, backgroundColor: C.card },
   bar: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginHorizontal: 16, padding: 6, paddingLeft: 16, borderRadius: 26, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
   input: { flex: 1, minWidth: 0, maxHeight: 110, fontFamily: F.r, fontSize: 15, color: C.ink, paddingVertical: 10 },
-  send: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' },
+  send: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' },
 }));

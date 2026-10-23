@@ -1,29 +1,16 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SystemUI from 'expo-system-ui';
-import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
-import { useColorScheme } from 'react-native';
+import { createContext, ReactNode, useContext, useEffect } from 'react';
 
 import { applyScheme, C, Scheme, ThemeMode } from './theme';
 
-/* Light / Dark / System, chosen in Profile and kept on the phone. */
-const KEY = 'kaizen.theme';
+/* Kaizen is light-only: the palette is always the light one, whatever the phone is set to. */
 type Ctx = { mode: ThemeMode; scheme: Scheme; setMode: (m: ThemeMode) => void };
-const ThemeCtx = createContext<Ctx>({ mode: 'system', scheme: 'light', setMode: () => {} });
+const LIGHT_ONLY: Ctx = { mode: 'light', scheme: 'light', setMode: () => {} };
+const ThemeCtx = createContext<Ctx>(LIGHT_ONLY);
 export const useTheme = () => useContext(ThemeCtx);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const sys = useColorScheme();
-  const [mode, setModeState] = useState<ThemeMode | null>(null);
-  const scheme: Scheme = (mode ?? 'system') === 'system' ? (sys === 'dark' ? 'dark' : 'light') : (mode as Scheme);
-  // Swap the palette before anything below renders with it.
-  if (mode) applyScheme(scheme);
-
-  useEffect(() => {
-    AsyncStorage.getItem(KEY).then((v) => setModeState(v === 'light' || v === 'dark' ? v : 'system')).catch(() => setModeState('system'));
-  }, []);
-  useEffect(() => { if (mode) SystemUI.setBackgroundColorAsync(C.bg).catch(() => {}); }, [mode, scheme]);
-
-  const setMode = useCallback((m: ThemeMode) => { setModeState(m); AsyncStorage.setItem(KEY, m).catch(() => {}); }, []);
-  if (!mode) return null;
-  return <ThemeCtx.Provider value={{ mode, scheme, setMode }}>{children}</ThemeCtx.Provider>;
+  applyScheme('light');
+  useEffect(() => { SystemUI.setBackgroundColorAsync(C.bg).catch(() => {}); }, []);
+  return <ThemeCtx.Provider value={LIGHT_ONLY}>{children}</ThemeCtx.Provider>;
 }

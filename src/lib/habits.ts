@@ -1,5 +1,5 @@
 import { addDays, DAY, DAY_NAMES, fmtTime, mondayOf, monIndex, parse, today, uid, ymd } from './dates';
-import { PASTEL } from './theme';
+import { PASTEL, toneOf } from './theme';
 
 export type Habit = {
   id: string;
@@ -27,7 +27,8 @@ export const isQuitIcon = (i: number) => /-off$/.test(ICONS[i] ?? '');
 
 /** Pastel card tones (background, ink); they live in theme so dark mode can swap them. */
 export { PASTEL };
-export const pastel = (h: Pick<Habit, 'icon'>) => PASTEL[(h.icon ?? 0) % 4];
+/** Each habit's own colour, picked by its icon so the same kind of habit always looks the same. */
+export const pastel = (h: Pick<Habit, 'icon'>) => toneOf(h.icon ?? 0);
 
 export function newHabit(o: Partial<Habit> = {}): Habit {
   return {

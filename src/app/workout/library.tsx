@@ -87,7 +87,7 @@ export default function Library() {
 const st = themed(() => StyleSheet.create({
   search: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 50, paddingHorizontal: 14, borderRadius: 16, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
   input: { flex: 1, minWidth: 0, fontFamily: F.r, fontSize: 15, color: C.ink, paddingVertical: 12 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: 18, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: 18, backgroundColor: C.card },
   thumb: { width: 52, height: 52, borderRadius: 12, backgroundColor: C.soft },
   num: { width: 22, height: 22, borderRadius: 11, backgroundColor: C.accentSoft, alignItems: 'center', justifyContent: 'center', marginTop: -1 },
 }));

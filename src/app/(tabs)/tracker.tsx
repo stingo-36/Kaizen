@@ -136,6 +136,6 @@ const st = themed(() => StyleSheet.create({
   grid: { gap: 12 },
   tile: { flex: 1, minWidth: 0, minHeight: 112, borderRadius: 18, padding: 14, justifyContent: 'space-between', gap: 12 },
   tileIc: { width: 32, height: 32, borderRadius: 16, backgroundColor: C.glass, alignItems: 'center', justifyContent: 'center' },
-  clear: { gap: 3, paddingVertical: 16, paddingHorizontal: 16, borderRadius: 16, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
+  clear: { gap: 3, paddingVertical: 16, paddingHorizontal: 16, borderRadius: 16, backgroundColor: C.card },
   out: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, maxWidth: '100%' },
 }));

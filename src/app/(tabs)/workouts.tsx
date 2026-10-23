@@ -13,12 +13,11 @@ import { addDays, mondayOf, parse, today, WEEK, ymd } from '@/lib/dates';
 import { PASTEL } from '@/lib/habits';
 import { missingDetails } from '@/lib/profile';
 import { useStore } from '@/lib/store';
-import { C, F, themed, TY } from '@/lib/theme';
+import { C, F, themed, toneOf, TY } from '@/lib/theme';
 import { activePlan, logVolume, nextDayIdx, prCount, weekLogs } from '@/lib/workout';
 
 export default function Workouts() {
-  // Workouts are the coral area: the Today card is this tab's one featured card.
-  const WINK = PASTEL[4][1];
+  // The blue Today card is this tab's one featured card.
   const router = useRouter();
   const toast = useToast();
   const { workout: W, profile, setProfile } = useStore();
@@ -67,32 +66,32 @@ export default function Workouts() {
       )}
       {W.session ? (
         <View style={st.hero}>
-          <T size={11} w="s" color={WINK} style={st.label}>Workout in progress</T>
-          <T size={20} w="b" color={WINK}>{plan?.days[W.session.day]?.title ?? 'Workout'}</T>
+          <T size={11} w="s" color={C.accentInk} style={st.label}>Workout in progress</T>
+          <T size={20} w="b" color={C.accentInk}>{plan?.days[W.session.day]?.title ?? 'Workout'}</T>
           <Btn title="Resume workout" icon={Play} onPress={() => router.push('/workout/session')} style={{ marginTop: 12, minHeight: 48 }} />
         </View>
       ) : doneToday.length ? (
         <View style={st.hero}>
           <Row style={{ justifyContent: 'space-between' }}>
-            <T size={11} w="s" color={WINK} style={st.label}>Today’s workout</T>
-            <View style={st.chip}><T size={11} w="b" color={WINK}>Done</T></View>
+            <T size={11} w="s" color={C.accentInk} style={st.label}>Today’s workout</T>
+            <View style={st.chip}><T size={11} w="b" color={C.accentInk}>Done</T></View>
           </Row>
           <Row gap={10} style={{ marginTop: 8 }}>
-            <CheckCircle2 size={26} color={WINK} />
-            <T size={TY.hero} w="b" color={WINK} numberOfLines={1} style={{ flex: 1 }}>{doneToday[doneToday.length - 1].title}{doneToday.length > 1 ? ` +${doneToday.length - 1}` : ''}</T>
+            <CheckCircle2 size={26} color={C.accentInk} />
+            <T size={TY.hero} w="b" color={C.accentInk} numberOfLines={1} style={{ flex: 1 }}>{doneToday[doneToday.length - 1].title}{doneToday.length > 1 ? ` +${doneToday.length - 1}` : ''}</T>
           </Row>
-          <T size={TY.sub} color={WINK} style={{ marginTop: 4 }}>
+          <T size={TY.sub} color={C.accentInk} style={{ marginTop: 4 }}>
             {doneToday.reduce((a, l) => a + l.duration, 0)} min · {kcalToday} kcal burned. Recover well, see you next session.
           </T>
         </View>
       ) : plan && day ? (
         <View style={st.hero}>
           <Row style={{ justifyContent: 'space-between' }}>
-            <T size={11} w="s" color={WINK} style={st.label}>Today · Day {nd + 1} of {plan.days.length}</T>
-            <View style={st.chip}><T size={11} w="b" color={WINK}>≈ {estKcal} kcal</T></View>
+            <T size={11} w="s" color={C.accentInk} style={st.label}>Today · Day {nd + 1} of {plan.days.length}</T>
+            <View style={st.chip}><T size={11} w="b" color={C.accentInk}>≈ {estKcal} kcal</T></View>
           </Row>
-          <T size={TY.hero} w="b" color={WINK} style={{ marginTop: 6 }}>{day.title}</T>
-          <T size={13} color={WINK} numberOfLines={1}>{day.exercises.length} exercises · ~{profile.minutes} min</T>
+          <T size={TY.hero} w="b" color={C.accentInk} style={{ marginTop: 6 }}>{day.title}</T>
+          <T size={13} color={C.accentInk} numberOfLines={1}>{day.exercises.length} exercises · ~{profile.minutes} min</T>
           <Row gap={10} style={{ marginTop: 14 }}>
             <Btn title="Open workout" kind="light" small onPress={() => openDay(nd)} style={{ flex: 1, minHeight: 46 }} />
             <Btn title="Start" icon={Play} small onPress={() => router.push({ pathname: '/workout/session', params: { day: String(nd), plan: plan.id } })} style={{ flex: 1, minHeight: 46 }} />
@@ -100,9 +99,9 @@ export default function Workouts() {
         </View>
       ) : (
         <View style={[st.hero, { gap: 8 }]}>
-          <View style={st.heroIc}><Sparkles size={22} color={WINK} /></View>
-          <T size={20} w="b" color={WINK}>Create your first plan</T>
-          <T size={14} color={WINK}>Your AI coach builds a weekly plan with strength and cardio from your profile.</T>
+          <View style={st.heroIc}><Sparkles size={22} color={C.accentInk} /></View>
+          <T size={20} w="b" color={C.accentInk}>Create your first plan</T>
+          <T size={14} color={C.accentInk}>Your AI coach builds a weekly plan with strength and cardio from your profile.</T>
           <Btn title="Create a plan" kind="light" icon={Sparkles} onPress={() => router.push('/workout/new')} style={{ marginTop: 6 }} />
         </View>
       )}
@@ -117,7 +116,7 @@ export default function Workouts() {
             const dk = ymd(addDays(mon, i)), did = W.logs.some((l) => l.date === dk), isT = dk === k;
             return (
               <View key={w + i} style={{ flex: 1, alignItems: 'center', gap: 6 }} accessible accessibilityLabel={`${w}: ${did ? 'trained' : isT ? 'today' : 'no workout'}`}>
-                <View style={[st.wday, did ? { backgroundColor: PASTEL[0][0] } : isT ? { borderWidth: 2, borderColor: C.ink } : { borderWidth: 1.5, borderColor: C.faint, borderStyle: 'dashed' }]}>
+                <View style={[st.wday, did ? { backgroundColor: PASTEL[0][0] } : isT ? { borderWidth: 2, borderColor: C.accent } : { borderWidth: 1.5, borderColor: C.faint, borderStyle: 'dashed' }]}>
                   {did ? <CheckCircle2 size={15} color={PASTEL[0][1]} /> : null}
                 </View>
                 <T size={11} w="s" color={isT ? C.ink : C.muted}>{w}</T>
@@ -134,7 +133,7 @@ export default function Workouts() {
           {plan.days.map((d, i) => {
             const cardio = d.exercises.every((e) => e.kind === 'cardio');
             return (
-              <LinkRow key={d.title + i} icon={cardio ? HeartPulse : Dumbbell} tone={PASTEL[4]} title={d.title}
+              <LinkRow key={d.title + i} icon={cardio ? HeartPulse : Dumbbell} tone={toneOf(i + 1)} title={d.title}
                 sub={`${d.exercises.length} exercises${i === nd && !doneToday.length ? ' · today' : ''}`} onPress={() => openDay(i)} />
             );
           })}
@@ -232,14 +231,14 @@ export default function Workouts() {
 }
 
 const st = themed(() => StyleSheet.create({
-  card: { backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, padding: 14 },
-  label: { letterSpacing: 0.8, textTransform: 'uppercase' },
+  card: { backgroundColor: C.card, borderRadius: 20, padding: 14 },
+  label: { letterSpacing: 0.6, textTransform: 'uppercase' },
   wday: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   weight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   ic: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  hero: { borderRadius: 22, padding: 16, backgroundColor: PASTEL[4][0] },
+  hero: { borderRadius: 26, padding: 20, backgroundColor: C.accentSoft },
   heroIc: { width: 44, height: 44, borderRadius: 14, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
-  chip: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: 99, backgroundColor: C.card },
+  chip: { paddingVertical: 5, paddingHorizontal: 10, borderRadius: 99, backgroundColor: C.card },
   planRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   active: { paddingVertical: 2, paddingHorizontal: 8, borderRadius: 99, backgroundColor: PASTEL[0][0] },
   wInput: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 56, paddingHorizontal: 16, borderRadius: 16, backgroundColor: C.soft },

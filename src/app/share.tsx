@@ -42,8 +42,8 @@ function GalleryPicker({ open, picked, onToggle, onClose }: { open: boolean; pic
         </Row>
         <Row gap={8} style={{ paddingHorizontal: 16, paddingBottom: 10 }}>
           {([[true, 'Screenshots'], [false, 'All photos']] as const).map(([v, l]) => (
-            <Pressable key={l} onPress={() => filter(v)} style={[st.chip, onlyShots === v && { backgroundColor: C.ink, borderColor: C.ink }]} accessibilityRole="radio" accessibilityState={{ checked: onlyShots === v }}>
-              <T size={12.5} w="s" color={onlyShots === v ? C.onInk : C.ink}>{l}</T>
+            <Pressable key={l} onPress={() => filter(v)} style={[st.chip, onlyShots === v && { backgroundColor: C.accent, borderColor: C.accent }]} accessibilityRole="radio" accessibilityState={{ checked: onlyShots === v }}>
+              <T size={12.5} w="s" color={onlyShots === v ? C.white : C.ink}>{l}</T>
             </Pressable>
           ))}
         </Row>
@@ -226,8 +226,8 @@ export default function Share() {
           <View style={st.chips}>
             {types.map((t) => (
               <Pressable key={t} onPress={() => { haptic('select'); setType(t); }} accessibilityRole="radio" accessibilityState={{ checked: type === t }}
-                style={[st.chip, type === t && { backgroundColor: C.ink, borderColor: C.ink }]}>
-                <T size={12.5} w="s" color={type === t ? C.onInk : C.ink}>{t}</T>
+                style={[st.chip, type === t && { backgroundColor: C.accent, borderColor: C.accent }]}>
+                <T size={12.5} w="s" color={type === t ? C.white : C.ink}>{t}</T>
               </Pressable>
             ))}
           </View>
@@ -327,7 +327,7 @@ const st = themed(() => StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { paddingVertical: 7, paddingHorizontal: 12, borderRadius: 99, borderWidth: 1, borderColor: C.field, backgroundColor: C.card },
   area: { minHeight: 160, borderRadius: 14, borderWidth: 1.5, borderColor: C.field, backgroundColor: C.card, padding: 12, fontFamily: F.r, fontSize: 14, lineHeight: 20, color: C.ink, textAlignVertical: 'top' },
-  toggleRow: { padding: 14, borderRadius: 16, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
+  toggleRow: { padding: 14, borderRadius: 16, backgroundColor: C.card },
   addBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, borderWidth: 1.5, borderStyle: 'dashed', borderColor: C.accent, backgroundColor: C.accentTint },
   addIc: { width: 38, height: 38, borderRadius: 12, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
   thumb: { width: 84, height: 150, borderRadius: 12, overflow: 'hidden', borderWidth: 2.5, borderColor: 'transparent', backgroundColor: C.soft },

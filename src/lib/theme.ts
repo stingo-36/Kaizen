@@ -3,40 +3,45 @@
    the screens so nothing keeps the old colours. */
 
 const LIGHT = {
-  bg: '#F6F6F4',
+  /** Cool off-white page; cards are flat white surfaces on it (no shadows). */
+  bg: '#F4F6FC',
   card: '#FFFFFF',
-  soft: '#F3F3F0',
-  ink: '#1F2024',
+  soft: '#EEF1FA',
+  ink: '#121633',
   /** Text and icons on an ink-coloured surface (primary buttons, selected chips). */
   onInk: '#FFFFFF',
-  muted: '#5F6670',
+  muted: '#5A6180',
   /** Hints and outlines; 3:1 on white, so never body text. */
-  faint: '#868D96',
-  line: '#ECECEA',
-  field: '#DCDDD9',
-  track: '#EEEEEB',
-  /** Muted modern indigo accent. */
-  accent: '#5B5FC7',
-  accentSoft: '#E6E7F5',
-  accentTint: '#F4F4FA',
-  green: '#3F9A64',
-  danger: '#D9534F',
-  dangerSoft: '#FCEBEA',
+  faint: '#8B91AB',
+  line: '#E6E9F4',
+  field: '#D6DBEB',
+  track: '#E8EBF7',
+  /** Royal blue: the one accent, for primary actions, links, rings and the active tab. */
+  accent: '#4361EE',
+  /** Gradient partner for accent (rings and the featured card wash). */
+  accent2: '#4CC9F0',
+  accentSoft: '#E3E8FD',
+  accentTint: '#F1F3FE',
+  /** Text on accentSoft (featured cards). */
+  accentInk: '#1B2470',
+  green: '#1F9D55',
+  danger: '#DC2626',
+  dangerSoft: '#FDECEC',
   /** Always white: text on the accent colour and photos. */
   white: '#FFFFFF',
   /** Always dark: text on a white button. */
   onWhite: '#2F2F2F',
   /** Tab bar. */
-  bar: '#1F2024',
-  barOn: '#FFFFFF',
-  barOnInk: '#1F2024',
-  barInk: 'rgba(255,255,255,0.62)',
+  bar: '#FFFFFF',
+  barOn: '#E3E8FD',
+  barOnInk: '#1B2470',
+  barInk: '#5A6180',
   /** Frosted circle behind icons on pastel tiles. */
   glass: 'rgba(255,255,255,0.7)',
   /** Heatmap shades, lightest first. */
-  heat1: '#D9DAF2',
-  heat2: '#ABADE5',
-  heat3: '#8084D6',
+  heat1: '#E3E8FD',
+  heat2: '#A5B4FA',
+  heat3: '#5F79F2',
   /** WorkNest Tracker's own colour (teal), outside the five pastels. */
   tealSoft: '#D6EEEA',
   teal: '#1D4A45',
@@ -57,6 +62,8 @@ const DARK: Palette = {
   accent: '#7D81E6',
   accentSoft: '#2D2F52',
   accentTint: '#1E1F33',
+  accentInk: '#DCE7FD',
+  accent2: '#4CC9F0',
   green: '#5CC48A',
   danger: '#F07470',
   dangerSoft: '#3A2020',
@@ -78,12 +85,21 @@ export const C: Palette = { ...LIGHT };
 
 /** Pastel card tones (background, ink). Same slots in both modes, so code can keep references to them. */
 const PASTEL_LIGHT: [string, string][] = [
-  ['#DCEFCF', '#2F3D24'], ['#FCEBB6', '#4A3A10'], ['#D6E4F6', '#1F3550'], ['#E6E0F8', '#33295A'], ['#FDDCD2', '#5A2A1C'],
+  ['#DDEFD3', '#2B4520'], ['#FCEDBF', '#56420C'], ['#DAE7F6', '#1E3858'], ['#E8E2F7', '#382B63'], ['#FFDFCF', '#6A2C12'],
 ];
 const PASTEL_DARK: [string, string][] = [
   ['#22301C', '#BFE3A8'], ['#352C12', '#F5D77A'], ['#1A2738', '#A9C8F0'], ['#272140', '#CBBDF5'], ['#3A2119', '#F7B7A3'],
 ];
 export const PASTEL: [string, string][] = PASTEL_LIGHT.map(([a, b]) => [a, b]);
+
+/** Colourful tones (soft background, strong ink) for things that sit side by side in a list,
+    so each habit, workout day or tab gets its own colour instead of one shared pastel. */
+export const TONES: [string, string][] = [
+  ['#DDF5E6', '#0B7A45'], ['#E1E8FF', '#2F4BD8'], ['#ECE5FF', '#6236D9'], ['#FFE3EC', '#C2255C'],
+  ['#FFF0CC', '#946000'], ['#D7F5F3', '#0B7F7A'], ['#DDF1FF', '#0B6FB3'], ['#EDF7D2', '#4F7A0B'],
+];
+/** Stable tone for an index (an icon number, a position in a list…). */
+export const toneOf = (n: number): [string, string] => TONES[((n % TONES.length) + TONES.length) % TONES.length];
 
 export type Scheme = 'light' | 'dark';
 export type ThemeMode = 'system' | Scheme;
@@ -112,13 +128,13 @@ export function applyScheme(s: Scheme) {
 }
 
 export const F = {
-  r: 'Geist_400Regular',
-  m: 'Geist_500Medium',
-  s: 'Geist_600SemiBold',
-  b: 'Geist_700Bold',
+  r: 'Outfit_400Regular',
+  m: 'Outfit_500Medium',
+  s: 'Outfit_600SemiBold',
+  b: 'Outfit_700Bold',
 };
 
-export const R = { card: 20, pill: 999, tile: 16 };
+export const R = { card: 22, pill: 999, tile: 18, btn: 16, field: 14 };
 
 /** Type scale used across screens. */
 export const TY = {
@@ -135,4 +151,4 @@ export const TY = {
   cap: 12,
 };
 /** Spacing: between sections on a screen, and between cards side by side. */
-export const SP = { section: 18, grid: 12, pad: 16 };
+export const SP = { section: 20, grid: 12, pad: 18, page: 20 };

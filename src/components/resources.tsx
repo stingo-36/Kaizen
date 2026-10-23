@@ -120,8 +120,8 @@ export function ResourcesView() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
           {[null, ...types].map((t) => (
             <Pressable key={t ?? 'all'} onPress={() => { haptic('select'); setType(t); }} accessibilityRole="radio" accessibilityState={{ checked: type === t }}
-              style={[st.chip, type === t && { backgroundColor: C.ink, borderColor: C.ink }]}>
-              <T size={12} w="s" color={type === t ? C.onInk : C.ink}>{t ?? 'All'}</T>
+              style={[st.chip, type === t && { backgroundColor: C.accent, borderColor: C.accent }]}>
+              <T size={12} w="s" color={type === t ? C.white : C.ink}>{t ?? 'All'}</T>
             </Pressable>
           ))}
         </ScrollView>
@@ -174,8 +174,8 @@ export function RecentResourcesCard() {
 }
 
 const st = themed(() => StyleSheet.create({
-  card: { backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, overflow: 'hidden' },
-  res: { gap: 8, padding: 14, borderRadius: 16, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
+  card: { backgroundColor: C.card, borderRadius: 16, overflow: 'hidden' },
+  res: { gap: 8, padding: 14, borderRadius: 16, backgroundColor: C.card },
   src: { width: 36, height: 36, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   pill: { paddingVertical: 3, paddingHorizontal: 8, borderRadius: 99, backgroundColor: C.soft },
   ic: { width: 28, height: 28, borderRadius: 9, backgroundColor: C.accentTint, alignItems: 'center', justifyContent: 'center' },
@@ -183,7 +183,7 @@ const st = themed(() => StyleSheet.create({
   search: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 40, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, borderColor: C.line, backgroundColor: C.card },
   searchText: { flex: 1, minWidth: 0, fontFamily: F.r, fontSize: 14, color: C.ink, paddingVertical: 8 },
   chip: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 99, borderWidth: 1, borderColor: C.field, backgroundColor: C.card },
-  empty: { gap: 10, padding: 18, borderRadius: 16, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, alignItems: 'center' },
-  home: { gap: 10, padding: 14, borderRadius: 20, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
+  empty: { gap: 10, padding: 18, borderRadius: 16, backgroundColor: C.card, alignItems: 'center' },
+  home: { gap: 10, padding: 14, borderRadius: 20, backgroundColor: C.card },
   homeRow: { paddingTop: 9, borderTopWidth: 1, borderTopColor: C.line, gap: 1 },
 }));

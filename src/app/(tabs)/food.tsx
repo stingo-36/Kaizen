@@ -1,20 +1,55 @@
 import { useRouter } from 'expo-router';
-import { LucideIcon, Moon, Plus, Sun, Sunrise, Trash2, Utensils } from '@/components/ico';
+import { Flag, Flame, LucideIcon, Moon, Plus, Sun, Sunrise, Trash2, Utensils } from '@/components/ico';
 import { StyleSheet, View } from 'react-native';
+import { IconButton } from 'react-native-paper';
 
 import { BarChart } from '@/components/charts';
 import { AppHeader } from '@/components/header';
 import { PagerScreen } from '@/components/pager';
-import { Bar, Card, IconBtn, Ring, Row, SectionTitle, Stat, T, Tap, useToast } from '@/components/ui';
+import { pi } from '@/components/paper-icons';
+import { Card, IconBtn, Ring, Row, SectionTitle, Stat, T, useToast } from '@/components/ui';
 import { logKcal } from '@/lib/calories';
 import { addDays, monIndex, parse, today, WEEK, ymd } from '@/lib/dates';
-import { amountText, macrosOf, Meal, mealFor, MEALS, sumMacros, targets } from '@/lib/food';
+import { amountText, Macros, macrosOf, Meal, mealFor, MEALS, sumMacros, targets } from '@/lib/food';
 import { useFood } from '@/lib/food-store';
 import { PASTEL } from '@/lib/habits';
 import { useStore } from '@/lib/store';
 import { C, themed } from '@/lib/theme';
 
 const MEAL_ICON: Record<Meal, LucideIcon> = { breakfast: Sunrise, lunch: Sun, dinner: Moon, snacks: Utensils };
+/** Each macro keeps one colour pair everywhere on this screen: protein blue, carbs teal, fat violet. */
+const MACROS: { key: 'p' | 'c' | 'f'; label: string; grad: [string, string] }[] = [
+  { key: 'p', label: 'Protein', grad: ['#4361EE', '#7B93FF'] },
+  { key: 'c', label: 'Carbs', grad: ['#0CA678', '#63E6BE'] },
+  { key: 'f', label: 'Fat', grad: ['#7048E8', '#B197FC'] },
+];
+
+function MacroTile({ label, value, goal, grad }: { label: string; value: number; goal: number; grad: [string, string] }) {
+  const pct = goal ? Math.round((value / goal) * 100) : 0;
+  return (
+    <View style={st.macro} accessible accessibilityLabel={`${label}: ${Math.round(value)} of ${goal} grams`}>
+      <Ring value={goal ? value / goal : 0} size={54} stroke={6} gradient={grad} track={C.card}><T size={12} w="b">{pct}%</T></Ring>
+      <T size={13} w="s">{label}</T>
+      <T size={11.5} color={C.muted}>{Math.round(value)} / {goal} g</T>
+    </View>
+  );
+}
+
+/** Portion on one line, then "● 4g  ● 46g  ● 1g" with each dot in its macro's colour. */
+function MacroLine({ amount, m }: { amount: string; m: Macros }) {
+  return (
+    <>
+      <T size={12} color={C.muted} numberOfLines={1}>{amount}</T>
+      <Row gap={12}>
+        {MACROS.map(({ key, label, grad }) => (
+          <View key={key} style={st.macroVal} accessible accessibilityLabel={`${label} ${m[key]} grams`}>
+            <View style={[st.dot, { backgroundColor: grad[0] }]} /><T size={12} w="m" color={C.ink}>{m[key]}g</T>
+          </View>
+        ))}
+      </Row>
+    </>
+  );
+}
 
 export default function Food() {
   const router = useRouter();
@@ -36,61 +71,64 @@ export default function Food() {
 
   const todayPage = () => (
     <>
-      {/* Food is the amber area: the calorie ring uses it, macros keep their own colours. */}
-      <Card style={{ gap: 12 }}>
-        <Row gap={16}>
-          <Ring value={goal.kcal ? tot.kcal / goal.kcal : 0} size={96} stroke={10} color={PASTEL[1][1]} track={PASTEL[1][0]}>
-            <T size={19} w="b">{tot.kcal.toLocaleString()}</T>
-            <T size={11} color={C.muted}>of {goal.kcal.toLocaleString()}</T>
+      <Card style={{ gap: 18 }}>
+        <Row gap={18}>
+          <Ring value={goal.kcal ? tot.kcal / goal.kcal : 0} size={124} stroke={12} gradient={[C.accent, C.accent2]} track={C.track}>
+            <T size={26} w="b">{tot.kcal.toLocaleString()}</T>
+            <T size={12} color={C.muted}>of {goal.kcal.toLocaleString()} kcal</T>
           </Ring>
           <View style={{ flex: 1, minWidth: 0, gap: 10 }}>
-            {([['Protein', tot.p, goal.p, PASTEL[2][1]], ['Carbs', tot.c, goal.c, PASTEL[1][1]], ['Fat', tot.f, goal.f, PASTEL[4][1]]] as const).map(([l, v, g, col]) => (
-              <View key={l} style={{ gap: 5 }}>
-                <Row style={{ justifyContent: 'space-between' }}><T size={12.5} w="s">{l}</T><T size={12} color={C.muted}>{Math.round(v)} / {g} g</T></Row>
-                <Bar value={g ? v / g : 0} color={col} height={6} />
-              </View>
-            ))}
+            <View>
+              <T size={13} w="m" color={C.muted}>{left >= 0 ? 'Left today' : 'Over today'}</T>
+              <Row gap={6} style={{ alignItems: 'flex-end' }}>
+                <T size={30} w="b" color={left >= 0 ? C.ink : C.danger}>{Math.abs(left).toLocaleString()}</T>
+                <T size={13} w="m" color={C.muted} style={{ marginBottom: 5 }}>kcal</T>
+              </Row>
+            </View>
+            <View style={{ gap: 6, alignItems: 'flex-start' }}>
+              <View style={st.badge}><Flame size={13} color={C.accent} /><T size={12} w="s" color={C.accentInk}>{burned} kcal burned</T></View>
+              <View style={st.badge}><Flag size={13} color={C.accent} /><T size={12} w="s" color={C.accentInk} numberOfLines={1}>{profile.goal}</T></View>
+            </View>
           </View>
         </Row>
-        <T size={12} color={C.muted}>{left >= 0 ? `${left} kcal left` : `${-left} kcal over`} · goal set for {profile.goal.toLowerCase()}</T>
+        <Row gap={10} style={{ alignItems: 'stretch' }}>
+          {MACROS.map(({ key, label, grad }) => <MacroTile key={key} label={label} value={tot[key]} goal={goal[key]} grad={grad} />)}
+        </Row>
       </Card>
 
-      <View style={{ gap: 8 }}>
-        <SectionTitle title="Meals" />
-        <View style={st.meals}>
-          {MEALS.map(([m, label], mi) => {
-            const list = entries.filter((e) => e.meal === m), mk = sumMacros(list).kcal, Icon = MEAL_ICON[m];
-            return (
-              <View key={m} style={mi > 0 ? st.mealRule : undefined}>
-                <Row style={{ paddingVertical: 12 }}>
-                  <View style={[st.mealIc, { backgroundColor: PASTEL[1][0] }]}><Icon size={17} color={PASTEL[1][1]} /></View>
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <T size={14} w="m">{label}</T>
-                    <T size={12} color={C.muted} numberOfLines={1}>{list.length ? list.map((e) => e.item.name).join(', ') : 'Nothing logged yet'}</T>
-                  </View>
-                  {list.length ? <T size={13} w="s">{mk}</T> : null}
-                  <Tap onPress={() => add(m)} scale={0.9} style={[st.addBtn, !list.length && { backgroundColor: C.ink, borderColor: C.ink }]} accessibilityLabel={`Add food to ${label}`}>
-                    <Plus size={14} color={list.length ? C.ink : C.onInk} strokeWidth={2.4} />
-                  </Tap>
-                </Row>
-                {list.map((e) => {
-                  const mm = macrosOf(e);
-                  return (
-                    <Row key={e.id} style={st.entry}>
-                      <View style={{ flex: 1, minWidth: 0 }}>
-                        <T size={13.5} w="m" numberOfLines={1}>{e.item.name}</T>
-                        <T size={12} color={C.muted} numberOfLines={1}>{amountText(e)} · P {mm.p} · C {mm.c} · F {mm.f}</T>
-                      </View>
-                      <T size={13} w="s">{mm.kcal}</T>
-                      <IconBtn icon={Trash2} size={32} label={`Remove ${e.item.name}`} onPress={() => remove(e.id)} />
-                    </Row>
-                  );
-                })}
+      <SectionTitle title="Meals" action="Add food" onAction={() => add()} />
+      {MEALS.map(([m, label]) => {
+        const list = entries.filter((e) => e.meal === m), mk = sumMacros(list).kcal, Icon = MEAL_ICON[m];
+        return (
+          <Card key={m} style={{ paddingVertical: 14, gap: 0 }}>
+            <Row gap={12}>
+              <View style={st.mealIc}><Icon size={20} color={C.accent} /></View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <T size={16} w="s">{label}</T>
+                <T size={12.5} color={C.muted}>{list.length ? `${list.length} item${list.length > 1 ? 's' : ''} · ${mk} kcal` : 'Nothing logged yet'}</T>
               </View>
-            );
-          })}
-        </View>
-      </View>
+              <IconButton mode="contained-tonal" icon={pi(Plus, 2.2)} size={18} containerColor={C.accentTint} iconColor={C.accent}
+                onPress={() => add(m)} accessibilityLabel={`Add food to ${label}`} style={{ margin: 0 }} />
+            </Row>
+            {list.map((e) => {
+              const mm = macrosOf(e);
+              return (
+                <Row key={e.id} gap={10} style={st.entry}>
+                  <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+                    <T size={14.5} w="m" numberOfLines={1}>{e.item.name}</T>
+                    <MacroLine amount={amountText(e)} m={mm} />
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <T size={15} w="b">{mm.kcal}</T>
+                    <T size={11} color={C.muted}>kcal</T>
+                  </View>
+                  <IconButton icon={pi(Trash2)} size={18} iconColor={C.faint} onPress={() => remove(e.id)} accessibilityLabel={`Remove ${e.item.name}`} style={{ margin: 0 }} />
+                </Row>
+              );
+            })}
+          </Card>
+        );
+      })}
 
       {/* Tiles follow the fixed pastel order: green, then amber. */}
       <Row gap={12}>
@@ -131,9 +169,10 @@ export default function Food() {
 }
 
 const st = themed(() => StyleSheet.create({
-  meals: { backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, paddingHorizontal: 14 },
-  mealRule: { borderTopWidth: 1, borderTopColor: C.line },
-  mealIc: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  addBtn: { width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: C.field, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
-  entry: { paddingVertical: 8, paddingLeft: 48, gap: 8 },
+  macro: { flex: 1, minWidth: 0, alignItems: 'center', gap: 6, paddingVertical: 14, paddingHorizontal: 8, borderRadius: 18, backgroundColor: C.soft },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 99, backgroundColor: C.accentTint, maxWidth: '100%' },
+  mealIc: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: C.accentTint },
+  entry: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.line },
+  dot: { width: 7, height: 7, borderRadius: 4 },
+  macroVal: { flexDirection: 'row', alignItems: 'center', gap: 4 },
 }));

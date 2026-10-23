@@ -54,7 +54,7 @@ export function continuePoints(prev: string, next: string) {
 export function Section({ title, count, action, onAction, tone }: { title: string; count?: number; action?: string; onAction?: () => void; tone?: string }) {
   return (
     <Row style={{ justifyContent: 'space-between', paddingHorizontal: 4, marginBottom: -6 }}>
-      <T size={TK.label} w="s" color={tone ?? C.muted} style={{ letterSpacing: 0.6, textTransform: 'uppercase' }}>
+      <T size={14} w="s" color={tone ?? C.ink}>
         {title}{count != null ? <T size={TK.label} w="s" color={C.faint}>{`  ${count}`}</T> : null}
       </T>
       {action ? <Pressable onPress={onAction} hitSlop={10}><T size={12} w="s" color={C.accent}>{action}</T></Pressable> : null}
@@ -77,7 +77,7 @@ export function Fab({ label, onPress }: { label: string; onPress: () => void }) 
   const insets = useSafeAreaInsets();
   return (
     <Tap onPress={() => { haptic('light'); onPress(); }} scale={0.92} accessibilityLabel={label} style={[st.fab, { bottom: insets.bottom + 20 }]}>
-      <Plus size={22} color={C.onInk} strokeWidth={2.4} />
+      <Plus size={22} color={C.white} strokeWidth={2.4} />
     </Tap>
   );
 }
@@ -150,9 +150,9 @@ export function Avatar({ name, size = 34 }: { name: string; size?: number }) {
 export function Chip({ label, on, onPress, icon }: { label: string; on?: boolean; onPress: () => void; icon?: ReactNode }) {
   return (
     <Pressable onPress={() => { haptic('select'); onPress(); }} accessibilityRole="button" accessibilityState={{ selected: !!on }}
-      style={[st.chip, on && { backgroundColor: C.ink, borderColor: C.ink }]}>
+      style={[st.chip, on && { backgroundColor: C.accent, borderColor: C.accent }]}>
       {icon}
-      <T size={12.5} w="s" color={on ? C.onInk : C.ink}>{label}</T>
+      <T size={12.5} w="s" color={on ? C.white : C.ink}>{label}</T>
     </Pressable>
   );
 }
@@ -221,8 +221,8 @@ export function Calendar({ value, onPick }: { value: string | null; onPick: (d: 
           <View key={d ?? `e${i}`} style={st.calCell}>
             {d ? (
               <Pressable onPress={() => { haptic('select'); onPick(d); }} accessibilityRole="button" accessibilityLabel={dayName(d)}
-                style={[st.calDay, d === today && { borderWidth: 1, borderColor: C.accent }, d === value && { backgroundColor: C.ink }]}>
-                <T size={12.5} w={d === value ? 's' : 'r'} color={d === value ? C.onInk : C.ink}>{Number(d.slice(8))}</T>
+                style={[st.calDay, d === today && { borderWidth: 1, borderColor: C.accent }, d === value && { backgroundColor: C.accent }]}>
+                <T size={12.5} w={d === value ? 's' : 'r'} color={d === value ? C.white : C.ink}>{Number(d.slice(8))}</T>
               </Pressable>
             ) : null}
           </View>
@@ -246,7 +246,7 @@ export function DateChoice({ value, onChange, allowNone, past }: { value: string
       <View style={st.chips}>
         {quick.map((d, i) => <Chip key={d} label={i === 2 ? 'Next week' : dayName(d)} on={value === d} onPress={() => { onChange(d); setPicking(false); }} />)}
         {allowNone ? <Chip label="No date" on={!value} onPress={() => { onChange(null); setPicking(false); }} /> : null}
-        <Chip label={custom ? dayName(value) : 'Pick a date'} on={!!custom || picking} onPress={() => setPicking((p) => !p)} icon={<CalendarDays size={13} color={custom || picking ? C.onInk : C.ink} />} />
+        <Chip label={custom ? dayName(value) : 'Pick a date'} on={!!custom || picking} onPress={() => setPicking((p) => !p)} icon={<CalendarDays size={13} color={custom || picking ? C.white : C.ink} />} />
       </View>
       {picking ? <Calendar value={value} onPick={(d) => { onChange(d); setPicking(false); }} /> : null}
     </View>
@@ -254,15 +254,15 @@ export function DateChoice({ value, onChange, allowNone, past }: { value: string
 }
 
 const st = themed(() => StyleSheet.create({
-  card: { backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, overflow: 'hidden' },
+  card: { backgroundColor: C.card, borderRadius: 16, overflow: 'hidden' },
   // Rows carry the card's side padding and background, so the swipe action shows behind them edge to edge.
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 13, paddingHorizontal: 14, backgroundColor: C.card },
   rule: { borderTopWidth: 1, borderTopColor: C.line },
   swipe: { width: 110, flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 16 },
   dot: { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   point: { width: 4, height: 4, borderRadius: 2, opacity: 0.7 },
-  empty: { gap: 6, paddingVertical: 28, paddingHorizontal: 20, borderRadius: 16, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, alignItems: 'center' },
-  fab: { position: 'absolute', right: 20, width: 54, height: 54, borderRadius: 27, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' },
+  empty: { gap: 6, paddingVertical: 28, paddingHorizontal: 20, borderRadius: 16, backgroundColor: C.card, alignItems: 'center' },
+  fab: { position: 'absolute', right: 20, width: 54, height: 54, borderRadius: 27, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 7, paddingHorizontal: 12, borderRadius: 99, borderWidth: 1, borderColor: C.field, backgroundColor: C.card },
   area: { borderRadius: 14, borderWidth: 1.5, borderColor: C.field, backgroundColor: C.card, paddingHorizontal: 12, paddingVertical: 10, fontFamily: F.r, fontSize: 14, lineHeight: 20, color: C.ink, textAlignVertical: 'top' },
