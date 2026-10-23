@@ -62,7 +62,7 @@ function GalleryPicker({ open, picked, onToggle, onClose }: { open: boolean; pic
 const DEFAULT_TYPES = ['Website', 'App', 'Link', 'Tool', 'Command', 'Documentation', 'Snippet', 'Reference', 'Learning', 'Other'];
 
 /**
- * Save something to WorkNest Resources: opened by sharing a reel or page link (and/or screenshots) to Pulse,
+ * Save something to WorkNest Resources: opened by sharing a reel or page link (and/or screenshots) to Kaizen,
  * or from Tracker → Resources. The AI reads the screenshots into text; the screenshots themselves are never
  * stored, and are deleted from the gallery after saving unless the user turns that off.
  */
@@ -163,7 +163,7 @@ export default function Share() {
       setErr(e instanceof Error ? e.message : 'Couldn’t save it'); setPhase('review'); return;
     }
     haptic('success');
-    // Only the screenshots that were read; Android shows its own "allow Pulse to delete" prompt.
+    // Only the screenshots that were read; Android shows its own "allow Kaizen to delete" prompt.
     const gone = removeShots && picked.length ? await deleteScreenshots(picked) : true;
     toast(removeShots && picked.length ? (gone ? 'Saved to WorkNest · screenshots deleted' : 'Saved to WorkNest · screenshots kept') : 'Saved to WorkNest');
     clearSharedPayloads();
@@ -211,7 +211,7 @@ export default function Share() {
         {draft?.needsScreenshots ? (
           <View style={[st.note, { backgroundColor: PASTEL[1][0] }]}>
             <T size={13} w="s" color={PASTEL[1][1]}>The details are inside the video</T>
-            <T size={12} color={PASTEL[1][1]}>Go back and add screenshots where the names or links show, and Pulse will list them.</T>
+            <T size={12} color={PASTEL[1][1]}>Go back and add screenshots where the names or links show, and Kaizen will list them.</T>
           </View>
         ) : null}
         <Input label="Title" value={title} onChange={setTitle} />
@@ -232,7 +232,7 @@ export default function Share() {
             placeholder="What is this useful for?" accessibilityLabel="Description" />
         </View>
         <Input label="Tags (comma separated)" value={tags} onChange={setTags} placeholder="webdev, chrome-extension" />
-        {draft?.items.some((i) => i.suggested) ? <T size={12} color={C.muted}>“Suggested link” means the link wasn’t shown in the reel; Pulse added the official one. Check it before relying on it.</T> : null}
+        {draft?.items.some((i) => i.suggested) ? <T size={12} color={C.muted}>“Suggested link” means the link wasn’t shown in the reel; Kaizen added the official one. Check it before relying on it.</T> : null}
         {picked.length ? (
           <Row style={st.toggleRow}>
             <Trash2 size={16} color={C.muted} />
@@ -259,7 +259,7 @@ export default function Share() {
       <BackHeader title="Save to Resources" onBack={close} />
       <View style={{ gap: 6 }}>
         <Input label="Link" value={link} onChange={(v) => { setLink(v); setErr(''); }} placeholder="https://www.instagram.com/reel/…" keyboard="url" />
-        {shared.link ? <T size={12} color={C.muted}>From your share. Pulse reads the post’s title and caption, not the video.</T> : null}
+        {shared.link ? <T size={12} color={C.muted}>From your share. Kaizen reads the post’s title and caption, not the video.</T> : null}
       </View>
 
       <View style={{ gap: 10 }}>

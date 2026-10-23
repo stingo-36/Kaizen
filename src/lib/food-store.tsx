@@ -5,7 +5,7 @@ import { emptyFood, FoodData } from './food';
 import { useStore } from './store';
 
 /* Food diary, saved on the phone per account. */
-const key = (u: string) => `pulse.c.food.${u}`;
+const key = (u: string) => `kaizen.c.food.${u}`;
 
 type Ctx = { food: FoodData; setFood: (fn: (f: FoodData) => FoodData) => void };
 const FoodCtx = createContext<Ctx | null>(null);

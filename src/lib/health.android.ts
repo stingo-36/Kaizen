@@ -31,7 +31,7 @@ export async function grantedTypes(): Promise<HealthType[]> {
   return onlyOurs(await hc()!.getGrantedPermissions());
 }
 
-/** Opens the Health Connect permission screen for exactly the seven types Pulse shows. */
+/** Opens the Health Connect permission screen for exactly the seven types Kaizen shows. */
 export async function connectHealth(): Promise<HealthType[]> {
   if (!hc() || !(await init())) return [];
   return onlyOurs(await hc()!.requestPermission(HEALTH_TYPES.map((recordType) => ({ accessType: 'read' as const, recordType }))));

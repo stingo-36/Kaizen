@@ -6,7 +6,7 @@ import { connectHealth, grantedTypes, healthStatus, openHealthSettings, readHeal
 import { emptySummary, HealthStatus, HealthSummary, HealthType } from './health-types';
 
 /* Health Connect state shared by Home and the Health screen. The last reading is cached so numbers show instantly. */
-const CACHE = 'pulse.health.last';
+const CACHE = 'kaizen.health.last';
 
 type Ctx = {
   status: HealthStatus | 'checking'; granted: HealthType[]; data: HealthSummary; busy: boolean;

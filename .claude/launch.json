@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "pulse-mobile-web",
+      "name": "kaizen-mobile-web",
       "runtimeExecutable": "npx",
       "runtimeArgs": [
         "expo",
@@ -14,7 +14,7 @@
       "port": 8082
     },
     {
-      "name": "pulse-mobile-web-local-worknest",
+      "name": "kaizen-mobile-web-local-worknest",
       "runtimeExecutable": "env",
       "runtimeArgs": [
         "EXPO_PUBLIC_WORKNEST_URL=http://localhost:3000",

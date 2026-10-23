@@ -43,7 +43,7 @@ export function useInsight(uid: string | null, habits: Habit[], W: WorkoutData, 
   const [loading, setLoading] = useState(false);
   const ready = habits.length > 0 || W.logs.length > 0 || Object.keys(food.days).length > 0 || h.at > 0;
   // A new day, or tracker data arriving for the first time today, makes a fresh review.
-  const key = uid ? `pulse.insight.${uid}.${today()}.${h.at ? 'fit' : 'nofit'}` : null;
+  const key = uid ? `kaizen.insight.${uid}.${today()}.${h.at ? 'fit' : 'nofit'}` : null;
 
   useEffect(() => {
     if (!key || !ready) return;

@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
-/* SpendWise's own category glyphs (stroke icons on a 24 grid), so Pulse shows the same icon per category. */
+/* SpendWise's own category glyphs (stroke icons on a 24 grid), so Kaizen shows the same icon per category. */
 const PATHS: Record<string, ReactNode> = {
   food: (<><Path d="M4 3v7a3 3 0 0 0 3 3 3 3 0 0 0 3-3V3" /> <Path d="M7 3v10M7 13v8" /> <Path d="M17 3c-1.7 1.4-2.5 3.4-2.5 5.5S15.3 12.6 17 14v7" /></>),
   emi: (<><Rect x="3" y="4" width="18" height="16" rx="2.5" /> <Path d="M7 9h4M7 13h2M7 17h6" /> <Path d="M17 9v8" /></>),

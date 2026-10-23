@@ -1,4 +1,4 @@
-/* Pulse Coach: a Neon Function that makes every AI call for the app, so the OpenRouter key never ships to phones.
+/* Kaizen Coach: a Neon Function that makes every AI call for the app, so the OpenRouter key never ships to phones.
    Callers must send a Neon Auth JWT (the same short-lived token the app uses for the Data API).
    POST { messages, json?, temperature?, stream? }
      stream: true  → plain-text body that grows as the model writes
@@ -48,7 +48,7 @@ async function openrouter(body: object, models = MODELS): Promise<Response | str
   for (let attempt = 0; attempt < 3; attempt++) {
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json', 'X-Title': 'Pulse' },
+      headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json', 'X-Title': 'Kaizen' },
       body: JSON.stringify({ model: models[0], models, reasoning: { effort: 'low' }, ...body }),
       signal: AbortSignal.timeout(90_000),
     }).catch(() => null);

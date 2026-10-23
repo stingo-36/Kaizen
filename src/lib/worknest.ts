@@ -4,12 +4,12 @@ import { Platform } from 'react-native';
 
 import { normalizeUrl } from './spend';
 
-/* WorkNest link: Pulse shows the user's WorkNest Tracker (to-dos, follow-ups, notes) and Resources, and can add to both.
+/* WorkNest link: Kaizen shows the user's WorkNest Tracker (to-dos, follow-ups, notes) and Resources, and can add to both.
    The two apps keep separate accounts. Connecting trades the WorkNest email and password for a
    Tracker-only token once; only the token is kept (Keychain/Keystore), never the password. */
-const LINK_KEY = 'pulse.worknest.link';
-const CACHE_KEY = 'pulse.worknest.cache';
-const RES_CACHE_KEY = 'pulse.worknest.resources';
+const LINK_KEY = 'kaizen.worknest.link';
+const CACHE_KEY = 'kaizen.worknest.cache';
+const RES_CACHE_KEY = 'kaizen.worknest.resources';
 
 export type NestLink = { url: string; email: string; token: string };
 
@@ -56,7 +56,7 @@ export async function clearLink() {
   await Promise.all([secure.del(LINK_KEY), AsyncStorage.removeItem(CACHE_KEY), AsyncStorage.removeItem(RES_CACHE_KEY)]).catch(() => {});
 }
 
-/** The WorkNest server Pulse talks to. Fixed: users only sign in, they don't pick a server. */
+/** The WorkNest server Kaizen talks to. Fixed: users only sign in, they don't pick a server. */
 export const WORKNEST_URL = normalizeUrl(process.env.EXPO_PUBLIC_WORKNEST_URL || 'work-nest-en-rg.vercel.app') as string;
 
 /* Like SpendWise, WorkNest sits behind Vercel Deployment Protection; its own "Protection Bypass for
@@ -71,7 +71,7 @@ async function call<T>(url: string, init: RequestInit = {}): Promise<T> {
   try { res = await fetch(u, init); } catch { throw new Error('Couldn’t reach WorkNest. Check your connection.'); }
   if (res.url.includes('vercel.com')) throw new Error(BEHIND_LOGIN);
   // An older WorkNest without the phone API answers with an HTML page, not JSON.
-  if ((res.headers.get('content-type') ?? '').includes('text/html')) throw new Error('This WorkNest doesn’t support the Pulse link yet. Deploy the latest WorkNest.');
+  if ((res.headers.get('content-type') ?? '').includes('text/html')) throw new Error('This WorkNest doesn’t support the Kaizen link yet. Deploy the latest WorkNest.');
   const body = await res.json().catch(() => ({}));
   if (typeof body.error === 'object' && /protected deployment/i.test(body.error?.message ?? '')) throw new Error(BEHIND_LOGIN);
   if (res.status === 401) throw new NestAuthError(body.error || 'unauthorized');

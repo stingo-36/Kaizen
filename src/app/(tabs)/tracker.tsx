@@ -14,7 +14,7 @@ import { useWorkNest } from '@/lib/worknest-store';
 
 const host = WORKNEST_URL.replace(/^https?:\/\//, '');
 
-/* A list screen, so it runs a size below the rest of Pulse: 14 for titles, 12 for detail, 10.5 for labels. */
+/* A list screen, so it runs a size below the rest of Kaizen: 14 for titles, 12 for detail, 10.5 for labels. */
 const FS = { title: 14, meta: 12, label: 10.5 };
 
 type View_ = 'todo' | 'followups' | 'notes' | 'resources';
@@ -60,7 +60,7 @@ function Connect({ again }: { again?: boolean }) {
       <Input label="Password" value={password} onChange={(v) => { setPassword(v); setErr(''); }} placeholder="Your WorkNest password" secure />
       {err ? <T size={12} color={C.danger}>{err}</T> : null}
       <Btn title="Connect" onPress={submit} busy={busy} small />
-      <T size={11} color={C.muted}>Your password isn’t saved. Pulse keeps only a Tracker key on this phone.</T>
+      <T size={11} color={C.muted}>Your password isn’t saved. Kaizen keeps only a Tracker key on this phone.</T>
     </View>
   );
 }

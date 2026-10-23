@@ -25,7 +25,7 @@ export function snapshot(habits: Habit[], W: WorkoutData, p: Profile) {
 export function useCoachTip(uid: string | null, habits: Habit[], W: WorkoutData, p: Profile) {
   const [tip, setTip] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const key = uid ? `pulse.tip.${uid}.${today()}` : null;
+  const key = uid ? `kaizen.tip.${uid}.${today()}` : null;
   const ready = habits.length > 0 || W.logs.length > 0;
 
   useEffect(() => {

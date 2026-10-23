@@ -59,9 +59,9 @@ export default function Health() {
       {status === 'unsupported' ? (
         <Card style={{ gap: 10 }}>
           <View style={[st.big, { backgroundColor: PASTEL[2][0] }]}><HeartPulse size={24} color={PASTEL[2][1]} /></View>
-          <T size={18} w="s">{Platform.OS === 'web' ? 'Open Pulse on your Android phone' : 'Available on Android'}</T>
+          <T size={18} w="s">{Platform.OS === 'web' ? 'Open Kaizen on your Android phone' : 'Available on Android'}</T>
           <T size={14} color={C.muted} style={{ lineHeight: 20 }}>
-            Google Fit, Samsung Health, Fitbit and most watches share their data through Android’s Health Connect. Pulse reads sleep, steps, calories, exercise sessions, heart rate, resting heart rate and weight from there.
+            Google Fit, Samsung Health, Fitbit and most watches share their data through Android’s Health Connect. Kaizen reads sleep, steps, calories, exercise sessions, heart rate, resting heart rate and weight from there.
           </T>
           <Sources />
         </Card>
@@ -70,14 +70,14 @@ export default function Health() {
       ) : status !== 'ready' ? (
         <Card style={{ gap: 10 }}>
           <T size={18} w="s">{status === 'update-required' ? 'Update Health Connect' : 'Install Health Connect'}</T>
-          <T size={14} color={C.muted} style={{ lineHeight: 20 }}>Pulse reads your phone and watch data through Health Connect. Get it from the Play Store, then come back.</T>
+          <T size={14} color={C.muted} style={{ lineHeight: 20 }}>Kaizen reads your phone and watch data through Health Connect. Get it from the Play Store, then come back.</T>
           <Btn title="Open Play Store" onPress={() => Linking.openURL('market://details?id=com.google.android.apps.healthdata').catch(() => Linking.openURL('https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata'))} />
         </Card>
       ) : !granted.length ? (
         <Card style={{ gap: 12 }}>
           <View style={[st.big, { backgroundColor: PASTEL[0][0] }]}><ShieldCheck size={24} color={PASTEL[0][1]} /></View>
           <T size={18} w="s">Connect Google Fit and your watch</T>
-          <T size={14} color={C.muted} style={{ lineHeight: 20 }}>Pulse reads them through Health Connect. It asks for only these 7 types, writes nothing back, and you can turn each one off.</T>
+          <T size={14} color={C.muted} style={{ lineHeight: 20 }}>Kaizen reads them through Health Connect. It asks for only these 7 types, writes nothing back, and you can turn each one off.</T>
           <View style={{ gap: 8 }}>
             {HEALTH_TYPES.map((t) => { const I = ICON[t]; return <Row key={t} gap={10}><I size={17} color={C.muted} /><T size={14}>{HEALTH_LABEL[t]}</T></Row>; })}
           </View>

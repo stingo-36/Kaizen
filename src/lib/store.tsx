@@ -13,14 +13,15 @@ import { emptyWorkout, migrateWorkout, SessionLog, WorkoutData } from './workout
    ~1 s later. On launch and when the app returns to the foreground, the latest rows are pulled. */
 
 /** Demo sign-in shortcut: test1 / test1 maps to the demo account (the auth service needs 8+ character passwords). */
+// The shared demo account was created when the app was called Pulse; its login stays, since renaming it would lose its data.
 export const DEMO = { username: 'test1', password: 'test1', email: 'test1@pulse.app', cloudPassword: 'test1-pulse-demo' };
 export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'offline';
 
 const K = {
-  habits: (u: string) => `pulse.c.habits.${u}`,
-  workout: (u: string) => `pulse.c.workout.${u}`,
-  profile: (u: string) => `pulse.c.profile.${u}`,
-  synced: (u: string) => `pulse.c.synced.${u}`,
+  habits: (u: string) => `kaizen.c.habits.${u}`,
+  workout: (u: string) => `kaizen.c.workout.${u}`,
+  profile: (u: string) => `kaizen.c.profile.${u}`,
+  synced: (u: string) => `kaizen.c.synced.${u}`,
 };
 type Synced = { habits: Record<string, string>; state: string; sessions: string[]; profile: string };
 const emptySynced = (): Synced => ({ habits: {}, state: '', sessions: [], profile: '' });

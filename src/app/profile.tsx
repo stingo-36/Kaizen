@@ -116,7 +116,7 @@ export default function Profile() {
         {Platform.OS !== 'web' && (
           <Tap style={st.item} onPress={async () => {
             const ok = await ensurePermission();
-            if (ok) { await syncHabitReminders(habits); toast('Reminders are on'); } else toast('Allow notifications for Pulse in your phone’s Settings');
+            if (ok) { await syncHabitReminders(habits); toast('Reminders are on'); } else toast('Allow notifications for Kaizen in your phone’s Settings');
           }}><Bell size={20} color={C.accent} /><T size={15} w="s" style={{ flex: 1 }}>Turn on reminders</T></Tap>
         )}
         <Tap style={st.item} onPress={() => router.push('/health')}><HeartPulse size={20} color={C.accent} /><T size={15} w="s" style={{ flex: 1 }}>Google Fit & Health Connect</T></Tap>

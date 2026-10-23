@@ -8,7 +8,7 @@ import { Platform } from 'react-native';
 const AUTH = 'https://ep-green-credit-a1def8xw.neonauth.ap-southeast-1.aws.neon.tech/neondb/auth';
 const DATA = 'https://ep-green-credit-a1def8xw.apirest.ap-southeast-1.aws.neon.tech/neondb/rest/v1';
 const COOKIE = '__Secure-neon-auth.session_token';
-const SESSION_KEY = 'pulse.cloud.session';
+const SESSION_KEY = 'kaizen.cloud.session';
 
 export type CloudUser = { id: string; name: string; email: string; createdAt: string };
 type Saved = { cookie: string | null; user: CloudUser };

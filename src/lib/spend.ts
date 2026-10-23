@@ -2,11 +2,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-/* SpendWise link: Pulse reads a read-only spending summary from the user's SpendWise server.
+/* SpendWise link: Kaizen reads a read-only spending summary from the user's SpendWise server.
    The two apps keep separate accounts. Connecting trades the SpendWise email and password for a
    read-only token once; only the token is kept (Keychain/Keystore), never the password. */
-const LINK_KEY = 'pulse.spendwise.link';
-const CACHE_KEY = 'pulse.spendwise.cache';
+const LINK_KEY = 'kaizen.spendwise.link';
+const CACHE_KEY = 'kaizen.spendwise.cache';
 
 export type SpendLink = { url: string; email: string; token: string };
 
@@ -57,7 +57,7 @@ export function normalizeUrl(raw: string): string | null {
    Its "Protection Bypass for Automation" secret lets this app through while the site stays private. */
 const VERCEL_BYPASS = process.env.EXPO_PUBLIC_VERCEL_BYPASS;
 
-/** The SpendWise server Pulse reads from. Fixed: users only sign in, they don't pick a server. */
+/** The SpendWise server Kaizen reads from. Fixed: users only sign in, they don't pick a server. */
 export const SPENDWISE_URL = normalizeUrl(process.env.EXPO_PUBLIC_SPENDWISE_URL || 'spend-wise-en-rg.vercel.app') as string;
 
 async function call<T>(url: string, init: RequestInit = {}): Promise<T> {

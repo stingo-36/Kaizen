@@ -1,4 +1,4 @@
-/* AI calls go through Pulse's own Neon Function (mobile/server/coach), which holds the OpenRouter key and
+/* AI calls go through Kaizen's own Neon Function (mobile/server/coach), which holds the OpenRouter key and
    picks the models, so no key ships in the app. The function checks the signed-in user's token on every call. */
 import { fetch as streamFetch } from 'expo/fetch';
 

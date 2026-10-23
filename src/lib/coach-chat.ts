@@ -11,7 +11,7 @@ import { activePlan, type WorkoutData } from './workout';
 
 export type ChatMsg = { id: string; role: 'user' | 'assistant'; text: string; at: number };
 
-const key = (u: string) => `pulse.chat.${u}`;
+const key = (u: string) => `kaizen.chat.${u}`;
 export const loadChat = async (u: string): Promise<ChatMsg[]> => {
   try { return JSON.parse((await AsyncStorage.getItem(key(u))) || '[]'); } catch { return []; }
 };
@@ -38,7 +38,7 @@ export async function askCoach(history: ChatMsg[], data: { habits: Habit[]; W: W
   const reply = await askText([
     {
       role: 'system',
-      content: `You are Pulse Coach, a friendly, practical fitness, food and habit coach. Use the user's data below.
+      content: `You are Kaizen Coach, a friendly, practical fitness, food and habit coach. Use the user's data below.
 Answer in plain words, at most 120 words. Use short "- " bullet points for steps or lists. No markdown headings, no bold, no emoji.
 If something could be a medical issue, suggest seeing a doctor.
 

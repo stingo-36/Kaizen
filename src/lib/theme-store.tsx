@@ -6,7 +6,7 @@ import { useColorScheme } from 'react-native';
 import { applyScheme, C, Scheme, ThemeMode } from './theme';
 
 /* Light / Dark / System, chosen in Profile and kept on the phone. */
-const KEY = 'pulse.theme';
+const KEY = 'kaizen.theme';
 type Ctx = { mode: ThemeMode; scheme: Scheme; setMode: (m: ThemeMode) => void };
 const ThemeCtx = createContext<Ctx>({ mode: 'system', scheme: 'light', setMode: () => {} });
 export const useTheme = () => useContext(ThemeCtx);

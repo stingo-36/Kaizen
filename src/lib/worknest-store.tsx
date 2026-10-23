@@ -126,7 +126,7 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
     return () => { live = false; sub.remove(); };
   }, [load, loadResources]);
 
-  // The link belongs to whoever is signed in to Pulse on this phone: drop it when they log out.
+  // The link belongs to whoever is signed in to Kaizen on this phone: drop it when they log out.
   const prevMe = useRef(me);
   useEffect(() => {
     if (prevMe.current && !me) disconnect();

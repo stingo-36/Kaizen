@@ -131,7 +131,7 @@ export function ResourcesView() {
       ) : (
         <View style={st.empty}>
           <T size={14} w="s" center>Save reels and links here</T>
-          <T size={12.5} color={C.muted} center style={{ lineHeight: 18 }}>In Instagram, tap Share → Pulse on a reel, add screenshots of the names or links, and Pulse saves the list to your WorkNest Resources.</T>
+          <T size={12.5} color={C.muted} center style={{ lineHeight: 18 }}>In Instagram, tap Share → Kaizen on a reel, add screenshots of the names or links, and Kaizen saves the list to your WorkNest Resources.</T>
           <Btn title="Add from screenshots" icon={Plus} small kind="ghost" onPress={() => router.push('/share')} />
         </View>
       )}

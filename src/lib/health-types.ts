@@ -1,4 +1,4 @@
-/** The seven Health Connect data types Pulse reads. Each needs its own permission, so only these are requested. */
+/** The seven Health Connect data types Kaizen reads. Each needs its own permission, so only these are requested. */
 export const HEALTH_TYPES = ['Steps', 'SleepSession', 'TotalCaloriesBurned', 'ExerciseSession', 'HeartRate', 'RestingHeartRate', 'Weight'] as const;
 export type HealthType = (typeof HEALTH_TYPES)[number];
 

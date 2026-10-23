@@ -8,7 +8,7 @@ import { normExercise, PlanExercise } from './workout';
    Downloaded once, trimmed, and kept on the phone so search works offline. */
 const SRC = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json';
 const IMG = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
-const KEY = 'pulse.exlib.v2';
+const KEY = 'kaizen.exlib.v2';
 
 export type LibExercise = {
   id: string; name: string; category: string; equipment: string; level: string;
@@ -127,7 +127,7 @@ export function simpleSteps(steps: string[]): string[] {
   return out.slice(0, 7);
 }
 
-const SIMPLE_KEY = (id: string) => `pulse.exsteps.${id}`;
+const SIMPLE_KEY = (id: string) => `kaizen.exsteps.${id}`;
 /** Plain-words steps for an exercise: instant local version, replaced by a cached AI rewrite when available. */
 export function useSimpleSteps(e: LibExercise | null) {
   const local = useMemo(() => (e ? simpleSteps(e.steps) : []), [e]);

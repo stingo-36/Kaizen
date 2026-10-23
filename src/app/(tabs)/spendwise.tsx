@@ -41,7 +41,7 @@ function Connect({ again }: { again?: boolean }) {
         <T size={TY.body} color={C.muted} style={{ lineHeight: 20 }}>
           {again
             ? 'SpendWise no longer accepts this phone’s key. Sign in once more to keep seeing your spending.'
-            : 'Sign in with your SpendWise account. Pulse only reads your spending summary and never changes anything.'}
+            : 'Sign in with your SpendWise account. Kaizen only reads your spending summary and never changes anything.'}
         </T>
       </View>
       <View style={st.server}>
@@ -53,7 +53,7 @@ function Connect({ again }: { again?: boolean }) {
       <Input label="Password" value={password} onChange={(v) => { setPassword(v); setErr(''); }} placeholder="Your SpendWise password" secure />
       {err ? <T size={TY.sub} color={C.danger}>{err}</T> : null}
       <Btn title="Connect" onPress={submit} busy={busy} />
-      <T size={TY.cap} color={C.muted}>Your password isn’t saved. Pulse keeps only a read-only key on this phone.</T>
+      <T size={TY.cap} color={C.muted}>Your password isn’t saved. Kaizen keeps only a read-only key on this phone.</T>
     </Card>
   );
 }

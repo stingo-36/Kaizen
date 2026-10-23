@@ -1,10 +1,10 @@
-# Pulse Coach function
+# Kaizen Coach function
 
 Every AI call in the app (coach chat, daily tip, weekly insight, workout plans, exercise help, and turning a shared
-reel plus screenshots into a WorkNest resource) goes through this Neon Function, so the OpenRouter key stays on the server. It accepts only signed-in Pulse users (Neon Auth JWT),
+reel plus screenshots into a WorkNest resource) goes through this Neon Function, so the OpenRouter key stays on the server. It accepts only signed-in Kaizen users (Neon Auth JWT),
 caps message size, and limits each user to 40 calls per 10 minutes.
 
-- Project: Pulse (`jolly-field-54618531`), branch `main` (`br-young-salad-a1ehycin`)
+- Project: Kaizen (`jolly-field-54618531`), branch `main` (`br-young-salad-a1ehycin`)
 - URL: https://br-young-salad-a1ehycin-coach.compute.c-1.ap-southeast-1.aws.neon.tech/
 
 ## Models

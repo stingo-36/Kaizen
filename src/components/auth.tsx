@@ -26,7 +26,7 @@ export function Field({ icon: Icon, value, onChange, placeholder, secure, autoCo
   );
 }
 
-/* What Pulse covers, shown as a strip of the same pastel tones the app uses for each area. */
+/* What Kaizen covers, shown as a strip of the same pastel tones the app uses for each area. */
 const AREAS: { icon: LucideIcon; label: string; tone: number }[] = [
   { icon: ListChecks, label: 'Habits', tone: 0 },
   { icon: Dumbbell, label: 'Workouts', tone: 4 },
@@ -51,7 +51,7 @@ export function AuthShell({ mode, children }: { mode: 'login' | 'register'; chil
         contentContainerStyle={[st.page, { paddingTop: insets.top + 20, paddingBottom: (kb || insets.bottom) + 24 }]}>
         <View style={st.brand}>
           <View style={st.mark}><Activity size={17} color={C.white} /></View>
-          <T size={17} w="b">Pulse</T>
+          <T size={17} w="b">Kaizen</T>
         </View>
 
         <View style={{ gap: 8, marginTop: 36 }}>
@@ -61,7 +61,7 @@ export function AuthShell({ mode, children }: { mode: 'login' | 'register'; chil
           </T>
         </View>
 
-        <View style={st.areas} accessible accessibilityLabel="Pulse tracks habits, workouts, food, steps and spending">
+        <View style={st.areas} accessible accessibilityLabel="Kaizen tracks habits, workouts, food, steps and spending">
           {AREAS.map(({ icon: Icon, label, tone }) => (
             <View key={label} style={st.area}>
               <View style={[st.areaIc, { backgroundColor: PASTEL[tone][0] }]}><Icon size={17} color={PASTEL[tone][1]} /></View>

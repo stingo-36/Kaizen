@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Pulse",
-    "slug": "pulse",
+    "name": "Kaizen",
+    "slug": "kaizen",
     "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "pulse",
+    "scheme": "kaizen",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"
@@ -25,9 +25,13 @@
         "android.permission.health.READ_EXERCISE",
         "android.permission.health.READ_HEART_RATE",
         "android.permission.health.READ_RESTING_HEART_RATE",
-        "android.permission.health.READ_WEIGHT"
+        "android.permission.health.READ_WEIGHT",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "android.permission.READ_MEDIA_IMAGES"
       ],
-      "package": "com.stingo36.pulse",
+      "package": "com.stingo36.kaizen",
       "runtimeVersion": {
         "policy": "appVersion"
       }
@@ -82,7 +86,7 @@
       [
         "expo-media-library",
         {
-          "photosPermission": "Pulse shows your recent screenshots so you can turn them into a saved resource.",
+          "photosPermission": "Kaizen shows your recent screenshots so you can turn them into a saved resource.",
           "granularPermissions": [
             "photo"
           ]
@@ -101,17 +105,17 @@
         }
       },
       "eas": {
-        "projectId": "9b674e9a-1129-4fbb-96cb-56a6d707445c"
+        "projectId": "ad537f30-9e55-442e-af6a-d276c293c399"
       }
     },
     "owner": "stingo36",
-    "updates": {
-      "url": "https://u.expo.dev/9b674e9a-1129-4fbb-96cb-56a6d707445c",
-      "checkAutomatically": "ON_LOAD",
-      "fallbackToCacheTimeout": 5000
-    },
     "runtimeVersion": {
       "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/ad537f30-9e55-442e-af6a-d276c293c399",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 5000
     }
   }
 }

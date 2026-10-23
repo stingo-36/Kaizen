@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* Loads the shared `foods` table in Neon from USDA FoodData Central (public domain, no API key).
    Run once to fill the table, then monthly to pick up new USDA releases:  npm run foods:sync
-   Needs DATABASE_URL (the Pulse project's connection string) in mobile/.env.local.
+   Needs DATABASE_URL (the Kaizen project's connection string) in mobile/.env.local.
    Rows are upserted by id, so re-running only adds or refreshes foods; products users added are untouched. */
 import { neon } from '@neondatabase/serverless';
 import { execFileSync } from 'node:child_process';
@@ -69,7 +69,7 @@ async function latestReleases() {
 }
 
 async function main() {
-  const dir = mkdtempSync(join(tmpdir(), 'pulse-foods-'));
+  const dir = mkdtempSync(join(tmpdir(), 'kaizen-foods-'));
   try {
     const rows = new Map();
     for (const path of await latestReleases()) {
