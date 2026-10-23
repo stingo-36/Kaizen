@@ -17,6 +17,7 @@ import { BookOpen as PBookOpen } from 'phosphor-react-native/src/icons/BookOpen'
 import { BookmarkSimple as PBookmark } from 'phosphor-react-native/src/icons/BookmarkSimple';
 import { ArrowSquareOut as PExternalLink } from 'phosphor-react-native/src/icons/ArrowSquareOut';
 import { LinkSimple as PLink2 } from 'phosphor-react-native/src/icons/LinkSimple';
+import { Images as PImages } from 'phosphor-react-native/src/icons/Images';
 import { CalendarCheck as PCalendarClock } from 'phosphor-react-native/src/icons/CalendarCheck';
 import { Check as PCheck } from 'phosphor-react-native/src/icons/Check';
 import { CheckCircle as PCheckCircle2 } from 'phosphor-react-native/src/icons/CheckCircle';
@@ -109,6 +110,7 @@ export const BookOpen = wrap(PBookOpen, 'duotone');
 export const Bookmark = wrap(PBookmark, 'duotone');
 export const ExternalLink = wrap(PExternalLink, 'bold');
 export const Link2 = wrap(PLink2, 'bold');
+export const Images = wrap(PImages, 'duotone');
 export const Briefcase = wrap(PBriefcase, 'duotone');
 export const Notebook = wrap(PNotebook, 'duotone');
 export const CalendarClock = wrap(PCalendarClock, 'duotone');

@@ -6,12 +6,18 @@ import { Platform } from 'react-native';
 
 export type Shot = { id: string; uri: string; at: number };
 
-/** The newest screenshots (Screenshots album when there is one), for picking right after sharing a reel. */
-export async function recentScreenshots(limit = 18): Promise<Shot[] | 'denied'> {
+/** Photo access: 'blocked' means Android won't ask again, so only Settings can grant it. */
+export type PhotoAccess = 'granted' | 'denied' | 'blocked';
+export async function photoAccess(): Promise<PhotoAccess> {
+  if (Platform.OS === 'web') return 'denied';
+  const r = await requestPermissionsAsync(false, ['photo']);
+  return r.granted ? 'granted' : r.canAskAgain ? 'denied' : 'blocked';
+}
+
+/** Newest images first: the Screenshots album when asked and there is one, otherwise every photo. Needs photo access. */
+export async function recentImages({ limit = 18, screenshotsOnly = true } = {}): Promise<Shot[]> {
   if (Platform.OS === 'web') return [];
-  const { granted } = await requestPermissionsAsync(false, ['photo']);
-  if (!granted) return 'denied';
-  const album = await Album.get('Screenshots').catch(() => null);
+  const album = screenshotsOnly ? await Album.get('Screenshots').catch(() => null) : null;
   let q = new Query().eq(AssetField.MEDIA_TYPE, MediaType.IMAGE).orderBy({ key: AssetField.CREATION_TIME, ascending: false }).limit(limit);
   if (album) q = q.album(album);
   const assets = await q.exe();

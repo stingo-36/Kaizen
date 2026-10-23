@@ -31,10 +31,11 @@ export const Label = ({ children, style }: { children: ReactNode; style?: StyleP
 );
 
 /* ---------- layout ---------- */
-export function Screen({ children, tabs, scroll = true, style }: { children: ReactNode; tabs?: boolean; scroll?: boolean; style?: StyleProp<ViewStyle> }) {
+/** `footer` stays pinned at the bottom (above the keyboard) while the content scrolls, for a screen's main action. */
+export function Screen({ children, tabs, scroll = true, style, footer }: { children: ReactNode; tabs?: boolean; scroll?: boolean; style?: StyleProp<ViewStyle>; footer?: ReactNode }) {
   const insets = useSafeAreaInsets();
   const kb = useKeyboardHeight();
-  const pad = { paddingBottom: kb ? kb + 24 : (tabs ? 110 : 32) + insets.bottom };
+  const pad = { paddingBottom: footer ? 20 : kb ? kb + 24 : (tabs ? 110 : 32) + insets.bottom };
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: C.bg }}>
       <FocusReplay>
@@ -43,6 +44,7 @@ export function Screen({ children, tabs, scroll = true, style }: { children: Rea
         ) : (
           <View style={[s.screen, { flex: 1 }, pad, style]}>{children}</View>
         )}
+        {footer ? <View style={[s.footer, { paddingBottom: kb ? kb + 10 : insets.bottom + 12 }]}>{footer}</View> : null}
       </FocusReplay>
     </SafeAreaView>
   );
@@ -233,6 +235,7 @@ export function Sheet({ open, onClose, title, subtitle, children }: { open: bool
 
 export const s = themed(() => StyleSheet.create({
   screen: { paddingHorizontal: 20, paddingTop: 16, gap: SP.section },
+  footer: { paddingHorizontal: 20, paddingTop: 10, gap: 8, backgroundColor: C.bg, borderTopWidth: 1, borderTopColor: C.line },
   card: { backgroundColor: C.card, borderRadius: R.card, padding: SP.pad, borderWidth: 1, borderColor: C.line },
   btn: { minHeight: 50, borderRadius: R.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 20 },
   btnSm: { minHeight: 38, paddingHorizontal: 16 },

@@ -1,18 +1,63 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useIncomingShare } from 'expo-sharing';
-import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, FlatList, Linking, Modal, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Check, Link2, Sparkles, Trash2 } from '@/components/ico';
+import { Check, Images, Link2, Plus, Sparkles, Trash2, X } from '@/components/ico';
 import { BackHeader, Btn, Input, Row, Screen, T, haptic, useToast } from '@/components/ui';
 import { draftResource, ResourceDraft } from '@/lib/ai';
 import { goBack } from '@/lib/nav';
-import { deleteScreenshots, firstLink, recentScreenshots, Shot, shrink } from '@/lib/screenshots';
+import { deleteScreenshots, firstLink, photoAccess, PhotoAccess, recentImages, Shot, shrink } from '@/lib/screenshots';
 import { C, F, PASTEL, themed } from '@/lib/theme';
 import { useWorkNest } from '@/lib/worknest-store';
 
 const MAX_SHOTS = 6;
+
+/** Full-screen gallery: Screenshots album first (or every photo), tap to pick up to MAX_SHOTS. */
+function GalleryPicker({ open, picked, onToggle, onClose }: { open: boolean; picked: string[]; onToggle: (s: Shot) => void; onClose: () => void }) {
+  const [onlyShots, setOnlyShots] = useState(true);
+  const [items, setItems] = useState<Shot[] | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    let live = true;
+    recentImages({ limit: 90, screenshotsOnly: onlyShots }).then((r) => { if (live) setItems(r); }).catch(() => { if (live) setItems([]); });
+    return () => { live = false; };
+  }, [open, onlyShots]);
+  const filter = (v: boolean) => { haptic('select'); setItems(null); setOnlyShots(v); };
+  return (
+    <Modal visible={open} animationType="slide" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
+      <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
+        <Row style={st.pickerHead}>
+          <Pressable onPress={onClose} hitSlop={10} accessibilityRole="button" accessibilityLabel="Close"><X size={20} color={C.ink} /></Pressable>
+          <T size={16} w="s" style={{ flex: 1, textAlign: 'center' }}>Pick screenshots</T>
+          <Pressable onPress={onClose} hitSlop={10} accessibilityRole="button"><T size={15} w="s" color={C.accent}>Done{picked.length ? ` (${picked.length})` : ''}</T></Pressable>
+        </Row>
+        <Row gap={8} style={{ paddingHorizontal: 16, paddingBottom: 10 }}>
+          {([[true, 'Screenshots'], [false, 'All photos']] as const).map(([v, l]) => (
+            <Pressable key={l} onPress={() => filter(v)} style={[st.chip, onlyShots === v && { backgroundColor: C.ink, borderColor: C.ink }]} accessibilityRole="radio" accessibilityState={{ checked: onlyShots === v }}>
+              <T size={12.5} w="s" color={onlyShots === v ? C.onInk : C.ink}>{l}</T>
+            </Pressable>
+          ))}
+        </Row>
+        {items === null ? <ActivityIndicator color={C.accent} style={{ marginTop: 40 }} />
+          : items.length ? (
+            <FlatList data={items} keyExtractor={(s) => s.id} numColumns={3} contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 40, gap: 6 }} columnWrapperStyle={{ gap: 6 }}
+              renderItem={({ item }) => {
+                const n = picked.indexOf(item.id);
+                return (
+                  <Pressable onPress={() => onToggle(item)} style={[st.cell, n >= 0 && { borderColor: C.accent }]} accessibilityRole="checkbox" accessibilityState={{ checked: n >= 0 }} accessibilityLabel="Photo">
+                    <Image source={{ uri: item.uri }} style={StyleSheet.absoluteFill} contentFit="cover" recyclingKey={item.id} />
+                    {n >= 0 ? <View style={st.pick}><T size={11} w="b" color={C.white}>{n + 1}</T></View> : null}
+                  </Pressable>
+                );
+              }} />
+          ) : <T size={13} color={C.muted} center style={{ marginTop: 40 }}>{onlyShots ? 'No screenshots found. Try All photos.' : 'No photos found.'}</T>}
+      </SafeAreaView>
+    </Modal>
+  );
+}
 /** WorkNest's built-in types, for a WorkNest that hasn't sent the user's own list yet. */
 const DEFAULT_TYPES = ['Website', 'App', 'Link', 'Tool', 'Command', 'Documentation', 'Snippet', 'Reference', 'Learning', 'Other'];
 
@@ -34,8 +79,12 @@ export default function Share() {
   }, [sharedPayloads]);
 
   const [link, setLink] = useState('');
-  const [shots, setShots] = useState<Shot[] | 'denied' | null>(null);
+  const [access, setAccess] = useState<PhotoAccess | null>(null);
+  const [recent, setRecent] = useState<Shot[]>([]);
   const [picked, setPicked] = useState<string[]>([]);
+  // Uris for picked ids, including ones chosen in the full gallery that aren't in the recent row.
+  const [uris, setUris] = useState<Record<string, string>>({});
+  const [gallery, setGallery] = useState(false);
   const [phase, setPhase] = useState<'pick' | 'reading' | 'review' | 'saving'>('pick');
   const [draft, setDraft] = useState<ResourceDraft | null>(null);
   const [title, setTitle] = useState('');
@@ -52,20 +101,39 @@ export default function Share() {
     if (shared.link) setLink(shared.link);
     if (shared.images.length) setPicked((p) => [...new Set([...shared.images, ...p])].slice(0, MAX_SHOTS));
   }
-  useEffect(() => { recentScreenshots().then(setShots).catch(() => setShots([])); }, []);
+  const askPhotos = useCallback(async () => {
+    const a = await photoAccess().catch(() => 'denied' as const);
+    setAccess(a);
+    if (a === 'granted') setRecent(await recentImages({ limit: 12 }).catch(() => []));
+  }, []);
+  // Ask once on open, so the recent row is ready; the Add button asks again if it was declined.
+  useEffect(() => {
+    let live = true;
+    photoAccess().then(async (a) => {
+      if (!live) return;
+      setAccess(a);
+      if (a === 'granted') { const r = await recentImages({ limit: 12 }).catch(() => []); if (live) setRecent(r); }
+    }).catch(() => { if (live) setAccess('denied'); });
+    return () => { live = false; };
+  }, []);
 
   const types = resourceTypes.length ? resourceTypes : DEFAULT_TYPES;
-  // Shared images that aren't among the recent screenshots still show (first) so they can be unticked.
-  const grid: Shot[] = useMemo(() => {
-    const recent = Array.isArray(shots) ? shots : [];
+  // The recent row: shared images first (so they can be unticked), then the latest screenshots.
+  const row: Shot[] = useMemo(() => {
     const extra = shared.images.filter((u) => !recent.some((s) => s.id === u)).map((u) => ({ id: u, uri: u, at: 0 }));
     return [...extra, ...recent];
-  }, [shots, shared.images]);
-  const uriOf = (id: string) => grid.find((s) => s.id === id)?.uri ?? id;
+  }, [recent, shared.images]);
+  const uriOf = (id: string) => uris[id] ?? row.find((s) => s.id === id)?.uri ?? id;
 
-  const toggle = (id: string) => {
+  const toggle = (s: Shot) => {
     haptic('select');
-    setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length >= MAX_SHOTS ? (toast(`Up to ${MAX_SHOTS} screenshots`), p) : [...p, id]));
+    setUris((u) => ({ ...u, [s.id]: s.uri }));
+    setPicked((p) => (p.includes(s.id) ? p.filter((x) => x !== s.id) : p.length >= MAX_SHOTS ? (toast(`Up to ${MAX_SHOTS} screenshots`), p) : [...p, s.id]));
+  };
+  const openGallery = () => {
+    if (access === 'granted') return setGallery(true);
+    if (access === 'blocked') return Linking.openSettings();
+    askPhotos().then(() => setGallery(true));
   };
 
   const read = async () => {
@@ -127,7 +195,12 @@ export default function Share() {
 
   if (phase === 'review' || phase === 'saving') {
     return (
-      <Screen>
+      <Screen footer={(
+        <>
+          {err ? <T size={13} color={C.danger}>{err}</T> : null}
+          <Btn title="Save to WorkNest" icon={Check} onPress={save} busy={phase === 'saving'} />
+        </>
+      )}>
         <BackHeader title="Check and save" onBack={() => setPhase('pick')} />
         {draft?.source ? (
           <Row gap={8} style={st.source}>
@@ -170,45 +243,73 @@ export default function Share() {
             <Switch value={removeShots} onValueChange={setRemoveShots} trackColor={{ true: C.accent }} accessibilityLabel="Delete screenshots after saving" />
           </Row>
         ) : null}
-        {err ? <T size={13} color={C.danger}>{err}</T> : null}
-        <Btn title="Save to WorkNest" icon={Check} onPress={save} busy={phase === 'saving'} />
       </Screen>
     );
   }
 
+  const pickedShots = picked.map((id) => ({ id, uri: uriOf(id) }));
   return (
-    <Screen>
+    <Screen footer={(
+      <>
+        {err ? <T size={13} color={C.danger}>{err}</T> : null}
+        <Btn title={picked.length ? `Read ${picked.length} screenshot${picked.length > 1 ? 's' : ''}` : link.trim() ? 'Save with the link only' : 'Add a link or screenshots'}
+          icon={Sparkles} onPress={read} />
+      </>
+    )}>
       <BackHeader title="Save to Resources" onBack={close} />
       <View style={{ gap: 6 }}>
         <Input label="Link" value={link} onChange={(v) => { setLink(v); setErr(''); }} placeholder="https://www.instagram.com/reel/…" keyboard="url" />
         {shared.link ? <T size={12} color={C.muted}>From your share. Pulse reads the post’s title and caption, not the video.</T> : null}
       </View>
 
-      <View style={{ gap: 8 }}>
-        <Row style={{ justifyContent: 'space-between' }}>
-          <T size={13} w="s" color={C.muted}>Screenshots{picked.length ? ` · ${picked.length} picked` : ''}</T>
-          {shots === 'denied' ? <Pressable onPress={() => Linking.openSettings()} hitSlop={8}><T size={12.5} w="s" color={C.accent}>Allow photos</T></Pressable> : null}
-        </Row>
-        <T size={12} color={C.muted}>Pick the ones where the names or links show. They’re read once, then deleted after saving.</T>
-        {shots === null ? <ActivityIndicator color={C.accent} style={{ alignSelf: 'flex-start' }} />
-          : grid.length ? (
-            <View style={st.grid}>
-              {grid.map((s) => {
-                const n = picked.indexOf(s.id);
+      <View style={{ gap: 10 }}>
+        <View style={{ gap: 2 }}>
+          <T size={13} w="s" color={C.muted}>Screenshots{picked.length ? ` · ${picked.length} of ${MAX_SHOTS}` : ''}</T>
+          <T size={12} color={C.muted}>Add the ones where names or links show. They’re read once, then deleted after saving.</T>
+        </View>
+
+        <Pressable onPress={openGallery} accessibilityRole="button" style={st.addBtn}>
+          <View style={st.addIc}><Images size={18} color={C.accent} /></View>
+          <View style={{ flex: 1 }}>
+            <T size={14} w="s">Add screenshots</T>
+            <T size={12} color={C.muted}>{access === 'blocked' ? 'Photo access is off. Tap to open Settings.' : access === 'denied' ? 'Tap to allow photo access' : 'Choose from your gallery'}</T>
+          </View>
+          <Plus size={18} color={C.accent} />
+        </Pressable>
+
+        {pickedShots.length ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+            {pickedShots.map((s, i) => (
+              <View key={s.id} style={[st.thumb, { borderColor: C.accent }]}>
+                <Image source={{ uri: s.uri }} style={StyleSheet.absoluteFill} contentFit="cover" recyclingKey={s.id} />
+                <View style={[st.pick, { left: 5, right: undefined }]}><T size={11} w="b" color={C.white}>{i + 1}</T></View>
+                <Pressable onPress={() => toggle(s as Shot)} hitSlop={8} style={st.remove} accessibilityRole="button" accessibilityLabel={`Remove screenshot ${i + 1}`}>
+                  <X size={12} color={C.white} />
+                </Pressable>
+              </View>
+            ))}
+          </ScrollView>
+        ) : null}
+
+        {row.length ? (
+          <View style={{ gap: 6 }}>
+            <T size={11} w="s" color={C.faint} style={{ letterSpacing: 0.6 }}>RECENT · TAP TO ADD</T>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+              {row.map((s) => {
+                const on = picked.includes(s.id);
                 return (
-                  <Pressable key={s.id} onPress={() => toggle(s.id)} accessibilityRole="checkbox" accessibilityState={{ checked: n >= 0 }} accessibilityLabel="Screenshot"
-                    style={[st.shot, n >= 0 && { borderColor: C.accent }]}>
+                  <Pressable key={s.id} onPress={() => toggle(s)} accessibilityRole="checkbox" accessibilityState={{ checked: on }} accessibilityLabel="Recent screenshot"
+                    style={[st.thumb, st.thumbSm, on && { borderColor: C.accent, opacity: 0.55 }]}>
                     <Image source={{ uri: s.uri }} style={StyleSheet.absoluteFill} contentFit="cover" recyclingKey={s.id} />
-                    {n >= 0 ? <View style={st.pick}><T size={11} w="b" color={C.white}>{n + 1}</T></View> : null}
+                    {on ? <View style={st.pick}><Check size={11} color={C.white} /></View> : null}
                   </Pressable>
                 );
               })}
-            </View>
-          ) : <T size={13} color={C.muted}>{shots === 'denied' ? 'Allow photo access to pick screenshots here, or share them to Pulse from your gallery.' : 'No screenshots yet.'}</T>}
+            </ScrollView>
+          </View>
+        ) : null}
       </View>
-
-      {err ? <T size={13} color={C.danger}>{err}</T> : null}
-      <Btn title={picked.length ? `Read ${picked.length} screenshot${picked.length > 1 ? 's' : ''}` : 'Continue with the link only'} icon={Sparkles} onPress={read} />
+      <GalleryPicker open={gallery} picked={picked} onToggle={toggle} onClose={() => setGallery(false)} />
     </Screen>
   );
 }
@@ -221,7 +322,12 @@ const st = themed(() => StyleSheet.create({
   chip: { paddingVertical: 7, paddingHorizontal: 12, borderRadius: 99, borderWidth: 1, borderColor: C.field, backgroundColor: C.card },
   area: { minHeight: 160, borderRadius: 14, borderWidth: 1.5, borderColor: C.field, backgroundColor: C.card, padding: 12, fontFamily: F.r, fontSize: 14, lineHeight: 20, color: C.ink, textAlignVertical: 'top' },
   toggleRow: { padding: 14, borderRadius: 16, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  shot: { width: '31.5%', aspectRatio: 9 / 16, borderRadius: 12, overflow: 'hidden', borderWidth: 2.5, borderColor: 'transparent', backgroundColor: C.soft },
+  addBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, borderWidth: 1.5, borderStyle: 'dashed', borderColor: C.accent, backgroundColor: C.accentTint },
+  addIc: { width: 38, height: 38, borderRadius: 12, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
+  thumb: { width: 84, height: 150, borderRadius: 12, overflow: 'hidden', borderWidth: 2.5, borderColor: 'transparent', backgroundColor: C.soft },
+  thumbSm: { width: 62, height: 110, borderWidth: 2 },
+  remove: { position: 'absolute', top: 5, right: 5, width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
+  pickerHead: { paddingHorizontal: 16, paddingVertical: 14 },
+  cell: { flex: 1 / 3, aspectRatio: 9 / 16, borderRadius: 10, overflow: 'hidden', borderWidth: 2.5, borderColor: 'transparent', backgroundColor: C.soft },
   pick: { position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: 11, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' },
 }));
