@@ -143,7 +143,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       // Workout: plans and settings from the cloud unless changed here; logs are merged by id.
       const st = states[0];
       const cloudW = st ? migrateWorkout({ plans: st.plans, activePlanId: st.active_plan_id, lastChanges: st.last_changes, selDay: st.sel_day, plan: st.plans?.length ? null : st.plan }) : null;
-      const localDirtyState = stateOf(local.workout) !== s.state;
+      // Never synced on this device: the empty local state isn't an edit, so it must not overwrite the cloud plan.
+      const localDirtyState = s.state !== '' && stateOf(local.workout) !== s.state;
       const extraLocal = local.workout.logs.filter((l) => !sessions.some((x) => x.id === l.id) && !s.sessions.includes(l.id));
       const w: WorkoutData = migrateWorkout({
         ...local.workout,
