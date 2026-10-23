@@ -1,15 +1,18 @@
-import { Geist_400Regular, Geist_500Medium, Geist_600SemiBold, Geist_700Bold, useFonts } from '@expo-google-fonts/geist';
+import { Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold, Outfit_700Bold, useFonts } from '@expo-google-fonts/outfit';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { PaperIcon } from '@/components/paper-icons';
 import { ToastProvider } from '@/components/ui';
 import { FoodProvider } from '@/lib/food-store';
 import { HealthProvider } from '@/lib/health-store';
 import { initNotifications } from '@/lib/notifications';
+import { paperTheme } from '@/lib/paper-theme';
 import { SpendProvider } from '@/lib/spend-store';
 import { StoreProvider, useStore } from '@/lib/store';
 import { C } from '@/lib/theme';
@@ -74,13 +77,14 @@ function ThemedStatusBar() {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({ Geist_400Regular, Geist_500Medium, Geist_600SemiBold, Geist_700Bold });
+  const [fontsLoaded, fontError] = useFonts({ Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold, Outfit_700Bold });
   useEffect(() => { initNotifications().catch(() => {}); }, []);
   if (!fontsLoaded && !fontError) return null;
   return (
     <ThemeProvider>
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
+        <PaperProvider theme={paperTheme} settings={{ icon: PaperIcon }}>
         <StoreProvider>
           <FoodProvider>
             <HealthProvider>
@@ -95,6 +99,7 @@ export default function RootLayout() {
             </HealthProvider>
           </FoodProvider>
         </StoreProvider>
+        </PaperProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
     </ThemeProvider>

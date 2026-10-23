@@ -58,7 +58,7 @@ export function PagerScreen({ header, pages, tabs, initial = 0, index: ctrl, onI
     const i = Math.round(e.nativeEvent.contentOffset.x / w);
     if (i !== index && i >= 0 && i < pages.length) { haptic('select'); set(i); }
   };
-  const pad = { paddingBottom: (tabs ? 110 : 32) + insets.bottom };
+  const pad = { paddingBottom: tabs ? 28 : 32 + insets.bottom };
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: C.bg }}>
@@ -89,5 +89,5 @@ const st = themed(() => StyleSheet.create({
   head: { paddingHorizontal: 20, paddingTop: 12, gap: 16 },
   tabs: { flexDirection: 'row', gap: 20, borderBottomWidth: 1, borderBottomColor: C.line },
   tab: { paddingBottom: 9, marginBottom: -1, borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  tabOn: { borderBottomColor: C.ink },
+  tabOn: { borderBottomColor: C.accent },
 }));

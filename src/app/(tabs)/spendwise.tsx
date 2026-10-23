@@ -65,7 +65,7 @@ function Tile({ icon: Icon, tone, label, value }: { icon: typeof Wallet; tone: [
   return (
     <View style={[st.tile, { backgroundColor: tone[0] }]} accessible accessibilityLabel={`${label}: ${value}`}>
       <Row style={{ justifyContent: 'space-between' }}>
-        <T size={10.5} w="s" color={tone[1]} numberOfLines={1} style={{ letterSpacing: 0.8, textTransform: 'uppercase', flex: 1 }}>{label}</T>
+        <T size={13} w="s" color={tone[1]} numberOfLines={1} style={{ flex: 1 }}>{label}</T>
         <View style={st.tileIc}><Icon size={15} color={tone[1]} /></View>
       </Row>
       <T size={20} w="b" color={tone[1]} numberOfLines={1} adjustsFontSizeToFit>{value}</T>
@@ -163,5 +163,5 @@ const st = themed(() => StyleSheet.create({
   tile: { flex: 1, minWidth: 0, minHeight: 108, borderRadius: 20, padding: 16, justifyContent: 'space-between', gap: 14 },
   tileIc: { width: 30, height: 30, borderRadius: 15, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
   all: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 14, borderTopWidth: 1, borderTopColor: C.line },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 20, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 20, backgroundColor: C.card },
 }));

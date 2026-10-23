@@ -3,13 +3,10 @@ import { Check, Clock, Flame, Plus } from '@/components/ico';
 import { StyleSheet, View } from 'react-native';
 
 import { fmtTime, today } from '@/lib/dates';
-import { count, Habit, isDone, PASTEL, scheduleText, streak } from '@/lib/habits';
+import { count, Habit, isDone, pastel, scheduleText, streak } from '@/lib/habits';
 import { C, themed } from '@/lib/theme';
 import { HabitIcon } from './icons';
 import { Bar, T, Tap } from './ui';
-
-/* Habits are the green area of the app, so every habit icon uses the green pastel. */
-const tone = () => PASTEL[0];
 
 /**
  * One habit: icon, name, time + status, round check (or + for counted habits).
@@ -17,7 +14,7 @@ const tone = () => PASTEL[0];
  */
 export function HabitCard({ h, day = today(), onTap, flat, first }: { h: Habit; day?: string; onTap: () => void; flat?: boolean; first?: boolean }) {
   const router = useRouter();
-  const [bg, ink] = tone();
+  const [bg, ink] = pastel(h);
   const n = count(h, day), dn = isDone(h, day), s = streak(h), isToday = day === today();
   const status = dn ? 'Done' : h.skips[day] ? 'Skipped' : h.goal > 1 ? `${n} of ${h.goal}` : s && isToday ? `${s} day streak` : 'To do';
   return (
@@ -45,7 +42,7 @@ export function HabitCard({ h, day = today(), onTap, flat, first }: { h: Habit; 
 /** Compact link row for habits not scheduled today or quit habits. */
 export function HabitLinkRow({ h, meta }: { h: Habit; meta?: string }) {
   const router = useRouter();
-  const [bg, ink] = tone();
+  const [bg, ink] = pastel(h);
   return (
     <Tap style={[st.card, { opacity: 0.8 }]} onPress={() => router.push({ pathname: '/habit/[id]', params: { id: h.id } })}>
       <View style={[st.ic, { backgroundColor: bg }]}><HabitIcon index={h.icon} color={ink} size={18} /></View>
@@ -55,7 +52,7 @@ export function HabitLinkRow({ h, meta }: { h: Habit; meta?: string }) {
 }
 
 const st = themed(() => StyleSheet.create({
-  card: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, paddingRight: 14, borderRadius: 20, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
+  card: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, paddingRight: 14, borderRadius: 20, backgroundColor: C.card },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 },
   rule: { borderTopWidth: 1, borderTopColor: C.line },
   main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minWidth: 0 },

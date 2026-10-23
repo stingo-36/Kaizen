@@ -129,5 +129,5 @@ const st = themed(() => StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   tile: { width: '48%', flexGrow: 1, borderRadius: 20, padding: 14, gap: 6 },
   src: { paddingVertical: 5, paddingHorizontal: 10, borderRadius: 99, backgroundColor: C.soft },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: C.card },
 }));

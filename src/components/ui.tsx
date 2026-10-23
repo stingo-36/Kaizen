@@ -1,17 +1,20 @@
 import * as Haptics from 'expo-haptics';
 import { ArrowLeft, ChevronRight, LucideIcon } from '@/components/ico';
-import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useId, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Animated, KeyboardTypeOptions, Modal, Platform, Pressable, PressableProps, ScrollView, StyleProp, StyleSheet, Text, TextInput, TextProps,
-  TextStyle, View, ViewStyle,
+  Animated, KeyboardTypeOptions, Modal, Platform, Pressable, PressableProps, ScrollView, StyleProp, StyleSheet, Text, TextProps, TextStyle, View, ViewStyle,
 } from 'react-native';
+import {
+  Avatar, Button as PButton, Card as PCard, Chip as PChip, IconButton, List, SegmentedButtons, Snackbar, TextInput as PTextInput,
+} from 'react-native-paper';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Reanimated, { useAnimatedProps, useAnimatedStyle, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
-import Svg, { Circle, G } from 'react-native-svg';
+import Svg, { Circle, Defs, G, LinearGradient, Stop } from 'react-native-svg';
 
 import { C, F, R, SP, themed, TY } from '@/lib/theme';
 import { useKeyboardHeight } from '@/lib/useKeyboard';
 import { FocusReplay, Stagger, useVisit } from './motion';
+import { pi } from './paper-icons';
 
 export const haptic = (kind: 'light' | 'success' | 'select' = 'light') => {
   if (Platform.OS === 'web') return;
@@ -23,11 +26,13 @@ export const haptic = (kind: 'light' | 'success' | 'select' = 'light') => {
 /* ---------- text ---------- */
 type TProps = TextProps & { size?: number; w?: keyof typeof F; color?: string; center?: boolean; style?: StyleProp<TextStyle> };
 export function T({ size = 15, w = 'r', color = C.ink, center, style, ...rest }: TProps) {
-  const ls = size >= 22 ? -0.03 * size : size >= 17 ? -0.01 * size : 0;
-  return <Text {...rest} style={[{ fontFamily: F[w], fontSize: size, color, letterSpacing: ls, lineHeight: Math.round(size * 1.3) }, center && { textAlign: 'center' }, style]} />;
+  // Headings tighten and sit snug; body text gets room to breathe.
+  const ls = size >= 22 ? -0.025 * size : size >= 17 ? -0.01 * size : 0.1;
+  const lh = size >= 22 ? 1.15 : size >= 17 ? 1.25 : 1.4;
+  return <Text {...rest} style={[{ fontFamily: F[w], fontSize: size, color, letterSpacing: ls, lineHeight: Math.round(size * lh) }, center && { textAlign: 'center' }, style]} />;
 }
 export const Label = ({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) => (
-  <T size={11} w="s" color={C.muted} style={[{ letterSpacing: 0.8, textTransform: 'uppercase' }, style]}>{children}</T>
+  <T size={13} w="s" color={C.muted} style={style}>{children}</T>
 );
 
 /* ---------- layout ---------- */
@@ -38,7 +43,8 @@ export const Label = ({ children, style }: { children: ReactNode; style?: StyleP
 export function Screen({ children, tabs, scroll = true, style, footer, overlay }: { children: ReactNode; tabs?: boolean; scroll?: boolean; style?: StyleProp<ViewStyle>; footer?: ReactNode; overlay?: ReactNode }) {
   const insets = useSafeAreaInsets();
   const kb = useKeyboardHeight();
-  const pad = { paddingBottom: footer ? 20 : kb ? kb + 24 : (tabs ? 110 : 32) + insets.bottom };
+  // Tab screens sit above the bottom navigation bar, which handles the home-indicator inset itself.
+  const pad = { paddingBottom: footer ? 20 : kb ? kb + 24 : tabs ? 28 : 32 + insets.bottom };
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: C.bg }}>
       <FocusReplay>
@@ -56,7 +62,22 @@ export function Screen({ children, tabs, scroll = true, style, footer, overlay }
 export const Row = ({ children, style, gap = 12 }: { children: ReactNode; style?: StyleProp<ViewStyle>; gap?: number }) => (
   <View style={[{ flexDirection: 'row', alignItems: 'center', gap }, style]}>{children}</View>
 );
-export const Card = ({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) => <View style={[s.card, style]}>{children}</View>;
+/* Style keys that belong on the Paper card itself; everything else lays out its content. */
+const CARD_OUTER = new Set(['backgroundColor', 'borderRadius', 'borderColor', 'borderWidth', 'flex', 'flexGrow', 'flexShrink', 'flexBasis', 'alignSelf',
+  'width', 'minWidth', 'maxWidth', 'height', 'minHeight', 'opacity', 'margin', 'marginTop', 'marginBottom', 'marginLeft', 'marginRight', 'marginHorizontal', 'marginVertical']);
+/** Paper's Card hands layout props (index, borderRadiusStyles…) to its direct children; this absorbs them. */
+const CardBody = ({ children }: { children: ReactNode }) => <>{children}</>;
+/** Flat Paper card. A column card cascades its rows in on every visit; row cards animate as one piece. */
+export const Card = ({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) => {
+  const outer: Record<string, unknown> = {}, inner: Record<string, unknown> = {};
+  Object.entries(StyleSheet.flatten(style) ?? {}).forEach(([k, v]) => { (CARD_OUTER.has(k) ? outer : inner)[k] = v; });
+  const row = inner.flexDirection === 'row' || inner.flexDirection === 'row-reverse';
+  return (
+    <PCard mode="contained" style={[s.card, outer as ViewStyle]} contentStyle={[s.cardIn, inner as ViewStyle]}>
+      <CardBody>{row ? children : <Stagger step={45} max={8} lift={10} base={80}>{children}</Stagger>}</CardBody>
+    </PCard>
+  );
+};
 
 /* ---------- pressables ---------- */
 /** Pressable that scales slightly while pressed. */
@@ -70,60 +91,56 @@ export function Tap({ children, style, scale = 0.97, onPress, ...rest }: Omit<Pr
     </APressable>
   );
 }
-type BtnProps = { title: string; onPress?: () => void; kind?: 'primary' | 'ghost' | 'danger' | 'light'; icon?: LucideIcon; busy?: boolean; style?: StyleProp<ViewStyle>; small?: boolean };
-export function Btn({ title, onPress, kind = 'primary', icon: Icon, busy, style, small }: BtnProps) {
-  const bg = { primary: C.ink, ghost: C.soft, danger: C.dangerSoft, light: C.white }[kind];
-  const fg = { primary: C.onInk, ghost: C.ink, danger: C.danger, light: C.onWhite }[kind];
+type BtnProps = { title: string; onPress?: () => void; kind?: 'primary' | 'ghost' | 'danger' | 'light' | 'glass'; icon?: LucideIcon; busy?: boolean; style?: StyleProp<ViewStyle>; small?: boolean };
+/** Paper pill button. primary = filled blue, ghost/light/glass = soft tonal blue, danger = red tonal. */
+export function Btn({ title, onPress, kind = 'primary', icon, busy, style, small }: BtnProps) {
+  const { minHeight, ...rest } = StyleSheet.flatten(style) ?? {};
+  const mode = kind === 'primary' ? 'contained' : 'contained-tonal';
+  const colors = kind === 'danger' ? { buttonColor: C.dangerSoft, textColor: C.danger }
+    : kind === 'light' ? { buttonColor: C.card, textColor: C.accent } : kind === 'primary' ? {} : { buttonColor: C.accentTint, textColor: C.accent };
   return (
-    <Tap onPress={busy ? undefined : onPress} accessibilityRole="button" accessibilityLabel={title}
-      style={[s.btn, small && s.btnSm, { backgroundColor: bg }, kind === 'ghost' && { borderWidth: 1, borderColor: C.line }, busy && { opacity: 0.7 }, style]}>
-      {busy ? <ActivityIndicator color={fg} /> : Icon ? <Icon size={small ? 16 : 19} color={fg} strokeWidth={2} /> : null}
-      <T size={small ? 13 : 16} w="s" color={fg}>{title}</T>
-    </Tap>
+    <PButton mode={mode} {...colors} icon={icon ? pi(icon, 2) : undefined} loading={busy} onPress={busy ? undefined : onPress} accessibilityLabel={title}
+      style={[s.btn, rest]} contentStyle={{ minHeight: (minHeight as number) ?? (small ? 40 : 52) }}
+      labelStyle={{ fontFamily: F.s, fontSize: small ? 13.5 : 15.5, letterSpacing: 0.1, marginVertical: 0 }}>
+      {title}
+    </PButton>
   );
 }
-export function IconBtn({ icon: Icon, onPress, dark, label, size = 42, disabled }: { icon: LucideIcon; onPress?: () => void; dark?: boolean; label: string; size?: number; disabled?: boolean }) {
+export function IconBtn({ icon, onPress, dark, label, size = 42, disabled }: { icon: LucideIcon; onPress?: () => void; dark?: boolean; label: string; size?: number; disabled?: boolean }) {
   return (
-    <Tap onPress={disabled ? undefined : onPress} accessibilityLabel={label} accessibilityRole="button" scale={0.9}
-      style={[s.iconBtn, { width: size, height: size }, dark && { backgroundColor: C.ink }, disabled && { opacity: 0.3 }]}>
-      <Icon size={20} color={dark ? C.onInk : C.ink} strokeWidth={1.9} />
-    </Tap>
+    <IconButton icon={pi(icon, dark ? 2.2 : 1.9)} mode={dark ? 'contained' : undefined} containerColor={dark ? C.accent : undefined} iconColor={dark ? C.white : C.ink}
+      size={20} onPress={onPress} disabled={disabled} accessibilityLabel={label} style={{ width: size, height: size, margin: 0, borderRadius: size / 2 }} />
   );
 }
 export function Chip({ label, on, onPress, style }: { label: string; on?: boolean; onPress?: () => void; style?: StyleProp<ViewStyle> }) {
   return (
-    <Tap onPress={() => { haptic('select'); onPress?.(); }} accessibilityRole="button" accessibilityState={{ selected: !!on }} scale={0.95}
-      style={[s.chip, on && { backgroundColor: C.ink, borderColor: C.ink }, style]}>
-      <T size={13} w="s" color={on ? C.onInk : C.ink}>{label}</T>
-    </Tap>
+    <PChip mode={on ? 'flat' : 'outlined'} selected={!!on} showSelectedCheck={false} onPress={() => { haptic('select'); onPress?.(); }} compact
+      accessibilityState={{ selected: !!on }} style={[s.chip, on && { backgroundColor: C.accentSoft, borderColor: C.accentSoft }, style]}
+      textStyle={{ fontFamily: F.s, fontSize: 13, color: on ? C.accentInk : C.ink }}>
+      {label}
+    </PChip>
   );
 }
 export function Segmented({ options, value, onChange }: { options: [string, string][]; value: string; onChange: (v: string) => void }) {
   return (
-    <View style={s.seg}>
-      {options.map(([v, l]) => (
-        <Pressable key={v} onPress={() => { haptic('select'); onChange(v); }} style={[s.segBtn, value === v && { backgroundColor: C.ink }]} accessibilityRole="tab" accessibilityState={{ selected: value === v }}>
-          <T size={14} w="s" color={value === v ? C.onInk : C.muted}>{l}</T>
-        </Pressable>
-      ))}
-    </View>
+    <SegmentedButtons value={value} onValueChange={(v) => { haptic('select'); onChange(v); }}
+      theme={{ colors: { secondaryContainer: C.accent, onSecondaryContainer: C.white, outline: C.accentSoft } }}
+      buttons={options.map(([v, l]) => ({
+        value: v, label: l, showSelectedCheck: false, checkedColor: C.white, uncheckedColor: C.accentInk,
+        labelStyle: { fontFamily: F.s, fontSize: 14 }, style: { minHeight: 42, justifyContent: 'center', backgroundColor: value === v ? C.accent : C.accentTint },
+      }))} />
   );
 }
 
-/** Labelled text box with a clear border and focus ring, so it reads as editable. */
+/** Paper outlined text field with a floating label; the unit rides in the label so narrow fields keep room for the value. */
 export function Input({ label, value, onChange, placeholder, unit, keyboard, secure, style }: {
   label?: string; value: string; onChange: (v: string) => void; placeholder?: string; unit?: string; keyboard?: KeyboardTypeOptions; secure?: boolean; style?: StyleProp<ViewStyle>;
 }) {
-  const [focus, setFocus] = useState(false);
   return (
-    <View style={[{ minWidth: 0, gap: 6 }, style]}>
-      {label ? <T size={13} w="s" color={C.muted}>{label}</T> : null}
-      <View style={[s.input, focus && { borderColor: C.accent, backgroundColor: C.card }]}>
-        <TextInput value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={C.faint} keyboardType={keyboard}
-          secureTextEntry={secure} autoCapitalize={secure || keyboard === 'email-address' ? 'none' : undefined} autoCorrect={secure || keyboard === 'email-address' ? false : undefined}
-          onFocus={() => setFocus(true)} onBlur={() => setFocus(false)} style={s.inputText} accessibilityLabel={label ?? placeholder} />
-        {unit ? <T size={14} w="m" color={C.muted}>{unit}</T> : null}
-      </View>
+    <View style={[{ minWidth: 0 }, style]}>
+      <PTextInput mode="outlined" label={label && unit ? `${label} (${unit})` : label} value={value} onChangeText={onChange} placeholder={placeholder} keyboardType={keyboard} secureTextEntry={secure}
+        autoCapitalize={secure || keyboard === 'email-address' ? 'none' : undefined} autoCorrect={secure || keyboard === 'email-address' ? false : undefined}
+        outlineStyle={{ borderRadius: R.field }} style={{ backgroundColor: C.card, fontSize: 16 }} contentStyle={{ fontFamily: F.m }} accessibilityLabel={label ?? placeholder} />
     </View>
   );
 }
@@ -153,16 +170,27 @@ export function Bar({ value, color = C.accent, height = 6, track = C.track }: { 
   );
 }
 const ACircle = Reanimated.createAnimatedComponent(Circle);
-export function Ring({ value, size = 36, stroke = 4, color = C.accent, track = C.track, children }: { value: number; size?: number; stroke?: number; color?: string; track?: string; children?: ReactNode }) {
+/** Progress ring. Pass `gradient` for a two-tone stroke that sweeps from the first colour to the second. */
+export function Ring({ value, size = 36, stroke = 4, color = C.accent, gradient, track = C.track, children }: {
+  value: number; size?: number; stroke?: number; color?: string; gradient?: [string, string]; track?: string; children?: ReactNode;
+}) {
   const r = (size - stroke) / 2, c = 2 * Math.PI * r;
+  const gid = `rg${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const v = useFill(clamp01(value));
   const ring = useAnimatedProps(() => ({ strokeDashoffset: c * (1 - v.value) }));
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
         <Circle cx={size / 2} cy={size / 2} r={r} stroke={track} strokeWidth={stroke} fill="none" />
+        {gradient && (
+          <Defs>
+            <LinearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
+              <Stop offset="0" stopColor={gradient[0]} /><Stop offset="1" stopColor={gradient[1]} />
+            </LinearGradient>
+          </Defs>
+        )}
         <G transform={`rotate(-90 ${size / 2} ${size / 2})`}>
-          <ACircle cx={size / 2} cy={size / 2} r={r} stroke={color} strokeWidth={stroke} fill="none" strokeLinecap="round"
+          <ACircle cx={size / 2} cy={size / 2} r={r} stroke={gradient ? `url(#${gid})` : color} strokeWidth={stroke} fill="none" strokeLinecap="round"
             strokeDasharray={`${c} ${c}`} animatedProps={ring} />
         </G>
       </Svg>
@@ -193,29 +221,18 @@ type ToastFn = (msg: string, undo?: () => void) => void;
 const ToastCtx = createContext<ToastFn>(() => {});
 export const useToast = () => useContext(ToastCtx);
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [msg, setMsg] = useState<{ text: string; undo?: () => void } | null>(null);
-  const [y] = useState(() => new Animated.Value(80));
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [msg, setMsg] = useState<{ text: string; undo?: () => void; n: number } | null>(null);
+  const [open, setOpen] = useState(false);
   const insets = useSafeAreaInsets();
-  const hide = useCallback(() => Animated.timing(y, { toValue: 80, duration: 200, useNativeDriver: Platform.OS !== 'web' }).start(() => setMsg(null)), [y]);
-  const show: ToastFn = useCallback((text, undo) => {
-    setMsg({ text, undo });
-    Animated.spring(y, { toValue: 0, useNativeDriver: Platform.OS !== 'web', speed: 18, bounciness: 6 }).start();
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(hide, undo ? 4000 : 2200);
-  }, [y, hide]);
-  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  const show: ToastFn = useCallback((text, undo) => { setMsg((m) => ({ text, undo, n: (m?.n ?? 0) + 1 })); setOpen(true); }, []);
   return (
     <ToastCtx.Provider value={show}>
       {children}
-      {msg && (
-        <Animated.View pointerEvents="box-none" style={[s.toastWrap, { bottom: insets.bottom + 96, transform: [{ translateY: y }] }]}>
-          <View style={s.toast} accessibilityLiveRegion="polite">
-            <T size={14} w="m" color={C.onInk} style={{ flexShrink: 1 }}>{msg.text}</T>
-            {msg.undo && <Pressable onPress={() => { msg.undo?.(); hide(); }} hitSlop={10}><T size={14} w="b" color={C.accent}>Undo</T></Pressable>}
-          </View>
-        </Animated.View>
-      )}
+      <Snackbar key={msg?.n} visible={open} onDismiss={() => setOpen(false)} duration={msg?.undo ? 4000 : 2200}
+        action={msg?.undo ? { label: 'Undo', onPress: () => msg.undo?.(), labelStyle: { fontFamily: F.s } } : undefined}
+        wrapperStyle={{ bottom: insets.bottom + 84 }} style={{ borderRadius: 14 }} accessibilityLiveRegion="polite">
+        <T size={14} w="m" color={C.white}>{msg?.text ?? ''}</T>
+      </Snackbar>
     </ToastCtx.Provider>
   );
 }
@@ -238,24 +255,17 @@ export function Sheet({ open, onClose, title, subtitle, children }: { open: bool
 }
 
 export const s = themed(() => StyleSheet.create({
-  screen: { paddingHorizontal: 20, paddingTop: 16, gap: SP.section },
+  screen: { paddingHorizontal: SP.page, paddingTop: 12, gap: SP.section },
   footer: { paddingHorizontal: 20, paddingTop: 10, gap: 8, backgroundColor: C.bg, borderTopWidth: 1, borderTopColor: C.line },
-  card: { backgroundColor: C.card, borderRadius: R.card, padding: SP.pad, borderWidth: 1, borderColor: C.line },
-  btn: { minHeight: 50, borderRadius: R.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 20 },
-  btnSm: { minHeight: 38, paddingHorizontal: 16 },
-  iconBtn: { borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' },
-  chip: { paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: C.field, backgroundColor: C.card },
-  input: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 52, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1.5, borderColor: C.field, backgroundColor: C.card },
-  inputText: { flex: 1, minWidth: 0, width: 0, fontFamily: F.m, fontSize: 16, color: C.ink, paddingVertical: 12 },
-  seg: { flexDirection: 'row', backgroundColor: C.card, borderRadius: 16, padding: 4, borderWidth: 1, borderColor: C.line },
-  segBtn: { flex: 1, paddingVertical: 11, borderRadius: 12, alignItems: 'center' },
-  toastWrap: { position: 'absolute', left: 16, right: 16, alignItems: 'center' },
-  toast: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: C.ink, paddingVertical: 12, paddingHorizontal: 18, borderRadius: 16, maxWidth: 420 },
-  backdrop: { flex: 1, backgroundColor: 'rgba(20,20,20,0.4)' },
+  card: { backgroundColor: C.card, borderRadius: R.card },
+  cardIn: { padding: SP.pad },
+  btn: { borderRadius: R.pill, justifyContent: 'center' },
+  chip: { borderRadius: 999, backgroundColor: C.card },
+  backdrop: { flex: 1, backgroundColor: 'rgba(17,24,39,0.4)' },
   sheet: { maxHeight: '88%', backgroundColor: C.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 12, gap: 6 },
   grab: { alignSelf: 'center', width: 40, height: 5, borderRadius: 99, backgroundColor: C.field, marginBottom: 10 },
-  linkRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: R.card, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
-  linkIc: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  linkRow: { borderRadius: R.tile, backgroundColor: C.card, overflow: 'hidden' },
+  linkIc: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', alignSelf: 'center' },
 }));
 
 /* ---------- tab header with profile avatar (shown on every tab) ---------- */
@@ -264,11 +274,11 @@ export function TabHeader({ title, subtitle, right, onAvatar, initial }: { title
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <View style={{ flex: 1, minWidth: 0 }}>
         {subtitle ? <T size={13} color={C.muted} numberOfLines={1}>{subtitle}</T> : null}
-        <T size={TY.title} w="b" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ lineHeight: 32 }}>{title}</T>
+        <T size={TY.title} w="b" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ lineHeight: 34 }}>{title}</T>
       </View>
       {right}
-      <Tap onPress={onAvatar} scale={0.9} accessibilityLabel="Open your profile" style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}>
-        <T size={16} w="b" color={C.white}>{initial}</T>
+      <Tap onPress={onAvatar} scale={0.9} accessibilityLabel="Open your profile">
+        <Avatar.Text size={42} label={initial} color={C.white} style={{ backgroundColor: C.accent }} labelStyle={{ fontFamily: F.b, fontSize: 17 }} />
       </Tap>
     </View>
   );
@@ -277,16 +287,17 @@ export function TabHeader({ title, subtitle, right, onAvatar, initial }: { title
 export function Stat({ label, value, unit, tone, onPress }: { label: string; value: string | number; unit?: string; tone?: [string, string]; onPress?: () => void }) {
   const bg = tone?.[0] ?? C.card, ink = tone?.[1] ?? C.ink;
   return (
-    <Tap onPress={onPress} scale={onPress ? 0.97 : 1} style={{ flex: 1, minWidth: 0, minHeight: 88, alignSelf: 'stretch', justifyContent: 'space-between', borderRadius: R.tile, paddingVertical: 14, paddingHorizontal: 14, gap: 10, backgroundColor: bg, borderWidth: tone ? 0 : 1, borderColor: C.line }}>
+    <Tap onPress={onPress} scale={onPress ? 0.97 : 1} style={{ flex: 1, minWidth: 0, minHeight: 88, alignSelf: 'stretch', justifyContent: 'space-between', borderRadius: R.tile, paddingVertical: 14, paddingHorizontal: 14, gap: 10, backgroundColor: bg }}>
       <T size={12} w="s" color={tone ? ink : C.muted} numberOfLines={2} style={{ lineHeight: 16, opacity: tone ? 0.85 : 1 }}>{label}</T>
       <T size={20} w="b" color={ink} numberOfLines={1} adjustsFontSizeToFit>{value}{unit ? <T size={12} w="m" color={ink}>{unit}</T> : null}</T>
     </Tap>
   );
 }
+/** Section heading in the Material list-subheader position, with an optional text action. */
 export const SectionTitle = ({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) => (
-  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: -8 }}>
-    <T size={11} w="s" color={C.muted} style={{ letterSpacing: 0.8, textTransform: 'uppercase' }}>{title}</T>
-    {action ? <Pressable onPress={onAction} hitSlop={10}><T size={12.5} w="s" color={C.accent}>{action}</T></Pressable> : null}
+  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: -10, minHeight: 36 }}>
+    <T size={17} w="s">{title}</T>
+    {action ? <PButton mode="text" compact onPress={onAction} labelStyle={{ fontFamily: F.s, fontSize: 13.5, marginHorizontal: 8 }}>{action}</PButton> : null}
   </View>
 );
 
@@ -305,13 +316,12 @@ export function BackHeader({ title, onBack, right }: { title: string; onBack: ()
 /** Tappable row inside a list: icon, title, subtitle, chevron. */
 export function LinkRow({ icon: Icon, tone, title, sub, onPress, right }: { icon: LucideIcon; tone?: [string, string]; title: string; sub?: string; onPress: () => void; right?: ReactNode }) {
   return (
-    <Tap onPress={onPress} scale={0.98} style={s.linkRow} accessibilityLabel={title}>
-      <View style={[s.linkIc, { backgroundColor: tone?.[0] ?? C.soft }]}><Icon size={18} color={tone?.[1] ?? C.ink} /></View>
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <T size={15} w="s" numberOfLines={1}>{title}</T>
-        {sub ? <T size={12} color={C.muted} numberOfLines={1}>{sub}</T> : null}
-      </View>
-      {right ?? <ChevronRight size={18} color={C.faint} />}
-    </Tap>
+    <View style={s.linkRow}>
+      <List.Item title={title} description={sub} onPress={onPress} accessibilityLabel={title} titleNumberOfLines={1} descriptionNumberOfLines={1}
+        titleStyle={{ fontFamily: F.s, fontSize: 15, color: C.ink }} descriptionStyle={{ fontFamily: F.r, fontSize: 12.5, color: C.muted }}
+        style={{ paddingVertical: 10, paddingLeft: 14, paddingRight: 8 }}
+        left={() => <View style={[s.linkIc, { backgroundColor: tone?.[0] ?? C.soft }]}><Icon size={18} color={tone?.[1] ?? C.ink} /></View>}
+        right={() => <View style={{ alignSelf: 'center' }}>{right ?? <ChevronRight size={18} color={C.faint} />}</View>} />
+    </View>
   );
 }

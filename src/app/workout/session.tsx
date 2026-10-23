@@ -137,7 +137,7 @@ export default function SessionScreen() {
             <Row gap={8} style={{ justifyContent: 'center', marginTop: 6 }}>
               <Tap style={st.restBtn} onPress={() => adjustRest(-15)}><T size={13} w="b" color={PASTEL[4][1]}>−15s</T></Tap>
               <Tap style={st.restBtn} onPress={() => adjustRest(15)}><T size={13} w="b" color={PASTEL[4][1]}>+15s</T></Tap>
-              <Tap style={[st.restBtn, { backgroundColor: C.ink }]} onPress={() => adjustRest(0)}><T size={13} w="b" color={C.onInk}>Skip</T></Tap>
+              <Tap style={[st.restBtn, { backgroundColor: C.accent }]} onPress={() => adjustRest(0)}><T size={13} w="b" color={C.white}>Skip</T></Tap>
             </Row>
           </View>
         )}
@@ -145,7 +145,7 @@ export default function SessionScreen() {
           const last = lastFor(W, x.name), timed = timedSeconds(x.tReps) > 0;
           const lastText = last?.set ? (last.set.w ? `${last.set.w} × ${last.set.r}` : `${last.set.r} reps`) : last?.cardio ? `${last.cardio.minutes} min` : '';
           return (
-            <Card key={x.name + i} style={i === cur ? { borderColor: C.ink, borderWidth: 2 } : undefined}>
+            <Card key={x.name + i} style={i === cur ? { borderColor: C.accent, borderWidth: 2 } : undefined}>
               <Row style={{ justifyContent: 'space-between' }}>
                 <Tap style={{ flex: 1, minWidth: 0 }} scale={0.98} onPress={() => router.push({ pathname: '/workout/exercise', params: { name: x.name } })}>
                   <Row gap={6}>{x.kind === 'cardio' && <HeartPulse size={15} color={C.accent} />}<T size={15} w="s" style={{ flexShrink: 1 }}>{x.name}</T></Row>
@@ -160,8 +160,8 @@ export default function SessionScreen() {
                       <TextInput value={x.cardio.minutes} onChangeText={(v) => setCardio(i, 'minutes', v)} keyboardType="decimal-pad" style={[st.input, st.colInput, x.cardio.done && st.inputDone]} selectTextOnFocus accessibilityLabel={`${x.name} minutes`} /></View>
                     <View style={{ flex: 1, minWidth: 0, gap: 4 }}><T size={11} w="s" color={C.muted} center>km (optional)</T>
                       <TextInput value={x.cardio.km} onChangeText={(v) => setCardio(i, 'km', v)} keyboardType="decimal-pad" style={[st.input, st.colInput, x.cardio.done && st.inputDone]} selectTextOnFocus accessibilityLabel={`${x.name} distance`} /></View>
-                    <Tap scale={0.85} onPress={() => toggleCardio(i)} style={[st.check, { alignSelf: 'flex-end' }, x.cardio.done && { backgroundColor: C.ink, borderColor: C.ink }]} accessibilityRole="checkbox" accessibilityState={{ checked: x.cardio.done }} accessibilityLabel={`${x.name} done`}>
-                      {x.cardio.done && <Check size={17} color={C.onInk} strokeWidth={2.6} />}
+                    <Tap scale={0.85} onPress={() => toggleCardio(i)} style={[st.check, { alignSelf: 'flex-end' }, x.cardio.done && { backgroundColor: C.accent, borderColor: C.accent }]} accessibilityRole="checkbox" accessibilityState={{ checked: x.cardio.done }} accessibilityLabel={`${x.name} done`}>
+                      {x.cardio.done && <Check size={17} color={C.white} strokeWidth={2.6} />}
                     </Tap>
                   </View>
                 </>
@@ -179,8 +179,8 @@ export default function SessionScreen() {
                       <T size={13} w="b" color={C.muted} center style={{ width: 22 }}>{j + 1}</T>
                       <TextInput value={t.w} onChangeText={(v) => setVal(i, j, 'w', v)} keyboardType="decimal-pad" placeholder="0" placeholderTextColor={C.faint} style={[st.input, t.done && st.inputDone]} selectTextOnFocus accessibilityLabel={`${x.name} set ${j + 1} weight`} />
                       <TextInput value={t.r} onChangeText={(v) => setVal(i, j, 'r', v)} keyboardType="number-pad" style={[st.input, t.done && st.inputDone]} selectTextOnFocus accessibilityLabel={`${x.name} set ${j + 1} reps`} />
-                      <Tap scale={0.85} onPress={() => toggleSet(i, j)} style={[st.check, t.done && { backgroundColor: C.ink, borderColor: C.ink }]} accessibilityRole="checkbox" accessibilityState={{ checked: t.done }} accessibilityLabel={`Set ${j + 1} done`}>
-                        {t.done && <Check size={17} color={C.onInk} strokeWidth={2.6} />}
+                      <Tap scale={0.85} onPress={() => toggleSet(i, j)} style={[st.check, t.done && { backgroundColor: C.accent, borderColor: C.accent }]} accessibilityRole="checkbox" accessibilityState={{ checked: t.done }} accessibilityLabel={`Set ${j + 1} done`}>
+                        {t.done && <Check size={17} color={C.white} strokeWidth={2.6} />}
                       </Tap>
                     </View>
                   ))}

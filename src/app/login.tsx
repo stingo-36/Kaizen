@@ -23,13 +23,13 @@ export default function Login() {
   };
   return (
     <AuthShell mode="login">
-      <Field icon={AuthIcons.Mail} value={user} onChange={(v) => { setUser(v); setErr(''); }} placeholder="Email" autoComplete="email" />
-      <Field icon={AuthIcons.Lock} value={pw} onChange={(v) => { setPw(v); setErr(''); }} placeholder="Password" secure autoComplete="password" onSubmit={submit} />
+      <Field icon={AuthIcons.Mail} label="Email" value={user} onChange={(v) => { setUser(v); setErr(''); }} placeholder="you@example.com" autoComplete="email" />
+      <Field icon={AuthIcons.Lock} label="Password" value={pw} onChange={(v) => { setPw(v); setErr(''); }} placeholder="Your password" secure autoComplete="password" onSubmit={submit} />
       {err ? <T size={13} color={C.danger}>{err}</T> : null}
-      <Btn title="Log in" icon={ArrowRight} onPress={submit} busy={busy} style={{ minHeight: 50, marginTop: 4 }} />
+      <Btn title="Log in" icon={ArrowRight} onPress={submit} busy={busy} style={{ marginTop: 6 }} />
       <OrRule />
       <DemoCard onPress={() => { setUser(DEMO.username); setPw(DEMO.password); setErr(''); }} />
-      <Row gap={4} style={{ justifyContent: 'center', marginTop: 10 }}>
+      <Row gap={4} style={{ justifyContent: 'center', marginTop: 6 }}>
         <T size={13.5} color={C.muted}>New here?</T>
         <Pressable onPress={() => router.replace('/register')} hitSlop={8}><T size={13.5} w="s" color={C.accent}>Create an account</T></Pressable>
       </Row>

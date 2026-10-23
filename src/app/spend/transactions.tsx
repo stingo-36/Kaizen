@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, SectionList, StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Item } from '@/components/motion';
 import { timeOf, TxnRow } from '@/components/txn-row';
 import { BackHeader, Btn, Segmented, T } from '@/components/ui';
 import { goBack } from '@/lib/nav';
@@ -91,7 +92,7 @@ export default function Transactions() {
         renderSectionHeader={({ section }) => (
           <View style={st.day}>
             <CalendarClock size={13} color={C.muted} />
-            <T size={TY.cap} w="b" color={C.muted} style={{ textTransform: 'uppercase', letterSpacing: 0.4 }}>{dayHeading(section.iso)}</T>
+            <T size={13} w="s" color={C.muted}>{dayHeading(section.iso)}</T>
             <View style={st.rule} />
             <View style={[st.net, { backgroundColor: section.net >= 0 ? C.accentTint : C.dangerSoft }]}>
               <T size={11} w="b" color={section.net >= 0 ? C.green : C.danger}>{section.net >= 0 ? '+' : '−'}{inr(Math.abs(section.net))}</T>
@@ -99,10 +100,12 @@ export default function Transactions() {
           </View>
         )}
         renderItem={({ item, index, section }) => (
-          <View style={[st.cardMid, index === 0 && st.cardTop, index === section.data.length - 1 && st.cardBottom]}>
-            <TxnRow first={index === 0} label={item.label} amount={item.amount} category={item.categoryName} credit={item.direction === 'credit'}
-              card={item.isCreditCard} meta={timeOf(item.occurredAt)} />
-          </View>
+          <Item delay={Math.min(index, 8) * 35}>
+            <View style={[st.cardMid, index === 0 && st.cardTop, index === section.data.length - 1 && st.cardBottom]}>
+              <TxnRow first={index === 0} label={item.label} amount={item.amount} category={item.categoryName} credit={item.direction === 'credit'}
+                card={item.isCreditCard} meta={timeOf(item.occurredAt)} />
+            </View>
+          </Item>
         )}
         ListEmptyComponent={busy ? undefined : <T size={TY.body} color={C.muted} center style={{ marginTop: 40 }}>{err || 'No transactions yet.'}</T>}
         ListFooterComponent={

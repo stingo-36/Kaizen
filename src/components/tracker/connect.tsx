@@ -56,7 +56,7 @@ export function Connect({ again }: { again?: boolean }) {
 }
 
 const st = themed(() => StyleSheet.create({
-  card: { gap: 14, padding: 16, backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line },
+  card: { gap: 14, padding: 16, backgroundColor: C.card, borderRadius: 16 },
   badge: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   server: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 9, paddingHorizontal: 12, borderRadius: 12, backgroundColor: C.soft },
 }));

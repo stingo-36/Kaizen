@@ -69,7 +69,7 @@ export function TrackerCard() {
 }
 
 const st = themed(() => StyleSheet.create({
-  card: { gap: 10, padding: 14, borderRadius: 20, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
+  card: { gap: 10, padding: 14, borderRadius: 20, backgroundColor: C.card },
   ic: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   row: { paddingTop: 9, borderTopWidth: 1, borderTopColor: C.line },
   dot: { width: 17, height: 17, borderRadius: 9, borderWidth: 1.5, borderColor: C.field, alignItems: 'center', justifyContent: 'center' },

@@ -1,5 +1,5 @@
 import { Redirect, useRouter } from 'expo-router';
-import { Bell, CheckCircle2, HeartPulse, LucideIcon, Play, Sparkles, Wallet } from '@/components/ico';
+import { Bell, CheckCircle2, Dumbbell, Flame, HeartPulse, LucideIcon, Play, Sparkles, Wallet } from '@/components/ico';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -14,7 +14,7 @@ import { fmtTime, today } from '@/lib/dates';
 import { sumMacros, targets } from '@/lib/food';
 import { useFood } from '@/lib/food-store';
 import { useHealth } from '@/lib/health-store';
-import { dueOn, isDone, isScheduled, PASTEL } from '@/lib/habits';
+import { dayStreak, dueOn, isDone, isScheduled, PASTEL, pastel } from '@/lib/habits';
 import { inr, thisMonth } from '@/lib/spend';
 import { useSpend } from '@/lib/spend-store';
 import { useStore } from '@/lib/store';
@@ -25,12 +25,13 @@ const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good 
 const STEP_GOAL = 8000;
 const hm = (min: number) => `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}m`;
 
-/** One ring in the Today card. Each area keeps its own colour across the app. */
-function DayRing({ tone, value, text, label, onPress }: { tone: [string, string]; value: number; text: string; label: string; onPress: () => void }) {
+const ON_ACCENT = C.accentInk;
+/** One ring on the blue "Your day" card. */
+function DayRing({ value, text, label, onPress }: { value: number; text: string; label: string; onPress: () => void }) {
   return (
     <Tap onPress={onPress} scale={0.94} style={{ flex: 1, alignItems: 'center', gap: 8 }} accessibilityLabel={`${label}: ${text}. Open`}>
-      <Ring value={value} size={54} stroke={6} color={tone[1]} track={tone[0]}><T size={12} w="b">{text}</T></Ring>
-      <T size={11.5} w="m" color={C.muted}>{label}</T>
+      <Ring value={value} size={58} stroke={6} gradient={[C.accent, C.accent2]} track={C.card}><T size={13} w="b" color={C.accentInk}>{text}</T></Ring>
+      <T size={12} w="m" color={ON_ACCENT}>{label}</T>
     </Tap>
   );
 }
@@ -67,8 +68,13 @@ export default function Home() {
   const eaten = sumMacros(food.days[k] ?? []).kcal, goal = targets(profile).kcal;
   const { steps, sleepMin, restingHr } = health.data;
   const month = spend.summaries[thisMonth()];
-  // Workouts are the coral area: the "Up next" card is this screen's one featured card.
+  // Workouts are the coral area; the blue "Your day" card is this screen's one featured card.
   const [wBg, wInk] = PASTEL[4];
+  const rings = [
+    due.length ? done / due.length : 0, profile.minutes ? minsToday / profile.minutes : 0, goal ? eaten / goal : 0, steps != null ? steps / STEP_GOAL : 0,
+  ].map((v) => Math.min(1, v));
+  const score = Math.round((rings.reduce((a, v) => a + v, 0) / (steps != null ? 4 : 3)) * 100);
+  const streak = dayStreak(habits);
 
   return (
     <Screen tabs>
@@ -81,13 +87,24 @@ export default function Home() {
           </View>
         )} />
 
-      <View style={st.card}>
-        <T size={11} w="s" color={C.muted} style={st.label}>Today</T>
-        <Row gap={8} style={{ alignItems: 'flex-start' }}>
-          <DayRing tone={PASTEL[0]} value={due.length ? done / due.length : 0} text={due.length ? `${done}/${due.length}` : '–'} label="Habits" onPress={() => router.navigate('/habits')} />
-          <DayRing tone={PASTEL[4]} value={profile.minutes ? minsToday / profile.minutes : 0} text={`${minsToday}m`} label="Workout" onPress={() => router.navigate('/workouts')} />
-          <DayRing tone={PASTEL[1]} value={goal ? eaten / goal : 0} text={goal ? `${Math.round((eaten / goal) * 100)}%` : '–'} label="Food" onPress={() => router.navigate('/food')} />
-          <DayRing tone={PASTEL[2]} value={steps != null ? steps / STEP_GOAL : 0} text={steps == null ? '–' : steps >= 1000 ? `${(steps / 1000).toFixed(1)}k` : `${steps}`} label="Steps" onPress={() => router.push('/health')} />
+      <View style={st.day}>
+        <Row style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <View style={{ gap: 2 }}>
+            <T size={13} w="m" color={ON_ACCENT}>Your day</T>
+            <Row gap={6} style={{ alignItems: 'flex-end' }}>
+              <T size={40} w="b" color={C.accentInk} style={{ lineHeight: 44 }}>{score}%</T>
+              <T size={13} w="m" color={ON_ACCENT} style={{ marginBottom: 7 }}>done</T>
+            </Row>
+          </View>
+          {streak > 0 && (
+            <View style={st.streak}><Flame size={14} color={C.accent} /><T size={12.5} w="s" color={C.accentInk}>{streak}-day streak</T></View>
+          )}
+        </Row>
+        <Row gap={6} style={{ alignItems: 'flex-start' }}>
+          <DayRing value={rings[0]} text={due.length ? `${done}/${due.length}` : '–'} label="Habits" onPress={() => router.navigate('/habits')} />
+          <DayRing value={rings[1]} text={`${minsToday}m`} label="Workout" onPress={() => router.navigate('/workouts')} />
+          <DayRing value={rings[2]} text={goal ? `${Math.round((eaten / goal) * 100)}%` : '–'} label="Food" onPress={() => router.navigate('/food')} />
+          <DayRing value={rings[3]} text={steps == null ? '–' : steps >= 1000 ? `${(steps / 1000).toFixed(1)}k` : `${steps}`} label="Steps" onPress={() => router.push('/health')} />
         </Row>
       </View>
 
@@ -110,18 +127,18 @@ export default function Home() {
           <T size={13} color={wInk}>{minsToday} min · {doneToday.reduce((a, l) => a + logKcal(profile, l), 0)} kcal · nice work, rest up</T>
         </Tap>
       ) : plan && day ? (
-        <View style={[st.hero, { backgroundColor: wBg }]}>
-          <Row style={{ justifyContent: 'space-between' }}>
-            <T size={11} w="s" color={wInk} style={st.label}>Up next · Workout</T>
-            <View style={st.chip}><T size={11} w="b" color={wInk}>≈ {est} kcal</T></View>
+        <View style={st.next}>
+          <Row gap={14}>
+            <View style={[st.nextIc, { backgroundColor: wBg }]}><Dumbbell size={24} color={wInk} /></View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <T size={12.5} w="m" color={C.muted} numberOfLines={1}>Up next · {profile.minutes} min</T>
+              <T size={20} w="b" numberOfLines={1}>{day.title}</T>
+            </View>
+            <View style={[st.chip, { backgroundColor: C.accentTint }]}><T size={12} w="s" color={C.accent}>≈ {est} kcal</T></View>
           </Row>
-          <View>
-            <T size={20} w="b" color={wInk}>{day.title}</T>
-            <T size={13} color={wInk} numberOfLines={1}>{day.exercises.length} exercises · about {profile.minutes} min</T>
-          </View>
-          <Row gap={8}>
-            <Btn title="View" kind="light" small onPress={() => router.push({ pathname: '/workout/plan', params: { id: plan.id, day: String(nd) } })} style={{ flex: 1, minHeight: 42 }} />
-            <Btn title="Start" icon={Play} small onPress={() => router.push({ pathname: '/workout/session', params: { day: String(nd), plan: plan.id } })} style={{ flex: 1, minHeight: 42 }} />
+          <Row gap={10}>
+            <Btn title="View" kind="ghost" small onPress={() => router.push({ pathname: '/workout/plan', params: { id: plan.id, day: String(nd) } })} style={{ flex: 1, minHeight: 44 }} />
+            <Btn title="Start" icon={Play} small onPress={() => router.push({ pathname: '/workout/session', params: { day: String(nd), plan: plan.id } })} style={{ flex: 1, minHeight: 44 }} />
           </Row>
         </View>
       ) : (
@@ -132,25 +149,24 @@ export default function Home() {
         </Tap>
       )}
 
-      <TrackerCard />
-      <RecentResourcesCard />
-
       {/* Tiles follow the fixed pastel order: first green, then amber. */}
       <Row gap={12} style={{ alignItems: 'stretch' }}>
         <Tile tone={PASTEL[0]} icon={Wallet} label="Spend" onPress={() => router.navigate('/spendwise')}
           value={month ? inr(month.totalSpend) : spend.status === 'on' ? '–' : 'Connect'}
-          sub={month ? `this month · ${inr(month.todaySpend)} today` : 'SpendWise'} />
+          sub={month ? `${inr(month.todaySpend)} spent today` : 'SpendWise'} />
         <Tile tone={PASTEL[1]} icon={HeartPulse} label="Google Fit" onPress={() => router.push('/health')}
           value={sleepMin != null ? hm(sleepMin) : steps != null ? steps.toLocaleString() : 'Connect'}
           sub={sleepMin != null ? `sleep${restingHr != null ? ` · ${restingHr} bpm resting` : ''}` : steps != null ? 'steps today' : 'Sleep, steps, heart rate'} />
       </Row>
 
+      <TrackerCard />
+      <RecentResourcesCard />
       <InsightCard />
 
       <Sheet open={remOpen} onClose={() => setRemOpen(false)} title="Today's reminders">
         {reminders.length ? reminders.map((h) => (
           <Row key={h.id} style={{ paddingVertical: 6 }}>
-            <View style={[st.ic, { backgroundColor: PASTEL[0][0] }]}><HabitIcon index={h.icon} color={PASTEL[0][1]} size={18} /></View>
+            <View style={[st.ic, { backgroundColor: pastel(h)[0] }]}><HabitIcon index={h.icon} color={pastel(h)[1]} size={18} /></View>
             <View style={{ flex: 1, minWidth: 0 }}><T size={15} w="s">{h.name}</T><T size={13} color={C.muted}>{fmtTime(h.reminder as string)}</T></View>
             {isDone(h, k) && <T size={12} w="b" color={C.green}>Done</T>}
           </Row>
@@ -163,11 +179,14 @@ export default function Home() {
 
 const st = themed(() => StyleSheet.create({
   dot: { position: 'absolute', top: 9, right: 10, width: 9, height: 9, borderRadius: 5, backgroundColor: C.accent, borderWidth: 2, borderColor: C.bg },
-  card: { gap: 14, paddingVertical: 16, paddingHorizontal: 14, borderRadius: 20, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
-  label: { letterSpacing: 0.8, textTransform: 'uppercase', paddingHorizontal: 4 },
+  day: { gap: 18, padding: 20, borderRadius: 26, backgroundColor: C.accentSoft },
+  streak: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 99, backgroundColor: C.card },
+  next: { gap: 16, padding: 18, borderRadius: 22, backgroundColor: C.card },
+  nextIc: { width: 52, height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  label: { letterSpacing: 0.6, textTransform: 'uppercase' },
   hero: { borderRadius: 22, padding: 18, gap: 14 },
-  chip: { paddingVertical: 4, paddingHorizontal: 9, borderRadius: 99, backgroundColor: C.card },
-  tile: { flex: 1, minWidth: 0, minHeight: 112, borderRadius: 16, padding: 16, gap: 14, justifyContent: 'space-between' },
+  chip: { paddingVertical: 5, paddingHorizontal: 10, borderRadius: 99, backgroundColor: C.card },
+  tile: { flex: 1, minWidth: 0, minHeight: 120, borderRadius: 20, padding: 16, gap: 14, justifyContent: 'space-between' },
   tileIc: { width: 26, height: 26, borderRadius: 13, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
   ic: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
 }));

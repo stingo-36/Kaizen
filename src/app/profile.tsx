@@ -3,15 +3,13 @@ import { ArrowLeft, Bell, Cloud, CloudOff, HeartPulse, LogOut, RefreshCw, Wallet
 import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
-import { Btn, Card, Chip, IconBtn, Input, Label, Row, Screen, Segmented, T, Tap, haptic, useToast } from '@/components/ui';
+import { Btn, Card, Chip, IconBtn, Input, Label, Row, Screen, T, Tap, haptic, useToast } from '@/components/ui';
 import { today } from '@/lib/dates';
 import { ensurePermission, syncHabitReminders } from '@/lib/notifications';
 import { EQUIPMENT, GOALS, LEVELS, missingDetails, Profile as P } from '@/lib/profile';
 import { useStore } from '@/lib/store';
 import { C, themed } from '@/lib/theme';
 import { goBack } from '@/lib/nav';
-import { useTheme } from '@/lib/theme-store';
-import type { ThemeMode } from '@/lib/theme';
 
 const num = (v: string) => { const n = parseFloat(v.replace(',', '.')); return Number.isFinite(n) ? n : null; };
 
@@ -24,7 +22,6 @@ export default function Profile() {
     weightKg: profile.weightKg ? String(profile.weightKg) : '', injuries: profile.injuries,
     sex: profile.sex, goal: profile.goal, level: profile.level, days: profile.days, minutes: profile.minutes, equipment: profile.equipment,
   });
-  const theme = useTheme();
   const [err, setErr] = useState('');
   const set = <K extends keyof typeof d>(k: K, v: (typeof d)[K]) => { setD({ ...d, [k]: v }); setErr(''); };
 
@@ -97,13 +94,6 @@ export default function Profile() {
       {err ? <T size={13} color={C.danger}>{err}</T> : null}
       <Btn title="Save profile" onPress={save} />
 
-      <Label>Appearance</Label>
-      <Card style={{ gap: 10 }}>
-        <Segmented options={[['light', 'Light'], ['dark', 'Dark'], ['system', 'System']]} value={theme.mode}
-          onChange={(v) => { theme.setMode(v as ThemeMode); setTimeout(() => router.push('/profile'), 0); }} />
-        <T size={12} color={C.muted}>System follows your phone’s dark mode setting.</T>
-      </Card>
-
       <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         {sync === 'offline' ? <CloudOff size={20} color={C.danger} /> : <Cloud size={20} color={C.green} />}
         <View style={{ flex: 1, minWidth: 0 }}>
@@ -129,6 +119,6 @@ export default function Profile() {
 
 const st = themed(() => StyleSheet.create({
   avatar: { width: 56, height: 56, borderRadius: 28, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' },
-  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
+  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   item: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, paddingHorizontal: 12 },
 }));

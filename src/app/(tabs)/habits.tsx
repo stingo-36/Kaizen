@@ -11,7 +11,7 @@ import { PagerScreen } from '@/components/pager';
 import { HabitIcon } from '@/components/icons';
 import { Bar, Btn, Card, IconBtn, Label, Ring, Row, Screen, SectionTitle, Stat, T, Tap, haptic } from '@/components/ui';
 import { addDays, DAY_NAMES, fmtShort, monIndex, mondayOf, parse, today, WEEK, ymd } from '@/lib/dates';
-import { bestStreak, cleanDays, dayStreak, dueOn, Habit, isDone, nextMilestone, PASTEL, rate, streak, totalDone, weekData } from '@/lib/habits';
+import { bestStreak, cleanDays, dayStreak, dueOn, Habit, isDone, nextMilestone, PASTEL, pastel, rate, streak, totalDone, weekData } from '@/lib/habits';
 import { useStore } from '@/lib/store';
 import { C, themed } from '@/lib/theme';
 import { useHabitActions } from '@/lib/useHabitActions';
@@ -96,9 +96,9 @@ export default function Habits() {
             return (
               <Tap key={dk} onPress={future ? undefined : () => { haptic('select'); setSel(dk); }} scale={0.92} style={[st.dcell, on && st.dcellOn, future && { opacity: 0.4 }]}
                 accessibilityLabel={`${d.toDateString()}${dk === k ? ', today' : ''}`} accessibilityState={{ selected: on, disabled: future }}>
-                <T size={11} w="s" color={on ? C.onInk : C.muted}>{d.toLocaleDateString(undefined, { weekday: 'short' })}</T>
-                <T size={15} w="s" color={on ? C.onInk : C.ink}>{d.getDate()}</T>
-                <View style={[st.doneDot, all && { backgroundColor: on ? C.onInk : C.green }]} />
+                <T size={11} w="s" color={on ? C.white : C.muted}>{d.toLocaleDateString(undefined, { weekday: 'short' })}</T>
+                <T size={15} w="s" color={on ? C.white : C.ink}>{d.getDate()}</T>
+                <View style={[st.doneDot, all && { backgroundColor: on ? C.white : C.green }]} />
               </Tap>
             );
           })}
@@ -106,12 +106,15 @@ export default function Habits() {
       </View>
 
       {due.length > 0 && (
-        <View style={{ gap: 8 }}>
-          <Row style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <T size={15} w="s">{due.length - todo.length} of {due.length} done</T>
-            <T size={12} color={C.muted}>{dayStreak(habits)}-day streak</T>
+        <View style={st.dayHero}>
+          <Row style={{ justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <View style={{ gap: 2 }}>
+              <T size={13} w="m" color={C.accentInk}>{isToday ? 'Today' : 'This day'}</T>
+              <T size={30} w="b" color={C.accentInk}>{due.length - todo.length} of {due.length} done</T>
+            </View>
+            <View style={st.heroChip}><Flame size={14} color={C.accent} /><T size={12.5} w="s" color={C.accentInk}>{dayStreak(habits)}-day streak</T></View>
           </Row>
-          <Bar value={(due.length - todo.length) / due.length} color={PASTEL[0][1]} height={8} />
+          <Bar value={(due.length - todo.length) / due.length} color={C.accent} track={C.card} height={8} />
         </View>
       )}
 
@@ -150,7 +153,7 @@ export default function Habits() {
             const days = cleanDays(h), next = nextMilestone(days);
             return (
               <Tap key={h.id} style={[st.card, { flexDirection: 'row', alignItems: 'center', gap: 12 }]} onPress={() => router.push({ pathname: '/habit/[id]', params: { id: h.id } })}>
-                <View style={[st.ic36, { backgroundColor: PASTEL[0][0] }]}><HabitIcon index={h.icon} color={PASTEL[0][1]} size={17} /></View>
+                <View style={[st.ic36, { backgroundColor: pastel(h)[0] }]}><HabitIcon index={h.icon} color={pastel(h)[1]} size={17} /></View>
                 <View style={{ flex: 1, minWidth: 0, gap: 8 }}>
                   <Row style={{ justifyContent: 'space-between' }}><T size={15} w="s" numberOfLines={1} style={{ flex: 1 }}>{h.name}</T><T size={12} color={C.muted}><T size={15} w="b">{days}</T> / {next} days</T></Row>
                   <Bar value={days / next} />
@@ -270,7 +273,7 @@ export default function Habits() {
 
           <SectionTitle title="By habit · 30 days" />
           {ranked.map(({ h, r, s }) => {
-            const [bg, ink] = PASTEL[0];
+            const [bg, ink] = pastel(h);
             return (
               <Tap key={h.id} onPress={() => router.push({ pathname: '/habit/[id]', params: { id: h.id } })} style={[st.card, st.rank]} scale={0.98}>
                 <Ring value={r as number} size={48} stroke={5} color={ink} track={bg}>
@@ -300,13 +303,15 @@ export default function Habits() {
 }
 
 const st = themed(() => StyleSheet.create({
-  weekCard: { gap: 6, padding: 8, borderRadius: 20, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
+  weekCard: { gap: 6, padding: 8, borderRadius: 20, backgroundColor: C.card },
   dcell: { flex: 1, minWidth: 0, alignItems: 'center', gap: 3, paddingVertical: 8, borderRadius: 14 },
-  dcellOn: { backgroundColor: C.ink },
+  dcellOn: { backgroundColor: C.accent },
+  dayHero: { gap: 16, padding: 20, borderRadius: 26, backgroundColor: C.accentSoft },
+  heroChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 99, backgroundColor: C.card },
   doneDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'transparent', marginTop: 2 },
   count: { paddingVertical: 3, paddingHorizontal: 9, borderRadius: 99, backgroundColor: C.soft },
-  card: { backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, padding: 14 },
-  group: { backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, paddingHorizontal: 14 },
+  card: { backgroundColor: C.card, borderRadius: 20, padding: 14 },
+  group: { backgroundColor: C.card, borderRadius: 20, paddingHorizontal: 14 },
   ic36: { width: 36, height: 36, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   doneToggle: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 16, backgroundColor: C.soft },
   rank: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },

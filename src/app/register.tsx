@@ -24,13 +24,13 @@ export default function Register() {
   };
   return (
     <AuthShell mode="register">
-      <Field icon={AuthIcons.User} value={f.name} onChange={set('name')} placeholder="Your name" autoComplete="name" />
-      <Field icon={AuthIcons.Mail} value={f.email} onChange={set('email')} placeholder="Email" autoComplete="email" />
-      <Field icon={AuthIcons.Lock} value={f.pw} onChange={set('pw')} placeholder="Password (8+ characters)" secure autoComplete="new-password" />
-      <Field icon={AuthIcons.Lock} value={f.pw2} onChange={set('pw2')} placeholder="Confirm password" secure autoComplete="new-password" onSubmit={submit} />
+      <Field icon={AuthIcons.User} label="Name" value={f.name} onChange={set('name')} placeholder="What should we call you?" autoComplete="name" />
+      <Field icon={AuthIcons.Mail} label="Email" value={f.email} onChange={set('email')} placeholder="you@example.com" autoComplete="email" />
+      <Field icon={AuthIcons.Lock} label="Password" value={f.pw} onChange={set('pw')} placeholder="At least 8 characters" secure autoComplete="new-password" />
+      <Field icon={AuthIcons.Lock} label="Confirm password" value={f.pw2} onChange={set('pw2')} placeholder="Type it again" secure autoComplete="new-password" onSubmit={submit} />
       {err ? <T size={13} color={C.danger}>{err}</T> : null}
-      <Btn title="Create account" icon={ArrowRight} onPress={submit} busy={busy} style={{ minHeight: 50, marginTop: 4 }} />
-      <Row gap={4} style={{ justifyContent: 'center', marginTop: 10 }}>
+      <Btn title="Create account" icon={ArrowRight} onPress={submit} busy={busy} style={{ marginTop: 6 }} />
+      <Row gap={4} style={{ justifyContent: 'center', marginTop: 6 }}>
         <T size={13.5} color={C.muted}>Already have an account?</T>
         <Pressable onPress={() => router.replace('/login')} hitSlop={8}><T size={13.5} w="s" color={C.accent}>Log in</T></Pressable>
       </Row>

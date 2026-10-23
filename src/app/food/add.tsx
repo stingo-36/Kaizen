@@ -84,7 +84,7 @@ export default function AddFood() {
         {MEALS.map(([m, l]) => (
           <Tap key={m} onPress={() => { haptic('select'); setMeal(m); }} scale={0.95} style={[st.meal, meal === m && st.mealOn]}
             accessibilityRole="tab" accessibilityState={{ selected: meal === m }} accessibilityLabel={l}>
-            <T size={12} w="s" color={meal === m ? C.onInk : C.muted} numberOfLines={1} adjustsFontSizeToFit>{l}</T>
+            <T size={12} w="s" color={meal === m ? C.white : C.muted} numberOfLines={1} adjustsFontSizeToFit>{l}</T>
           </Tap>
         ))}
       </View>
@@ -109,7 +109,7 @@ export default function AddFood() {
                 {f.brand ? `${f.brand} · ` : ''}{(() => { const p = portionsOf(f)[0]; return `${macrosOf({ item: f, grams: p.g }).kcal} kcal per ${p.label}`; })()}
               </T>
             </View>
-            <View style={st.plus}><Plus size={16} color={C.onInk} strokeWidth={2.4} /></View>
+            <View style={st.plus}><Plus size={16} color={C.white} strokeWidth={2.4} /></View>
           </Tap>
         ))}
         {q.trim().length >= 2 && !busy && !err && !results.length && <T size={13} color={C.muted}>Nothing found. Try another word or use quick add.</T>}
@@ -159,14 +159,14 @@ export default function AddFood() {
 }
 
 const st = themed(() => StyleSheet.create({
-  meals: { flexDirection: 'row', gap: 4, padding: 4, borderRadius: 99, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
+  meals: { flexDirection: 'row', gap: 4, padding: 4, borderRadius: 99, backgroundColor: C.card },
   meal: { flex: 1, minWidth: 0, alignItems: 'center', paddingVertical: 7, paddingHorizontal: 4, borderRadius: 99 },
-  mealOn: { backgroundColor: C.ink },
+  mealOn: { backgroundColor: C.accent },
   search: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 50, paddingHorizontal: 14, borderRadius: 16, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
   input: { flex: 1, minWidth: 0, fontFamily: F.r, fontSize: 15, color: C.ink, paddingVertical: 12 },
   quick: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 16, backgroundColor: C.accentTint },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, paddingLeft: 14, borderRadius: 18, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
-  plus: { width: 30, height: 30, borderRadius: 15, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, paddingLeft: 14, borderRadius: 18, backgroundColor: C.card },
+  plus: { width: 30, height: 30, borderRadius: 15, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' },
   amt: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 72, paddingHorizontal: 10, borderRadius: 18, backgroundColor: C.soft },
   mac: { flex: 1, minWidth: 0, padding: 10, borderRadius: 14, backgroundColor: C.soft, gap: 2 },
   field: { minHeight: 46, minWidth: 0, paddingHorizontal: 12, borderRadius: 12, backgroundColor: C.soft, fontFamily: F.r, fontSize: 15, color: C.ink },

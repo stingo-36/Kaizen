@@ -125,8 +125,8 @@ function Thread({ updates, person }: { updates: NestUpdate[]; person: string }) 
     <View style={{ gap: 10 }}>
       {updates.map((u) => (
         <View key={u.id} style={[st.bubble, u.fromThem ? st.theirs : st.mine]}>
-          {u.note ? <Points text={u.note} size={13.5} w="r" lineHeight={19} color={u.fromThem ? C.ink : C.onInk} /> : <T size={13} color={C.muted}>Replied</T>}
-          <T size={10.5} color={u.fromThem ? C.faint : C.onInk} style={!u.fromThem && { opacity: 0.7 }}>{u.fromThem ? person : 'You'} · {u.channel} · {when(u.occurredAt)}</T>
+          {u.note ? <Points text={u.note} size={13.5} w="r" lineHeight={19} color={u.fromThem ? C.ink : C.white} /> : <T size={13} color={C.muted}>Replied</T>}
+          <T size={10.5} color={u.fromThem ? C.faint : C.white} style={!u.fromThem && { opacity: 0.7 }}>{u.fromThem ? person : 'You'} · {u.channel} · {when(u.occurredAt)}</T>
         </View>
       ))}
     </View>
@@ -159,8 +159,8 @@ function Composer({ kind, person, channels, onSend }: { kind: string; person: st
     <View style={{ gap: 8 }}>
       {follow ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }} keyboardShouldPersistTaps="handled">
-          <Chip label="I followed up" on={!fromThem} onPress={() => setFromThem(false)} icon={<Send size={12} color={!fromThem ? C.onInk : C.ink} />} />
-          <Chip label={`${person ?? 'They'} replied`} on={fromThem} onPress={() => setFromThem(true)} icon={<Reply size={12} color={fromThem ? C.onInk : C.ink} />} />
+          <Chip label="I followed up" on={!fromThem} onPress={() => setFromThem(false)} icon={<Send size={12} color={!fromThem ? C.white : C.ink} />} />
+          <Chip label={`${person ?? 'They'} replied`} on={fromThem} onPress={() => setFromThem(true)} icon={<Reply size={12} color={fromThem ? C.white : C.ink} />} />
           <View style={{ width: 1, backgroundColor: C.line, marginHorizontal: 2 }} />
           {channels.map((c) => <Chip key={c} label={c} on={channel === c} onPress={() => setChannel(c)} />)}
         </ScrollView>
@@ -169,7 +169,7 @@ function Composer({ kind, person, channels, onSend }: { kind: string; person: st
         <TextInput value={text} onChangeText={setText} multiline placeholder={follow ? (fromThem ? `What did ${person ?? 'they'} say? (optional)` : 'What did you tell them?') : kind === 'Note' ? 'Add to this note…' : 'Add a note…'}
           placeholderTextColor={C.faint} style={st.input} accessibilityLabel="Add an update" />
         <Pressable onPress={send} accessibilityRole="button" accessibilityLabel="Send" style={[st.send, !canSend && { opacity: 0.35 }]}>
-          {busy ? <ActivityIndicator size="small" color={C.onInk} /> : <Send size={17} color={C.onInk} />}
+          {busy ? <ActivityIndicator size="small" color={C.white} /> : <Send size={17} color={C.white} />}
         </Pressable>
       </Row>
     </View>
@@ -178,12 +178,12 @@ function Composer({ kind, person, channels, onSend }: { kind: string; person: st
 
 const st = themed(() => StyleSheet.create({
   pill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4, paddingHorizontal: 9, borderRadius: 99 },
-  body: { padding: 14, borderRadius: 16, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
+  body: { padding: 14, borderRadius: 16, backgroundColor: C.card },
   added: { gap: 4, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 14, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
   bubble: { maxWidth: '86%', gap: 4, paddingVertical: 9, paddingHorizontal: 12, borderRadius: 16 },
-  mine: { alignSelf: 'flex-end', backgroundColor: C.ink, borderBottomRightRadius: 5 },
-  theirs: { alignSelf: 'flex-start', backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderBottomLeftRadius: 5 },
+  mine: { alignSelf: 'flex-end', backgroundColor: C.accent, borderBottomRightRadius: 5 },
+  theirs: { alignSelf: 'flex-start', backgroundColor: C.card, borderBottomLeftRadius: 5 },
   input: { flex: 1, minWidth: 0, maxHeight: 110, minHeight: 44, borderRadius: 22, borderWidth: 1, borderColor: C.field, backgroundColor: C.card, paddingHorizontal: 14, paddingTop: 11, paddingBottom: 11, fontFamily: F.r, fontSize: 14, color: C.ink },
-  send: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' },
+  send: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' },
 }));
 

@@ -25,23 +25,25 @@ export const VisitBump = ({ extra, children }: { extra: number; children: ReactN
   <Visit.Provider value={useVisit() + extra}>{children}</Visit.Provider>
 );
 
-/** Fades and lifts its child in after `delay`, again on every visit. */
-function Rise({ children, delay }: { children: ReactNode; delay: number }) {
+/** Fades, lifts and settles its child in after `delay`, again on every visit. */
+function Rise({ children, delay, lift = 18 }: { children: ReactNode; delay: number; lift?: number }) {
   const visit = useVisit();
   const p = useSharedValue(0);
   // Keep the first delay, so a sibling appearing above doesn't replay this one.
   const [wait] = useState(delay);
   useEffect(() => {
     p.value = 0;
-    p.value = withDelay(wait, withTiming(1, { duration: 340, easing: Easing.out(Easing.cubic) }));
+    p.value = withDelay(wait, withTiming(1, { duration: 460, easing: Easing.out(Easing.exp) }));
   }, [visit, wait, p]);
   // Drop the transform once settled, like an entering animation would.
-  const style = useAnimatedStyle(() => (p.value < 1 ? { opacity: p.value, transform: [{ translateY: (1 - p.value) * 14 }] } : { opacity: 1, transform: [] }));
+  const style = useAnimatedStyle(() => (p.value < 1
+    ? { opacity: Math.min(1, p.value * 1.6), transform: [{ translateY: (1 - p.value) * lift }, { scale: 0.97 + 0.03 * p.value }] }
+    : { opacity: 1, transform: [] }));
   return <Animated.View style={style}>{children}</Animated.View>;
 }
 
 /** Fades and lifts each child in, one after another. Fragments are unwrapped so page sections stagger too. */
-export function Stagger({ children, step = 45, max = 10 }: { children: ReactNode; step?: number; max?: number }) {
+export function Stagger({ children, step = 60, max = 10, lift, base = 0 }: { children: ReactNode; step?: number; max?: number; lift?: number; base?: number }) {
   // Keys are prefixed with the fragment's own key: two fragments both have children ".0", ".1"…,
   // and duplicate keys make React drop or duplicate views (overlapping text).
   const flat: { key: string; node: ReactNode }[] = [];
@@ -52,7 +54,7 @@ export function Stagger({ children, step = 45, max = 10 }: { children: ReactNode
     } else flat.push({ key: k, node: c });
   });
   return flat.map(({ key, node: c }, i) => (
-    <Rise key={key} delay={Math.min(i, max) * step}>
+    <Rise key={key} delay={base + Math.min(i, max) * step} lift={lift}>
       {c}
     </Rise>
   ));

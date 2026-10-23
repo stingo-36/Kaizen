@@ -9,7 +9,7 @@ import { BackHeader, Btn, Card, Chip, IconBtn, Row, Screen, Segmented, Sheet, T,
 import { kcalForPlanDay } from '@/lib/calories';
 import { PASTEL } from '@/lib/habits';
 import { useStore } from '@/lib/store';
-import { C, F, themed } from '@/lib/theme';
+import { C, F, themed, toneOf } from '@/lib/theme';
 import { aiDescribeExercise, aiRetune, aiSuggestExercises, fmtKg, Intensity, keyPoints, Kind, normExercise, Plan, PlanDay, PlanExercise } from '@/lib/workout';
 import { goBack } from '@/lib/nav';
 
@@ -96,7 +96,7 @@ export default function PlanScreen() {
           <View style={[st.badge, { backgroundColor: C.accentSoft }]}><T size={11} w="b" color={C.accent}>≈ {kcalForPlanDay(profile, dd.exercises)} kcal</T></View>
         </Row>
         {dd.exercises.map((e, i) => {
-          const [bg, ink] = PASTEL[4];
+          const [bg, ink] = toneOf(i + 1);
           return (
             <View key={e.id} style={[st.ex, { borderTopWidth: 1, borderTopColor: C.line }]}>
               <View style={[st.n, { backgroundColor: bg }]}>{e.kind === 'cardio' ? <HeartPulse size={15} color={ink} /> : <T size={13} w="b" color={ink}>{i + 1}</T>}</View>

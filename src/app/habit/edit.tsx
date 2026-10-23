@@ -81,7 +81,7 @@ export default function EditHabit() {
             const [bg, ink] = PASTEL[i % 4];
             return (
               <Tap key={i} onPress={() => { haptic('select'); setD({ ...d, icon: i }); }} scale={0.9} style={st.iconCell} accessibilityLabel={ICONS[i]} accessibilityState={{ selected: d.icon === i }}>
-                <View style={[st.iconTile, { backgroundColor: bg }, d.icon === i && { borderWidth: 2.5, borderColor: C.ink }]}><HabitIcon index={i} color={ink} size={22} /></View>
+                <View style={[st.iconTile, { backgroundColor: bg }, d.icon === i && { borderWidth: 2.5, borderColor: C.accent }]}><HabitIcon index={i} color={ink} size={22} /></View>
               </Tap>
             );
           })}
@@ -93,7 +93,7 @@ export default function EditHabit() {
           <Row gap={8}>
             {[0, 1, 7, 30].map((n) => {
               const dk = ymd(new Date(now - n * 864e5));
-              return <Pressable key={n} onPress={() => setD({ ...d, quitDate: dk })} style={[st.pill, d.quitDate === dk && st.pillOn]}><T size={13} w="s" color={d.quitDate === dk ? C.onInk : C.ink}>{n === 0 ? 'Today' : n === 1 ? 'Yesterday' : `${n} days ago`}</T></Pressable>;
+              return <Pressable key={n} onPress={() => setD({ ...d, quitDate: dk })} style={[st.pill, d.quitDate === dk && st.pillOn]}><T size={13} w="s" color={d.quitDate === dk ? C.white : C.ink}>{n === 0 ? 'Today' : n === 1 ? 'Yesterday' : `${n} days ago`}</T></Pressable>;
             })}
           </Row>
         </View>
@@ -106,8 +106,8 @@ export default function EditHabit() {
                 const js = (i + 1) % 7, on = d.days.includes(js);
                 return (
                   <Tap key={i} scale={0.9} onPress={() => { haptic('select'); setD({ ...d, days: on ? d.days.filter((x) => x !== js) : [...d.days, js] }); }}
-                    style={[st.dayBtn, on && { backgroundColor: C.ink, borderColor: C.ink }]} accessibilityLabel={DAY_NAMES[js]} accessibilityState={{ selected: on }}>
-                    <T size={14} w="s" color={on ? C.onInk : C.muted}>{w}</T>
+                    style={[st.dayBtn, on && { backgroundColor: C.accent, borderColor: C.accent }]} accessibilityLabel={DAY_NAMES[js]} accessibilityState={{ selected: on }}>
+                    <T size={14} w="s" color={on ? C.white : C.muted}>{w}</T>
                   </Tap>
                 );
               })}
@@ -140,7 +140,7 @@ export default function EditHabit() {
         <View style={st.times}>
           {TIMES.map((t) => (
             <Pressable key={t} onPress={() => { setD({ ...d, reminder: t }); setTimeOpen(false); }} style={[st.pill, d.reminder === t && st.pillOn]}>
-              <T size={13} w="s" color={d.reminder === t ? C.onInk : C.ink}>{fmt(t)}</T>
+              <T size={13} w="s" color={d.reminder === t ? C.white : C.ink}>{fmt(t)}</T>
             </Pressable>
           ))}
         </View>
@@ -167,6 +167,6 @@ const st = themed(() => StyleSheet.create({
   setting: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: 16, borderRadius: 18, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
   step: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.soft, alignItems: 'center', justifyContent: 'center' },
   pill: { paddingVertical: 9, paddingHorizontal: 14, borderRadius: 99, borderWidth: 1, borderColor: C.field, backgroundColor: C.card },
-  pillOn: { backgroundColor: C.ink, borderColor: C.ink },
+  pillOn: { backgroundColor: C.accent, borderColor: C.accent },
   times: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 }));
