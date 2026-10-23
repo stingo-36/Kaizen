@@ -1,8 +1,8 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { useIncomingShare } from 'expo-sharing';
+import { SharePayload, useIncomingShare } from 'expo-sharing';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Linking, Modal, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { ActivityIndicator, FlatList, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Check, Images, Link2, Plus, Sparkles, Trash2, X } from '@/components/ico';
@@ -14,6 +14,12 @@ import { C, F, PASTEL, themed } from '@/lib/theme';
 import { useWorkNest } from '@/lib/worknest-store';
 
 const MAX_SHOTS = 6;
+
+/* Browsers can't receive shares (expo-sharing throws there), so the web preview opens the screen with nothing shared.
+   Chosen once at load, so the hook order never changes between renders. */
+const NO_SHARE: SharePayload[] = [];
+const useShared: () => { sharedPayloads: SharePayload[]; clearSharedPayloads: () => void } =
+  Platform.OS === 'web' ? () => ({ sharedPayloads: NO_SHARE, clearSharedPayloads: () => {} }) : useIncomingShare;
 
 /** Full-screen gallery: Screenshots album first (or every photo), tap to pick up to MAX_SHOTS. */
 function GalleryPicker({ open, picked, onToggle, onClose }: { open: boolean; picked: string[]; onToggle: (s: Shot) => void; onClose: () => void }) {
@@ -69,7 +75,7 @@ const DEFAULT_TYPES = ['Website', 'App', 'Link', 'Tool', 'Command', 'Documentati
 export default function Share() {
   const toast = useToast();
   const { status, resourceTypes, saveResource } = useWorkNest();
-  const { sharedPayloads, clearSharedPayloads } = useIncomingShare();
+  const { sharedPayloads, clearSharedPayloads } = useShared();
 
   // What came in: a link from the shared text, and any shared images (preselected).
   const shared = useMemo(() => {
