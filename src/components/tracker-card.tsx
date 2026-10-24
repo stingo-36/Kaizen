@@ -7,7 +7,7 @@ import { C, themed } from '@/lib/theme';
 import { Briefcase, Check, ChevronRight } from './ico';
 import { haptic, LinkRow, Row, T, useToast } from './ui';
 
-// WorkNest's own colour: teal, outside the five pastels.
+// Lavender accents keep WorkNest within the Cobalt Studio palette.
 export const nestTone = (): [string, string] => [C.tealSoft, C.teal];
 const SHOWN = 4;
 

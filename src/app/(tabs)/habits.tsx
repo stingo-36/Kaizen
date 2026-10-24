@@ -9,7 +9,7 @@ import { AppHeader } from '@/components/header';
 import { Item } from '@/components/motion';
 import { PagerScreen } from '@/components/pager';
 import { HabitIcon } from '@/components/icons';
-import { Bar, Btn, Card, IconBtn, Label, Ring, Row, Screen, SectionTitle, Stat, T, Tap, haptic } from '@/components/ui';
+import { Bar, Btn, FeatureCard, Card, IconBtn, Label, Ring, Row, Screen, SectionTitle, Stat, T, Tap, haptic } from '@/components/ui';
 import { addDays, DAY_NAMES, fmtShort, monIndex, mondayOf, parse, today, WEEK, ymd } from '@/lib/dates';
 import { bestStreak, cleanDays, dayStreak, dueOn, Habit, isDone, nextMilestone, PASTEL, pastel, rate, streak, totalDone, weekData } from '@/lib/habits';
 import { useStore } from '@/lib/store';
@@ -106,16 +106,16 @@ export default function Habits() {
       </View>
 
       {due.length > 0 && (
-        <View style={st.dayHero}>
-          <Row style={{ justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <FeatureCard style={st.dayHero}>
+          <Row style={{ justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
             <View style={{ gap: 2 }}>
-              <T size={13} w="m" color={C.accentInk}>{isToday ? 'Today' : 'This day'}</T>
-              <T size={30} w="b" color={C.accentInk}>{due.length - todo.length} of {due.length} done</T>
+              <T size={13} w="m" color={C.white}>{isToday ? 'Today' : 'This day'}</T>
+              <T size={30} w="b" color={C.white}>{due.length - todo.length} of {due.length} done</T>
             </View>
-            <View style={st.heroChip}><Flame size={14} color={C.accent} /><T size={12.5} w="s" color={C.accentInk}>{dayStreak(habits)}-day streak</T></View>
+            <View style={st.heroChip}><Flame size={14} color={C.heroMuted} /><T size={12.5} w="s" color={C.white}>{dayStreak(habits)}-day streak</T></View>
           </Row>
-          <Bar value={(due.length - todo.length) / due.length} color={C.accent} track={C.card} height={8} />
-        </View>
+          <Bar value={(due.length - todo.length) / due.length} color={C.heroMuted} track="rgba(255,255,255,0.2)" height={8} />
+        </FeatureCard>
       )}
 
       {/* All habits for the selected day */}
@@ -306,8 +306,8 @@ const st = themed(() => StyleSheet.create({
   weekCard: { gap: 6, padding: 8, borderRadius: 20, backgroundColor: C.card },
   dcell: { flex: 1, minWidth: 0, alignItems: 'center', gap: 3, paddingVertical: 8, borderRadius: 14 },
   dcellOn: { backgroundColor: C.accent },
-  dayHero: { gap: 16, padding: 20, borderRadius: 26, backgroundColor: C.accentSoft },
-  heroChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 99, backgroundColor: C.card },
+  dayHero: { gap: 16, padding: 21, borderRadius: 20 },
+  heroChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 99, backgroundColor: C.heroEnd },
   doneDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'transparent', marginTop: 2 },
   count: { paddingVertical: 3, paddingHorizontal: 9, borderRadius: 99, backgroundColor: C.soft },
   card: { backgroundColor: C.card, borderRadius: 20, padding: 14 },

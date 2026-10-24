@@ -5,13 +5,13 @@ import {
   Animated, KeyboardTypeOptions, Modal, Platform, Pressable, PressableProps, ScrollView, StyleProp, StyleSheet, Text, TextProps, TextStyle, View, ViewStyle,
 } from 'react-native';
 import {
-  Avatar, Button as PButton, Card as PCard, Chip as PChip, IconButton, List, SegmentedButtons, Snackbar, TextInput as PTextInput,
+  Avatar, Button as PButton, Card as PCard, Chip as PChip, IconButton, List, Snackbar, TextInput as PTextInput,
 } from 'react-native-paper';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Reanimated, { useAnimatedProps, useAnimatedStyle, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
-import Svg, { Circle, Defs, G, LinearGradient, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, G, LinearGradient, Rect, Stop } from 'react-native-svg';
 
-import { C, F, R, SP, themed, TY } from '@/lib/theme';
+import { C, F, H, R, SP, themed, TY } from '@/lib/theme';
 import { useKeyboardHeight } from '@/lib/useKeyboard';
 import { FocusReplay, Stagger, useVisit } from './motion';
 import { pi } from './paper-icons';
@@ -29,7 +29,7 @@ export function T({ size = 15, w = 'r', color = C.ink, center, style, ...rest }:
   // Headings tighten and sit snug; body text gets room to breathe.
   const ls = size >= 22 ? -0.025 * size : size >= 17 ? -0.01 * size : 0.1;
   const lh = size >= 22 ? 1.15 : size >= 17 ? 1.25 : 1.4;
-  return <Text {...rest} style={[{ fontFamily: F[w], fontSize: size, color, letterSpacing: ls, lineHeight: Math.round(size * lh) }, center && { textAlign: 'center' }, style]} />;
+  return <Text {...rest} style={[{ fontFamily: size >= 17 ? H[w] : F[w], fontSize: size, color, letterSpacing: ls, lineHeight: Math.round(size * lh) }, center && { textAlign: 'center' }, style]} />;
 }
 export const Label = ({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) => (
   <T size={13} w="s" color={C.muted} style={style}>{children}</T>
@@ -62,6 +62,18 @@ export function Screen({ children, tabs, scroll = true, style, footer, overlay }
 export const Row = ({ children, style, gap = 12 }: { children: ReactNode; style?: StyleProp<ViewStyle>; gap?: number }) => (
   <View style={[{ flexDirection: 'row', alignItems: 'center', gap }, style]}>{children}</View>
 );
+
+/** Navy-to-cobalt feature surface, with content kept above the decorative gradient. */
+export function FeatureCard({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
+  const id = `feature-${useId().replace(/:/g, '')}`;
+  return <View style={[s.feature, style]}>
+    <Svg width="100%" height="100%" style={StyleSheet.absoluteFill} pointerEvents="none" accessible={false}>
+      <Defs><LinearGradient id={id} x1="0%" y1="0%" x2="100%" y2="100%"><Stop offset="0" stopColor={C.hero} /><Stop offset="1" stopColor={C.heroEnd} /></LinearGradient></Defs>
+      <Rect width="100%" height="100%" fill={`url(#${id})`} />
+    </Svg>
+    {children}
+  </View>;
+}
 /* Style keys that belong on the Paper card itself; everything else lays out its content. */
 const CARD_OUTER = new Set(['backgroundColor', 'borderRadius', 'borderColor', 'borderWidth', 'flex', 'flexGrow', 'flexShrink', 'flexBasis', 'alignSelf',
   'width', 'minWidth', 'maxWidth', 'height', 'minHeight', 'opacity', 'margin', 'marginTop', 'marginBottom', 'marginLeft', 'marginRight', 'marginHorizontal', 'marginVertical']);
@@ -108,7 +120,7 @@ export function Btn({ title, onPress, kind = 'primary', icon, busy, style, small
 }
 export function IconBtn({ icon, onPress, dark, label, size = 42, disabled }: { icon: LucideIcon; onPress?: () => void; dark?: boolean; label: string; size?: number; disabled?: boolean }) {
   return (
-    <IconButton icon={pi(icon, dark ? 2.2 : 1.9)} mode={dark ? 'contained' : undefined} containerColor={dark ? C.accent : undefined} iconColor={dark ? C.white : C.ink}
+    <IconButton icon={pi(icon, dark ? 2.2 : 1.9)} mode="contained" containerColor={dark ? C.accent : C.card} iconColor={dark ? C.white : C.ink}
       size={20} onPress={onPress} disabled={disabled} accessibilityLabel={label} style={{ width: size, height: size, margin: 0, borderRadius: size / 2 }} />
   );
 }
@@ -123,12 +135,12 @@ export function Chip({ label, on, onPress, style }: { label: string; on?: boolea
 }
 export function Segmented({ options, value, onChange }: { options: [string, string][]; value: string; onChange: (v: string) => void }) {
   return (
-    <SegmentedButtons value={value} onValueChange={(v) => { haptic('select'); onChange(v); }}
-      theme={{ colors: { secondaryContainer: C.accent, onSecondaryContainer: C.white, outline: C.accentSoft } }}
-      buttons={options.map(([v, l]) => ({
-        value: v, label: l, showSelectedCheck: false, checkedColor: C.white, uncheckedColor: C.accentInk,
-        labelStyle: { fontFamily: F.s, fontSize: 14 }, style: { minHeight: 42, justifyContent: 'center', backgroundColor: value === v ? C.accent : C.accentTint },
-      }))} />
+    <View style={s.segment} accessibilityRole="tablist">
+      {options.map(([v, l]) => <Pressable key={v} accessibilityRole="tab" accessibilityLabel={l} accessibilityState={{ selected: value === v }}
+        onPress={() => { haptic('select'); onChange(v); }} style={[s.segmentItem, value === v && s.segmentOn]}>
+        <T size={12} w={value === v ? 's' : 'm'} color={value === v ? C.ink : C.muted}>{l}</T>
+      </Pressable>)}
+    </View>
   );
 }
 
@@ -255,12 +267,16 @@ export function Sheet({ open, onClose, title, subtitle, children }: { open: bool
 }
 
 export const s = themed(() => StyleSheet.create({
-  screen: { paddingHorizontal: SP.page, paddingTop: 12, gap: SP.section },
+  screen: { width: '100%', maxWidth: 560, alignSelf: 'center', paddingHorizontal: SP.page, paddingTop: 12, gap: SP.section },
   footer: { paddingHorizontal: 20, paddingTop: 10, gap: 8, backgroundColor: C.bg, borderTopWidth: 1, borderTopColor: C.line },
-  card: { backgroundColor: C.card, borderRadius: R.card },
+  card: { backgroundColor: C.card, borderRadius: R.card, borderWidth: 1, borderColor: C.line },
+  feature: { borderRadius: R.card, padding: 21, overflow: 'hidden', gap: 16 },
   cardIn: { padding: SP.pad },
-  btn: { borderRadius: R.pill, justifyContent: 'center' },
-  chip: { borderRadius: 999, backgroundColor: C.card },
+  btn: { borderRadius: R.btn, justifyContent: 'center' },
+  chip: { borderRadius: 12, backgroundColor: C.card, borderColor: C.line },
+  segment: { flexDirection: 'row', padding: 4, gap: 4, borderRadius: 13, backgroundColor: C.soft },
+  segmentItem: { flex: 1, minHeight: 40, paddingHorizontal: 6, justifyContent: 'center', alignItems: 'center', borderRadius: 10 },
+  segmentOn: { backgroundColor: C.card },
   backdrop: { flex: 1, backgroundColor: 'rgba(17,24,39,0.4)' },
   sheet: { maxHeight: '88%', backgroundColor: C.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 12, gap: 6 },
   grab: { alignSelf: 'center', width: 40, height: 5, borderRadius: 99, backgroundColor: C.field, marginBottom: 10 },
@@ -273,22 +289,22 @@ export function TabHeader({ title, subtitle, right, onAvatar, initial }: { title
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <View style={{ flex: 1, minWidth: 0 }}>
-        {subtitle ? <T size={13} color={C.muted} numberOfLines={1}>{subtitle}</T> : null}
+        {subtitle ? <T size={11} w="m" color={C.muted} numberOfLines={1} style={{ letterSpacing: 0.8, marginBottom: 5 }}>{subtitle.toUpperCase()}</T> : null}
         <T size={TY.title} w="b" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ lineHeight: 34 }}>{title}</T>
       </View>
       {right}
       <Tap onPress={onAvatar} scale={0.9} accessibilityLabel="Open your profile">
-        <Avatar.Text size={42} label={initial} color={C.white} style={{ backgroundColor: C.accent }} labelStyle={{ fontFamily: F.b, fontSize: 17 }} />
+        <Avatar.Text size={38} label={initial} color={C.accentInk} style={{ backgroundColor: C.accentSoft }} labelStyle={{ fontFamily: F.s, fontSize: 15 }} />
       </Tap>
     </View>
   );
 }
 /** Small labelled number tile. */
-export function Stat({ label, value, unit, tone, onPress }: { label: string; value: string | number; unit?: string; tone?: [string, string]; onPress?: () => void }) {
-  const bg = tone?.[0] ?? C.card, ink = tone?.[1] ?? C.ink;
+export function Stat({ label, value, unit, onPress }: { label: string; value: string | number; unit?: string; tone?: [string, string]; onPress?: () => void }) {
+  const bg = C.card, ink = C.ink;
   return (
-    <Tap onPress={onPress} scale={onPress ? 0.97 : 1} style={{ flex: 1, minWidth: 0, minHeight: 88, alignSelf: 'stretch', justifyContent: 'space-between', borderRadius: R.tile, paddingVertical: 14, paddingHorizontal: 14, gap: 10, backgroundColor: bg }}>
-      <T size={12} w="s" color={tone ? ink : C.muted} numberOfLines={2} style={{ lineHeight: 16, opacity: tone ? 0.85 : 1 }}>{label}</T>
+    <Tap onPress={onPress} scale={onPress ? 0.97 : 1} style={{ flex: 1, minWidth: 0, minHeight: 88, alignSelf: 'stretch', justifyContent: 'space-between', borderRadius: R.tile, paddingVertical: 14, paddingHorizontal: 14, gap: 10, backgroundColor: bg, borderWidth: 1, borderColor: C.line }}>
+      <T size={12} w="m" color={C.muted} numberOfLines={2} style={{ lineHeight: 16 }}>{label}</T>
       <T size={20} w="b" color={ink} numberOfLines={1} adjustsFontSizeToFit>{value}{unit ? <T size={12} w="m" color={ink}>{unit}</T> : null}</T>
     </Tap>
   );

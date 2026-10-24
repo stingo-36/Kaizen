@@ -8,7 +8,7 @@ import { haptic, s as ui, T } from './ui';
 
 export type Page = { key: string; label: string; render: () => ReactNode };
 
-/** Text tabs with an underline under the open one, like WorkNest's own Tracker. */
+/** Quiet segmented navigation shared by the main sections. */
 export function PagerTabs({ labels, index, onChange }: { labels: string[]; index: number; onChange: (i: number) => void }) {
   return (
     <View style={st.tabs} accessibilityRole="tablist">
@@ -86,8 +86,8 @@ export function PagerScreen({ header, pages, tabs, initial = 0, index: ctrl, onI
 }
 
 const st = themed(() => StyleSheet.create({
-  head: { paddingHorizontal: 20, paddingTop: 12, gap: 16 },
-  tabs: { flexDirection: 'row', gap: 20, borderBottomWidth: 1, borderBottomColor: C.line },
-  tab: { paddingBottom: 9, marginBottom: -1, borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  tabOn: { borderBottomColor: C.accent },
+  head: { width: '100%', maxWidth: 560, alignSelf: 'center', paddingHorizontal: 20, paddingTop: 12, gap: 16 },
+  tabs: { flexDirection: 'row', gap: 4, backgroundColor: C.soft, borderRadius: 13, padding: 4 },
+  tab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
+  tabOn: { backgroundColor: C.card },
 }));

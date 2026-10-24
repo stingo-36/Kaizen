@@ -1,4 +1,12 @@
-import { Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold, Outfit_700Bold, useFonts } from '@expo-google-fonts/outfit';
+import { Inter_400Regular } from '@expo-google-fonts/inter/400Regular';
+import { Inter_500Medium } from '@expo-google-fonts/inter/500Medium';
+import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
+import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
+import { PlusJakartaSans_400Regular } from '@expo-google-fonts/plus-jakarta-sans/400Regular';
+import { PlusJakartaSans_500Medium } from '@expo-google-fonts/plus-jakarta-sans/500Medium';
+import { PlusJakartaSans_600SemiBold } from '@expo-google-fonts/plus-jakarta-sans/600SemiBold';
+import { PlusJakartaSans_700Bold } from '@expo-google-fonts/plus-jakarta-sans/700Bold';
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -16,7 +24,7 @@ import { paperTheme } from '@/lib/paper-theme';
 import { SpendProvider } from '@/lib/spend-store';
 import { StoreProvider, useStore } from '@/lib/store';
 import { C } from '@/lib/theme';
-import { ThemeProvider, useTheme } from '@/lib/theme-store';
+import { ThemeProvider } from '@/lib/theme-store';
 import { WorkNestProvider } from '@/lib/worknest-store';
 
 SplashScreen.preventAutoHideAsync();
@@ -24,19 +32,17 @@ SplashScreen.preventAutoHideAsync();
 // Web preview only: drop the browser's default focus ring on text boxes (it clashes with the app's own styling).
 if (typeof document !== 'undefined') {
   const css = document.createElement('style');
-  css.textContent = 'input:focus, textarea:focus { outline: none !important; }';
+  css.textContent = ':root { color-scheme: light; background: #F5F6FB; } input:focus-visible, textarea:focus-visible { outline: 2px solid #3459E6; outline-offset: 2px; }';
   document.head.appendChild(css);
 }
 
 function RootStack() {
   const { ready, me, profile } = useStore();
-  const { scheme } = useTheme();
   const setup = !!me && profile.onboarded === false;
   useEffect(() => { if (ready) SplashScreen.hideAsync(); }, [ready]);
   if (!ready) return null;
   return (
-    // Keyed by scheme: switching light/dark remounts the screens so they pick up the new colours.
-    <Stack key={scheme} screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.bg }, animation: 'slide_from_right' }}>
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.bg }, animation: 'slide_from_right' }}>
       <Stack.Protected guard={setup}>
         <Stack.Screen name="onboarding" options={{ animation: 'fade', gestureEnabled: false }} />
       </Stack.Protected>
@@ -71,13 +77,9 @@ function RootStack() {
   );
 }
 
-function ThemedStatusBar() {
-  const { scheme } = useTheme();
-  return <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />;
-}
-
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({ Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold, Outfit_700Bold });
+  const [fontsLoaded, fontError] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold,
+    PlusJakartaSans_400Regular, PlusJakartaSans_500Medium, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold });
   useEffect(() => { initNotifications().catch(() => {}); }, []);
   if (!fontsLoaded && !fontError) return null;
   return (
@@ -91,7 +93,7 @@ export default function RootLayout() {
               <SpendProvider>
                 <WorkNestProvider>
                   <ToastProvider>
-                    <ThemedStatusBar />
+                    <StatusBar style="dark" />
                     <RootStack />
                   </ToastProvider>
                 </WorkNestProvider>

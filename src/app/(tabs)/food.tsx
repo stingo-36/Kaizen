@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Flag, Flame, LucideIcon, Moon, Plus, Sun, Sunrise, Trash2, Utensils } from '@/components/ico';
+import { Flame, LucideIcon, Moon, Plus, Sun, Sunrise, Trash2, Utensils } from '@/components/ico';
 import { StyleSheet, View } from 'react-native';
 import { IconButton } from 'react-native-paper';
 
@@ -7,7 +7,7 @@ import { BarChart } from '@/components/charts';
 import { AppHeader } from '@/components/header';
 import { PagerScreen } from '@/components/pager';
 import { pi } from '@/components/paper-icons';
-import { Card, IconBtn, Ring, Row, SectionTitle, Stat, T, useToast } from '@/components/ui';
+import { Bar, Card, FeatureCard, IconBtn, Row, SectionTitle, Stat, T, useToast } from '@/components/ui';
 import { logKcal } from '@/lib/calories';
 import { addDays, monIndex, parse, today, WEEK, ymd } from '@/lib/dates';
 import { amountText, Macros, macrosOf, Meal, mealFor, MEALS, sumMacros, targets } from '@/lib/food';
@@ -17,20 +17,18 @@ import { useStore } from '@/lib/store';
 import { C, themed } from '@/lib/theme';
 
 const MEAL_ICON: Record<Meal, LucideIcon> = { breakfast: Sunrise, lunch: Sun, dinner: Moon, snacks: Utensils };
-/** Each macro keeps one colour pair everywhere on this screen: protein blue, carbs teal, fat violet. */
+/** Each macro keeps one colour pair everywhere on this screen: cobalt, slate blue and lavender. */
 const MACROS: { key: 'p' | 'c' | 'f'; label: string; grad: [string, string] }[] = [
-  { key: 'p', label: 'Protein', grad: ['#4361EE', '#7B93FF'] },
-  { key: 'c', label: 'Carbs', grad: ['#0CA678', '#63E6BE'] },
-  { key: 'f', label: 'Fat', grad: ['#7048E8', '#B197FC'] },
+  { key: 'p', label: 'Protein', grad: [C.accent, C.accent2] },
+  { key: 'c', label: 'Carbs', grad: ['#6279B5', '#A9B9DF'] },
+  { key: 'f', label: 'Fat', grad: [C.lavenderInk, '#B5A3E0'] },
 ];
 
 function MacroTile({ label, value, goal, grad }: { label: string; value: number; goal: number; grad: [string, string] }) {
-  const pct = goal ? Math.round((value / goal) * 100) : 0;
   return (
     <View style={st.macro} accessible accessibilityLabel={`${label}: ${Math.round(value)} of ${goal} grams`}>
-      <Ring value={goal ? value / goal : 0} size={54} stroke={6} gradient={grad} track={C.card}><T size={12} w="b">{pct}%</T></Ring>
       <T size={13} w="s">{label}</T>
-      <T size={11.5} color={C.muted}>{Math.round(value)} / {goal} g</T>
+      <T size={11} w="s">{Math.round(value)} / {goal} g</T><View style={{ alignSelf: 'stretch', marginTop: 6 }}><Bar value={goal ? value / goal : 0} color={grad[0]} height={5} /></View>
     </View>
   );
 }
@@ -71,30 +69,18 @@ export default function Food() {
 
   const todayPage = () => (
     <>
-      <Card style={{ gap: 18 }}>
-        <Row gap={18}>
-          <Ring value={goal.kcal ? tot.kcal / goal.kcal : 0} size={124} stroke={12} gradient={[C.accent, C.accent2]} track={C.track}>
-            <T size={26} w="b">{tot.kcal.toLocaleString()}</T>
-            <T size={12} color={C.muted}>of {goal.kcal.toLocaleString()} kcal</T>
-          </Ring>
-          <View style={{ flex: 1, minWidth: 0, gap: 10 }}>
-            <View>
-              <T size={13} w="m" color={C.muted}>{left >= 0 ? 'Left today' : 'Over today'}</T>
-              <Row gap={6} style={{ alignItems: 'flex-end' }}>
-                <T size={30} w="b" color={left >= 0 ? C.ink : C.danger}>{Math.abs(left).toLocaleString()}</T>
-                <T size={13} w="m" color={C.muted} style={{ marginBottom: 5 }}>kcal</T>
-              </Row>
-            </View>
-            <View style={{ gap: 6, alignItems: 'flex-start' }}>
-              <View style={st.badge}><Flame size={13} color={C.accent} /><T size={12} w="s" color={C.accentInk}>{burned} kcal burned</T></View>
-              <View style={st.badge}><Flag size={13} color={C.accent} /><T size={12} w="s" color={C.accentInk} numberOfLines={1}>{profile.goal}</T></View>
-            </View>
-          </View>
+      <FeatureCard>
+        <T size={11} w="s" color={C.heroMuted}>{left >= 0 ? 'LEFT FOR TODAY' : 'OVER TODAY'}</T>
+        <Row gap={7} style={{ alignItems: 'baseline' }}>
+          <T size={40} w="s" color={C.white}>{Math.abs(left).toLocaleString()}</T><T size={13} color={C.heroMuted}>kcal</T>
         </Row>
-        <Row gap={10} style={{ alignItems: 'stretch' }}>
-          {MACROS.map(({ key, label, grad }) => <MacroTile key={key} label={label} value={tot[key]} goal={goal[key]} grad={grad} />)}
-        </Row>
-      </Card>
+        <T size={12} color={C.heroMuted}>{tot.kcal.toLocaleString()} eaten · {goal.kcal.toLocaleString()} daily target</T>
+        <Bar value={goal.kcal ? tot.kcal / goal.kcal : 0} color={C.heroMuted} track="rgba(255,255,255,0.18)" height={6} />
+        <Row gap={6}><Flame size={14} color={C.heroMuted} /><T size={12} color={C.heroMuted}>{burned} kcal burned · {profile.goal}</T></Row>
+      </FeatureCard>
+      <Row gap={8} style={{ alignItems: 'stretch' }}>
+        {MACROS.map(({ key, label, grad }) => <MacroTile key={key} label={label} value={tot[key]} goal={goal[key]} grad={grad} />)}
+      </Row>
 
       <SectionTitle title="Meals" action="Add food" onAction={() => add()} />
       {MEALS.map(([m, label]) => {
@@ -169,7 +155,7 @@ export default function Food() {
 }
 
 const st = themed(() => StyleSheet.create({
-  macro: { flex: 1, minWidth: 0, alignItems: 'center', gap: 6, paddingVertical: 14, paddingHorizontal: 8, borderRadius: 18, backgroundColor: C.soft },
+  macro: { flex: 1, minWidth: 0, alignItems: 'center', gap: 6, paddingVertical: 14, paddingHorizontal: 8, borderRadius: 18, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
   badge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 99, backgroundColor: C.accentTint, maxWidth: '100%' },
   mealIc: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: C.accentTint },
   entry: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.line },

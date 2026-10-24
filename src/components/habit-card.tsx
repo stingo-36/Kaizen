@@ -59,5 +59,5 @@ const st = themed(() => StyleSheet.create({
   ic: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   time: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingVertical: 1, paddingHorizontal: 6, borderRadius: 99, backgroundColor: C.soft },
-  check: { width: 30, height: 30, borderRadius: 15, borderWidth: 1.5, borderColor: C.faint, alignItems: 'center', justifyContent: 'center' },
+  check: { width: 28, height: 28, borderRadius: 8, borderWidth: 1.5, borderColor: C.faint, alignItems: 'center', justifyContent: 'center' },
 }));

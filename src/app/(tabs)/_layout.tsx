@@ -5,16 +5,16 @@ import { BottomNavigation } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { haptic } from '@/components/ui';
-import { C, toneOf } from '@/lib/theme';
+import { C } from '@/lib/theme';
 
-/* Each tab has its own colour: the icon always shows in it, and the selected tab's pill and label take it too. */
-const TABS: { name: string; href: '/' | '/habits' | '/workouts' | '/food' | '/spendwise' | '/tracker'; label: string; icon: LucideIcon; tone: [string, string] }[] = [
-  { name: 'index', href: '/', label: 'Home', icon: House, tone: toneOf(1) },
-  { name: 'habits', href: '/habits', label: 'Habits', icon: ListChecks, tone: toneOf(0) },
-  { name: 'workouts', href: '/workouts', label: 'Workouts', icon: Dumbbell, tone: toneOf(3) },
-  { name: 'food', href: '/food', label: 'Food', icon: Utensils, tone: toneOf(4) },
-  { name: 'spendwise', href: '/spendwise', label: 'Spend', icon: Wallet, tone: toneOf(2) },
-  { name: 'tracker', href: '/tracker', label: 'Tracker', icon: Briefcase, tone: toneOf(5) },
+/* One cobalt active state keeps all six sections part of the same app. */
+const TABS: { name: string; href: '/' | '/habits' | '/workouts' | '/food' | '/spendwise' | '/tracker'; label: string; icon: LucideIcon }[] = [
+  { name: 'index', href: '/', label: 'Home', icon: House },
+  { name: 'habits', href: '/habits', label: 'Habits', icon: ListChecks },
+  { name: 'workouts', href: '/workouts', label: 'Workouts', icon: Dumbbell },
+  { name: 'food', href: '/food', label: 'Food', icon: Utensils },
+  { name: 'spendwise', href: '/spendwise', label: 'Spend', icon: Wallet },
+  { name: 'tracker', href: '/tracker', label: 'Tracker', icon: Briefcase },
 ];
 const ROUTES = TABS.map((t) => ({ key: t.name, title: t.label }));
 
@@ -36,13 +36,13 @@ function NavBar() {
       }}
       renderIcon={({ route, focused }) => {
         const t = TABS.find((x) => x.name === route.key) ?? TABS[0];
-        return <t.icon size={22} color={t.tone[1]} strokeWidth={focused ? 2.2 : 1.9} />;
+        return <t.icon size={22} color={focused ? C.white : C.muted} strokeWidth={focused ? 2.2 : 1.9} />;
       }}
       getLabelText={({ route }) => route.title}
-      activeColor={TABS[index].tone[1]}
+      activeColor={C.accent}
       inactiveColor={C.muted}
-      activeIndicatorStyle={{ backgroundColor: TABS[index].tone[0] }}
-      style={{ backgroundColor: C.card, borderTopWidth: 1, borderTopColor: C.line }}
+      activeIndicatorStyle={{ backgroundColor: C.accent }}
+      style={{ width: '100%', maxWidth: 560, alignSelf: 'center', backgroundColor: C.card, borderTopWidth: 1, borderTopColor: C.line }}
     />
   );
 }

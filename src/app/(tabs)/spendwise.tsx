@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { AppHeader } from '@/components/header';
-import { Btn, Card, IconBtn, Input, Row, Screen, SectionTitle, T, Tap, haptic, useToast } from '@/components/ui';
+import { Btn, Card, FeatureCard, IconBtn, Input, Row, Screen, SectionTitle, T, Tap, haptic, useToast } from '@/components/ui';
 import { shortDay, timeOf, TxnRow } from '@/components/txn-row';
 import { inr, monthName, shiftMonth, SPENDWISE_URL, thisMonth } from '@/lib/spend';
 import { useSpend } from '@/lib/spend-store';
@@ -63,12 +63,12 @@ function Connect({ again }: { again?: boolean }) {
 /** One of the four summary cards: label, icon and amount. */
 function Tile({ icon: Icon, tone, label, value }: { icon: typeof Wallet; tone: [string, string]; label: string; value: string }) {
   return (
-    <View style={[st.tile, { backgroundColor: tone[0] }]} accessible accessibilityLabel={`${label}: ${value}`}>
+    <View style={st.tile} accessible accessibilityLabel={`${label}: ${value}`}>
       <Row style={{ justifyContent: 'space-between' }}>
         <T size={13} w="s" color={tone[1]} numberOfLines={1} style={{ flex: 1 }}>{label}</T>
-        <View style={st.tileIc}><Icon size={15} color={tone[1]} /></View>
+        <View style={[st.tileIc, { backgroundColor: tone[0] }]}><Icon size={15} color={tone[1]} /></View>
       </Row>
-      <T size={20} w="b" color={tone[1]} numberOfLines={1} adjustsFontSizeToFit>{value}</T>
+      <T size={20} w="b" color={C.ink} numberOfLines={1} adjustsFontSizeToFit>{value}</T>
     </View>
   );
 }
@@ -110,10 +110,15 @@ export default function Spending() {
               : <T size={TY.body} color={C.muted}>{error || 'No data for this month.'}</T>
           ) : (
             <View style={{ gap: SP.section }}>
-              {/* The four cards follow the fixed pastel order: green, amber, blue, purple. */}
+              <FeatureCard>
+                <T size={11} w="s" color={C.heroMuted}>SPENT THIS MONTH</T>
+                <T size={38} w="s" color={C.white}>{inr(s.totalSpend)}</T>
+                <T size={12} color={C.heroMuted}>Connected to SpendWise · Read-only</T>
+              </FeatureCard>
+              {/* Neutral summaries use the shared cobalt and lavender accents. */}
               <View style={{ gap: SP.grid }}>
                 <Row gap={SP.grid} style={{ alignItems: 'stretch' }}>
-                  <Tile icon={Wallet} tone={PASTEL[0]} label="Total spend" value={inr(s.totalSpend)} />
+                  <Tile icon={Wallet} tone={PASTEL[0]} label="Today" value={inr(s.todaySpend)} />
                   <Tile icon={ArrowDownLeft} tone={PASTEL[1]} label="Money in" value={s.moneyIn != null ? inr(s.moneyIn) : '–'} />
                 </Row>
                 <Row gap={SP.grid} style={{ alignItems: 'stretch' }}>
@@ -160,7 +165,7 @@ const st = themed(() => StyleSheet.create({
   server: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 14, backgroundColor: C.soft },
   ro: { paddingVertical: 3, paddingHorizontal: 8, borderRadius: 99, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
   month: { justifyContent: 'space-between', backgroundColor: C.card, borderRadius: 99, borderWidth: 1, borderColor: C.line, padding: 4 },
-  tile: { flex: 1, minWidth: 0, minHeight: 108, borderRadius: 20, padding: 16, justifyContent: 'space-between', gap: 14 },
+  tile: { flex: 1, minWidth: 0, minHeight: 108, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 20, padding: 16, justifyContent: 'space-between', gap: 14 },
   tileIc: { width: 30, height: 30, borderRadius: 15, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
   all: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 14, borderTopWidth: 1, borderTopColor: C.line },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 20, backgroundColor: C.card },

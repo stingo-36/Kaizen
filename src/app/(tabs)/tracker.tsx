@@ -6,7 +6,7 @@ import { AppHeader } from '@/components/header';
 import { Bookmark, Chats, CheckSquare, ChevronRight, LogOut, LucideIcon, Notepad, RefreshCw } from '@/components/ico';
 import { Connect } from '@/components/tracker/connect';
 import { CheckDot, EntryRow, ListCard, Section, TK } from '@/components/tracker/parts';
-import { haptic, IconBtn, Row, Screen, T, Tap, useToast } from '@/components/ui';
+import { FeatureCard, haptic, IconBtn, Row, Screen, T, Tap, useToast } from '@/components/ui';
 import { C, PASTEL, themed } from '@/lib/theme';
 import { dayKey, dayLabel, NestEntry } from '@/lib/worknest';
 import { useWorkNest } from '@/lib/worknest-store';
@@ -16,14 +16,14 @@ function Tile({ icon: Icon, tone, label, value, unit, href }: { icon: LucideIcon
   const router = useRouter();
   return (
     <Tap onPress={() => { haptic('select'); router.push(href); }} accessibilityLabel={`${label}: ${value}${unit ? ` ${unit}` : ''}. Open`}
-      style={[st.tile, { backgroundColor: tone[0] }]}>
+      style={st.tile}>
       <Row style={{ justifyContent: 'space-between' }}>
-        <View style={st.tileIc}><Icon size={17} color={tone[1]} /></View>
+        <View style={[st.tileIc, { backgroundColor: tone[0] }]}><Icon size={17} color={tone[1]} /></View>
         <ChevronRight size={16} color={tone[1]} style={{ opacity: 0.55 }} />
       </Row>
       <View style={{ gap: 2 }}>
-        <T size={12.5} w="m" color={tone[1]} style={{ opacity: 0.85 }}>{label}</T>
-        <T size={22} w="b" color={tone[1]}>{value}{unit ? <T size={12} w="m" color={tone[1]}>{` ${unit}`}</T> : null}</T>
+        <T size={12.5} w="m" color={C.muted} style={{ opacity: 0.85 }}>{label}</T>
+        <T size={22} w="b" color={C.ink}>{value}{unit ? <T size={12} w="m" color={C.muted}>{` ${unit}`}</T> : null}</T>
       </View>
     </Tap>
   );
@@ -74,6 +74,11 @@ export default function Tracker() {
         <Connect again={status === 'expired'} />
       ) : (
         <>
+          <FeatureCard>
+            <T size={11} w="s" color={C.heroMuted}>YOUR WORK, TOGETHER</T>
+            <T size={34} w="s" color={C.white}>{counts.todo}<T size={14} color={C.heroMuted}> open to-dos</T></T>
+            <T size={12} color={C.heroMuted}>{counts.dueNow.length} due today · Synced with WorkNest</T>
+          </FeatureCard>
           <View style={st.grid}>
             <Row gap={12}>
               <Tile icon={CheckSquare} tone={[C.tealSoft, C.teal]} label="To-do" value={counts.dueNow.length} unit="today" href="/tracker/todo" />
@@ -134,7 +139,7 @@ export default function Tracker() {
 
 const st = themed(() => StyleSheet.create({
   grid: { gap: 12 },
-  tile: { flex: 1, minWidth: 0, minHeight: 112, borderRadius: 18, padding: 14, justifyContent: 'space-between', gap: 12 },
+  tile: { flex: 1, minWidth: 0, minHeight: 112, borderRadius: 18, padding: 16, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, justifyContent: 'space-between', gap: 12 },
   tileIc: { width: 32, height: 32, borderRadius: 16, backgroundColor: C.glass, alignItems: 'center', justifyContent: 'center' },
   clear: { gap: 3, paddingVertical: 16, paddingHorizontal: 16, borderRadius: 16, backgroundColor: C.card },
   out: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, maxWidth: '100%' },

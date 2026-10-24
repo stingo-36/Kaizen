@@ -1,6 +1,6 @@
 import { configureFonts, MD3LightTheme, type MD3Theme } from 'react-native-paper';
 
-import { C, F, R } from './theme';
+import { C, F, H, R } from './theme';
 
 /* React Native Paper (Material 3) themed from Kaizen's own tokens, so Paper components and
    hand-built views share one palette, one font and flat (shadow-free) surfaces. */
@@ -11,9 +11,9 @@ export const paperTheme: MD3Theme = {
   roundness: R.btn / 4,
   fonts: configureFonts({
     config: {
-      displayLarge: { fontFamily: F.b }, displayMedium: { fontFamily: F.b }, displaySmall: { fontFamily: F.b },
-      headlineLarge: { fontFamily: F.b }, headlineMedium: { fontFamily: F.b }, headlineSmall: { fontFamily: F.b },
-      titleLarge: { fontFamily: F.b }, titleMedium: { fontFamily: F.s }, titleSmall: { fontFamily: F.s },
+      displayLarge: { fontFamily: H.b }, displayMedium: { fontFamily: H.b }, displaySmall: { fontFamily: H.b },
+      headlineLarge: { fontFamily: H.b }, headlineMedium: { fontFamily: H.b }, headlineSmall: { fontFamily: H.b },
+      titleLarge: { fontFamily: H.b }, titleMedium: { fontFamily: H.s }, titleSmall: { fontFamily: F.s },
       labelLarge: { fontFamily: F.s }, labelMedium: { fontFamily: F.s }, labelSmall: { fontFamily: F.m },
       bodyLarge: { fontFamily: F.r }, bodyMedium: { fontFamily: F.r }, bodySmall: { fontFamily: F.r },
     },

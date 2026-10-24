@@ -88,7 +88,7 @@ export default function ExerciseScreen() {
                     <T size={15} w="s">{parse(h.l.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}</T>
                     <T size={12} color={C.muted}>{cardio ? `${h.d[0].r} min` : h.d.map((s) => (s.w ? `${s.w}×${s.r}` : `${s.r}`)).join(' · ')}</T>
                   </View>
-                  {pr && <View style={{ paddingVertical: 3, paddingHorizontal: 9, borderRadius: 99, backgroundColor: '#DCEFCF' }}><T size={11} w="b" color="#2F3D24">PR</T></View>}
+                  {pr && <View style={{ paddingVertical: 3, paddingHorizontal: 9, borderRadius: 99, backgroundColor: C.accentSoft }}><T size={11} w="b" color={C.accentInk}>PR</T></View>}
                 </Row>
               );
             })}

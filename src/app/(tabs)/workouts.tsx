@@ -7,7 +7,7 @@ import { BarChart } from '@/components/charts';
 import { AppHeader } from '@/components/header';
 import { InsightCard } from '@/components/insight-card';
 import { PagerScreen } from '@/components/pager';
-import { Btn, Card, LinkRow, Row, SectionTitle, Sheet, Stat, T, Tap, useToast } from '@/components/ui';
+import { Btn, FeatureCard, Card, LinkRow, Row, SectionTitle, Sheet, Stat, T, Tap, useToast } from '@/components/ui';
 import { kcalForPlanDay, logKcal } from '@/lib/calories';
 import { addDays, mondayOf, parse, today, WEEK, ymd } from '@/lib/dates';
 import { PASTEL } from '@/lib/habits';
@@ -65,45 +65,45 @@ export default function Workouts() {
         </Tap>
       )}
       {W.session ? (
-        <View style={st.hero}>
-          <T size={11} w="s" color={C.accentInk} style={st.label}>Workout in progress</T>
-          <T size={20} w="b" color={C.accentInk}>{plan?.days[W.session.day]?.title ?? 'Workout'}</T>
+        <FeatureCard style={st.hero}>
+          <T size={11} w="s" color={C.white} style={st.label}>Workout in progress</T>
+          <T size={20} w="b" color={C.white}>{plan?.days[W.session.day]?.title ?? 'Workout'}</T>
           <Btn title="Resume workout" icon={Play} onPress={() => router.push('/workout/session')} style={{ marginTop: 12, minHeight: 48 }} />
-        </View>
+        </FeatureCard>
       ) : doneToday.length ? (
-        <View style={st.hero}>
+        <FeatureCard style={st.hero}>
           <Row style={{ justifyContent: 'space-between' }}>
-            <T size={11} w="s" color={C.accentInk} style={st.label}>Today’s workout</T>
-            <View style={st.chip}><T size={11} w="b" color={C.accentInk}>Done</T></View>
+            <T size={11} w="s" color={C.white} style={st.label}>Today’s workout</T>
+            <View style={st.chip}><T size={11} w="b" color={C.white}>Done</T></View>
           </Row>
           <Row gap={10} style={{ marginTop: 8 }}>
-            <CheckCircle2 size={26} color={C.accentInk} />
-            <T size={TY.hero} w="b" color={C.accentInk} numberOfLines={1} style={{ flex: 1 }}>{doneToday[doneToday.length - 1].title}{doneToday.length > 1 ? ` +${doneToday.length - 1}` : ''}</T>
+            <CheckCircle2 size={26} color={C.white} />
+            <T size={TY.hero} w="b" color={C.white} numberOfLines={1} style={{ flex: 1 }}>{doneToday[doneToday.length - 1].title}{doneToday.length > 1 ? ` +${doneToday.length - 1}` : ''}</T>
           </Row>
-          <T size={TY.sub} color={C.accentInk} style={{ marginTop: 4 }}>
+          <T size={TY.sub} color={C.white} style={{ marginTop: 4 }}>
             {doneToday.reduce((a, l) => a + l.duration, 0)} min · {kcalToday} kcal burned. Recover well, see you next session.
           </T>
-        </View>
+        </FeatureCard>
       ) : plan && day ? (
-        <View style={st.hero}>
+        <FeatureCard style={st.hero}>
           <Row style={{ justifyContent: 'space-between' }}>
-            <T size={11} w="s" color={C.accentInk} style={st.label}>Today · Day {nd + 1} of {plan.days.length}</T>
-            <View style={st.chip}><T size={11} w="b" color={C.accentInk}>≈ {estKcal} kcal</T></View>
+            <T size={11} w="s" color={C.white} style={st.label}>Today · Day {nd + 1} of {plan.days.length}</T>
+            <View style={st.chip}><T size={11} w="b" color={C.white}>≈ {estKcal} kcal</T></View>
           </Row>
-          <T size={TY.hero} w="b" color={C.accentInk} style={{ marginTop: 6 }}>{day.title}</T>
-          <T size={13} color={C.accentInk} numberOfLines={1}>{day.exercises.length} exercises · ~{profile.minutes} min</T>
+          <T size={TY.hero} w="b" color={C.white} style={{ marginTop: 6 }}>{day.title}</T>
+          <T size={13} color={C.white} numberOfLines={1}>{day.exercises.length} exercises · ~{profile.minutes} min</T>
           <Row gap={10} style={{ marginTop: 14 }}>
             <Btn title="Open workout" kind="light" small onPress={() => openDay(nd)} style={{ flex: 1, minHeight: 46 }} />
             <Btn title="Start" icon={Play} small onPress={() => router.push({ pathname: '/workout/session', params: { day: String(nd), plan: plan.id } })} style={{ flex: 1, minHeight: 46 }} />
           </Row>
-        </View>
+        </FeatureCard>
       ) : (
-        <View style={[st.hero, { gap: 8 }]}>
-          <View style={st.heroIc}><Sparkles size={22} color={C.accentInk} /></View>
-          <T size={20} w="b" color={C.accentInk}>Create your first plan</T>
-          <T size={14} color={C.accentInk}>Your AI coach builds a weekly plan with strength and cardio from your profile.</T>
+        <FeatureCard style={[st.hero, { gap: 8 }]}>
+          <View style={st.heroIc}><Sparkles size={22} color={C.white} /></View>
+          <T size={20} w="b" color={C.white}>Create your first plan</T>
+          <T size={14} color={C.white}>Your AI coach builds a weekly plan with strength and cardio from your profile.</T>
           <Btn title="Create a plan" kind="light" icon={Sparkles} onPress={() => router.push('/workout/new')} style={{ marginTop: 6 }} />
-        </View>
+        </FeatureCard>
       )}
 
       <View style={[st.card, { gap: 10, paddingVertical: 12 }]}>
@@ -236,9 +236,9 @@ const st = themed(() => StyleSheet.create({
   wday: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   weight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   ic: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  hero: { borderRadius: 26, padding: 20, backgroundColor: C.accentSoft },
-  heroIc: { width: 44, height: 44, borderRadius: 14, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
-  chip: { paddingVertical: 5, paddingHorizontal: 10, borderRadius: 99, backgroundColor: C.card },
+  hero: { borderRadius: 20, padding: 21, backgroundColor: C.hero },
+  heroIc: { width: 44, height: 44, borderRadius: 14, backgroundColor: C.heroEnd, alignItems: 'center', justifyContent: 'center' },
+  chip: { paddingVertical: 5, paddingHorizontal: 10, borderRadius: 99, backgroundColor: C.heroEnd },
   planRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   active: { paddingVertical: 2, paddingHorizontal: 8, borderRadius: 99, backgroundColor: PASTEL[0][0] },
   wInput: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 56, paddingHorizontal: 16, borderRadius: 16, backgroundColor: C.soft },
