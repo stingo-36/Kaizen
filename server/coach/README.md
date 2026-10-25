@@ -1,27 +1,21 @@
 # Kaizen Coach function
 
-Every AI call in the app (coach chat, daily tip, weekly insight, workout plans, exercise help, and turning a shared
-reel plus screenshots into a WorkNest resource) goes through this Neon Function, so the OpenRouter key stays on the server. It accepts only signed-in Kaizen users (Neon Auth JWT),
-caps message size, and limits each user to 40 calls per 10 minutes.
+Every AI call (coach chat, insights, workout plans, exercise help and screenshot resources) goes through this Neon Function. The Groq key stays on the server. Signed-in Kaizen users authenticate with a Neon Auth JWT; message limits and per-user rate limits remain enabled.
 
 - Project: Kaizen (`jolly-field-54618531`), branch `main` (`br-young-salad-a1ehycin`)
 - URL: https://br-young-salad-a1ehycin-coach.compute.c-1.ap-southeast-1.aws.neon.tech/
 
 ## Models
 
-Set in `index.ts` (or the `OPENROUTER_MODELS` env var, comma-separated, at most 3). The first is the paid
-`minimax/minimax-m3.1-flash`; while the OpenRouter account has no credit, OpenRouter skips it and uses the free ones.
+Text defaults to `openai/gpt-oss-120b`, with `openai/gpt-oss-20b` as a fallback for transient failures. Override with `GROQ_MODELS` (comma-separated, up to three model IDs).
 
-Screenshots for resources use the image-reading models in `VISION_MODELS` (or `OPENROUTER_VISION_MODELS`). They are
-passed to the model and dropped; the function stores nothing.
+Screenshot reading uses `qwen/qwen3.8-27b` (`GROQ_VISION_MODEL` overrides it). This is a Groq preview model; monitor availability before relying on it for production. Its three-image limit is handled by splitting Kaizen's six screenshots into batches and merging the results. Images are forwarded to Groq and are not stored by this function. Provider retention settings are managed separately in Groq's Data Controls.
 
 ## Redeploy
 
-```bash
-cd server/coach && npm install && npm run build && cd ../..
-neon functions deploy coach --src server/coach/dist/index.mjs --no-bundle \
-  --env "OPENROUTER_KEY=$(grep '^OPENROUTER_KEY=' .env | cut -d= -f2-)" \
-  --project-id jolly-field-54618531 --branch br-young-salad-a1ehycin
-```
+1. Store `GROQ_API_KEY` in the gitignored root `.env` or your secret manager. Never use an `EXPO_PUBLIC_` variable for it.
+2. Run `npm ci && npm run build` in `server/coach`.
+3. Deploy `function.zip` to the existing `coach` function with `GROQ_API_KEY` in the deployment environment. Neon injects the existing Auth URLs automatically.
+4. Verify JSON, streamed text, screenshot extraction and rejection of unauthenticated requests before considering deployment complete.
 
-After rotating the OpenRouter key, put the new one in `.env` as `OPENROUTER_KEY` and run the deploy line again.
+Rotate the key in Groq and redeploy the environment when it changes. The app keeps the same coach endpoint, so changing the AI provider does not require a new APK.
