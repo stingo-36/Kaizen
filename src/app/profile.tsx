@@ -63,6 +63,11 @@ export default function Profile() {
         </Card>
       )}
 
+      <Card style={{ paddingVertical: 4, paddingHorizontal: 6 }}>
+        <Tap style={st.item} onPress={() => router.push('/day')}><T size={15} w="s">Plan my day</T></Tap>
+        <Tap style={st.item} onPress={() => router.push('/review')}><T size={15} w="s">Weekly review</T></Tap>
+        <Tap style={st.item} onPress={() => router.push('/home-settings')}><T size={15} w="s">Customize Home</T></Tap>
+      </Card>
       <Label>About you</Label>
       <Card style={{ gap: 14 }}>
         <Input label="Name" value={d.name} onChange={(v) => set('name', v)} placeholder="Your name" />

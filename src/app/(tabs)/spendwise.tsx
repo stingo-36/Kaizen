@@ -115,7 +115,7 @@ export default function Spending() {
                 <T size={38} w="s" color={C.white}>{inr(s.totalSpend)}</T>
                 <T size={12} color={C.heroMuted}>Connected to SpendWise · Read-only</T>
               </FeatureCard>
-              {/* Neutral summaries use the shared cobalt and lavender accents. */}
+              {/* Neutral summaries use the shared orange and sand accents. */}
               <View style={{ gap: SP.grid }}>
                 <Row gap={SP.grid} style={{ alignItems: 'stretch' }}>
                   <Tile icon={Wallet} tone={PASTEL[0]} label="Today" value={inr(s.todaySpend)} />

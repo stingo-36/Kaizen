@@ -9,7 +9,7 @@ import {
 } from 'react-native-paper';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Reanimated, { useAnimatedProps, useAnimatedStyle, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
-import Svg, { Circle, Defs, G, LinearGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, G, LinearGradient, Stop } from 'react-native-svg';
 
 import { C, F, R, SP, themed, TY } from '@/lib/theme';
 import { useKeyboardHeight } from '@/lib/useKeyboard';
@@ -63,16 +63,9 @@ export const Row = ({ children, style, gap = 12 }: { children: ReactNode; style?
   <View style={[{ flexDirection: 'row', alignItems: 'center', gap }, style]}>{children}</View>
 );
 
-/** Navy-to-cobalt feature surface, with content kept above the decorative gradient. */
+/** A native filled surface keeps the background attached to the card's full bounds on Android. */
 export function FeatureCard({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
-  const id = `feature-${useId().replace(/:/g, '')}`;
-  return <View style={[s.feature, style]}>
-    <Svg width="100%" height="100%" style={StyleSheet.absoluteFill} pointerEvents="none" accessible={Platform.OS === 'web' ? undefined : false} aria-hidden={Platform.OS === 'web' ? true : undefined}>
-      <Defs><LinearGradient id={id} x1="0%" y1="0%" x2="100%" y2="100%"><Stop offset="0" stopColor={C.hero} /><Stop offset="1" stopColor={C.heroEnd} /></LinearGradient></Defs>
-      <Rect width="100%" height="100%" fill={`url(#${id})`} />
-    </Svg>
-    {children}
-  </View>;
+  return <View style={[s.feature, style]}>{children}</View>;
 }
 /* Style keys that belong on the Paper card itself; everything else lays out its content. */
 const CARD_OUTER = new Set(['backgroundColor', 'borderRadius', 'borderColor', 'borderWidth', 'flex', 'flexGrow', 'flexShrink', 'flexBasis', 'alignSelf',
@@ -270,14 +263,14 @@ export const s = themed(() => StyleSheet.create({
   screen: { width: '100%', maxWidth: 560, alignSelf: 'center', paddingHorizontal: SP.page, paddingTop: 12, gap: SP.section },
   footer: { paddingHorizontal: 20, paddingTop: 10, gap: 8, backgroundColor: C.bg, borderTopWidth: 1, borderTopColor: C.line },
   card: { backgroundColor: C.card, borderRadius: R.card, borderWidth: 1, borderColor: C.line },
-  feature: { borderRadius: R.card, padding: 21, overflow: 'hidden', gap: 16 },
+  feature: { width: '100%', minWidth: 0, backgroundColor: C.hero, borderRadius: R.card, padding: 21, overflow: 'hidden', gap: 16 },
   cardIn: { padding: SP.pad },
   btn: { borderRadius: R.btn, justifyContent: 'center' },
   chip: { borderRadius: 12, backgroundColor: C.card, borderColor: C.line },
   segment: { flexDirection: 'row', padding: 4, gap: 4, borderRadius: 13, backgroundColor: C.soft },
   segmentItem: { flex: 1, minHeight: 40, paddingHorizontal: 6, justifyContent: 'center', alignItems: 'center', borderRadius: 10 },
   segmentOn: { backgroundColor: C.card },
-  backdrop: { flex: 1, backgroundColor: 'rgba(17,24,39,0.4)' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(16,16,16,0.4)' },
   sheet: { maxHeight: '88%', backgroundColor: C.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 12, gap: 6 },
   grab: { alignSelf: 'center', width: 40, height: 5, borderRadius: 99, backgroundColor: C.field, marginBottom: 10 },
   linkRow: { borderRadius: R.tile, backgroundColor: C.card, overflow: 'hidden' },

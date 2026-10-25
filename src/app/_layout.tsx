@@ -28,7 +28,7 @@ SplashScreen.preventAutoHideAsync();
 // Web preview only: drop the browser's default focus ring on text boxes (it clashes with the app's own styling).
 if (typeof document !== 'undefined') {
   const css = document.createElement('style');
-  css.textContent = ':root { color-scheme: light; background: #F5F6FB; } input:focus-visible, textarea:focus-visible { outline: 2px solid #3459E6; outline-offset: 2px; }';
+  css.textContent = `:root { color-scheme: light; background: ${C.bg}; } input:focus-visible, textarea:focus-visible { outline: 2px solid ${C.accent}; outline-offset: 2px; }`;
   document.head.appendChild(css);
 }
 

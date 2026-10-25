@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { haptic } from '@/components/ui';
 import { C } from '@/lib/theme';
 
-/* One cobalt active state keeps all six sections part of the same app. */
+/* One burnt-orange active state keeps all six sections part of the same app. */
 const TABS: { name: string; href: '/' | '/habits' | '/workouts' | '/food' | '/spendwise' | '/tracker'; label: string; icon: LucideIcon }[] = [
   { name: 'index', href: '/', label: 'Home', icon: House },
   { name: 'habits', href: '/habits', label: 'Habits', icon: ListChecks },

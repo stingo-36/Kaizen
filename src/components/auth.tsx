@@ -26,7 +26,7 @@ export function Field({ icon, label, value, onChange, placeholder, secure, autoC
   );
 }
 
-/** Quiet wordmark and editorial welcome, matching the Cobalt Studio preview. */
+/** Quiet wordmark and welcome, using the shared warm palette. */
 function Hero({ compact }: { compact: boolean }) {
   const insets = useSafeAreaInsets();
   return (

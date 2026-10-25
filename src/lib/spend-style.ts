@@ -1,17 +1,17 @@
-/* Category colour + icon, ported from SpendWise (src/lib/palette.ts) so a category reads the same in both apps. */
+/* Category icons with related warm accents from Kaizen’s orange and ivory palette. */
 import { C } from './theme';
 
 const EXPENSE: Record<string, [string, string]> = {
-  emi: ['#D2534B', 'emi'], food: ['#E0813C', 'food'], bills: ['#C9A22B', 'bills'], sip: ['#6279B5', 'sip'],
-  house: ['#6476A5', 'house'], transport: ['#3D7FC1', 'transport'], shopping: ['#6E5BC6', 'shopping'],
-  leisure: ['#B0559C', 'shopping'], health: ['#CC5F86', 'health'], other: ['#6D7484', 'other'], uncategorized: ['#8A909C', 'other'],
+  emi: ['#B4472A', 'emi'], food: ['#C96F31', 'food'], bills: ['#A97928', 'bills'], sip: ['#906641', 'sip'],
+  house: ['#7C6857', 'house'], transport: ['#A3572D', 'transport'], shopping: ['#985139', 'shopping'],
+  leisure: ['#A3654C', 'shopping'], health: ['#B15D48', 'health'], other: ['#74675E', 'other'], uncategorized: ['#88796C', 'other'],
 };
 const INCOME: Record<string, [string, string]> = {
-  salary: ['#3459E6', 'salary'], bonus: ['#6279B5', 'bonus'], extra: ['#6476A5', 'extra'], refund: ['#5E8FD0', 'refund'],
-  interest: ['#7A6FD0', 'sip'], transfers: ['#6E7BC6', 'transfers'],
+  salary: ['#D5360C', 'salary'], bonus: ['#906641', 'bonus'], extra: ['#7C6857', 'extra'], refund: ['#B77C4C', 'refund'],
+  interest: ['#8C6143', 'sip'], transfers: ['#9C7354', 'transfers'],
 };
-const EXPENSE_FALLBACK = ['#B0559C', '#6279B5', '#3D7FC1', '#E0813C', '#6E5BC6', '#C9A22B', '#6476A5', '#CC5F86'];
-const INCOME_FALLBACK = ['#3459E6', '#6476A5', '#6279B5', '#5E8FD0', '#7A6FD0', '#7894C6'];
+const EXPENSE_FALLBACK = ['#A3654C', '#906641', '#A3572D', '#C96F31', '#985139', '#A97928', '#7C6857', '#B15D48'];
+const INCOME_FALLBACK = ['#D5360C', '#7C6857', '#906641', '#B77C4C', '#8C6143', '#BC8B60'];
 
 const hash = (s: string) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h); };
 const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));

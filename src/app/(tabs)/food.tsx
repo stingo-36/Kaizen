@@ -17,11 +17,11 @@ import { useStore } from '@/lib/store';
 import { C, themed } from '@/lib/theme';
 
 const MEAL_ICON: Record<Meal, LucideIcon> = { breakfast: Sunrise, lunch: Sun, dinner: Moon, snacks: Utensils };
-/** Each macro keeps one colour pair everywhere on this screen: cobalt, slate blue and lavender. */
+/** Each macro keeps a related clay, caramel or sand accent across this screen. */
 const MACROS: { key: 'p' | 'c' | 'f'; label: string; grad: [string, string] }[] = [
   { key: 'p', label: 'Protein', grad: [C.accent, C.accent2] },
-  { key: 'c', label: 'Carbs', grad: ['#6279B5', '#A9B9DF'] },
-  { key: 'f', label: 'Fat', grad: [C.lavenderInk, '#B5A3E0'] },
+  { key: 'c', label: 'Carbs', grad: ['#A76932', '#DFC29B'] },
+  { key: 'f', label: 'Fat', grad: [C.lavenderInk, '#CEB394'] },
 ];
 
 function MacroTile({ label, value, goal, grad }: { label: string; value: number; goal: number; grad: [string, string] }) {

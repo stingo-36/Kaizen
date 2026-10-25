@@ -58,7 +58,7 @@ export default function Home() {
   const eaten = sumMacros(food.days[k] ?? []).kcal, goal = targets(profile).kcal;
   const { steps, sleepMin, restingHr } = health.data;
   const month = spend.summaries[thisMonth()];
-  // Lavender training surface complements the navy daily overview.
+  // Warm sand complements the soft-black daily overview.
   const [wBg, wInk] = [C.lavender, C.lavenderInk];
   const rings = [
     due.length ? done / due.length : 0, profile.minutes ? minsToday / profile.minutes : 0, goal ? eaten / goal : 0, steps != null ? steps / STEP_GOAL : 0,
@@ -70,8 +70,8 @@ export default function Home() {
   const cards: Record<HomeCardId, ReactNode> = {
     overview: (<>
       <FeatureCard>
-        <Row gap={14} style={{ alignItems: 'center' }}>
-          <View style={{ flex: 1, minWidth: 0, gap: 9 }}>
+        <Row gap={14} style={{ alignItems: 'center', flexWrap: 'wrap' }}>
+          <View style={{ flex: 1, minWidth: 125, gap: 9 }}>
             <T size={10} w="s" color={C.heroMuted} style={st.label}>Today’s overview</T>
             <T size={21} w="s" color={C.white}>You’re building momentum.</T>
             <T size={12} color={C.heroMuted}>One good choice at a time.</T>
@@ -82,7 +82,7 @@ export default function Home() {
           </Ring>
         </Row>
         <Row style={st.overviewFoot}>
-          <Row gap={6}><Flame size={14} color={C.heroMuted} /><T size={12} color={C.heroMuted}>{streak ? `${streak}-day streak` : 'A little better, every day'}</T></Row>
+          <Row gap={6} style={{ flexShrink: 1 }}><Flame size={14} color={C.heroMuted} /><T size={12} color={C.heroMuted} style={{ flexShrink: 1 }}>{streak ? `${streak}-day streak` : 'A little better, every day'}</T></Row>
           <T size={11} color={C.heroMuted}>{minsToday}m training</T>
         </Row>
       </FeatureCard>
@@ -187,11 +187,6 @@ export default function Home() {
           </View>
         )} />
 
-      <Card style={{ gap: 12 }}>
-        <T size={17} w="s">Make today yours</T>
-        <Row gap={8}><Btn title="Plan my day" small onPress={() => router.push('/day')} style={{ flex: 1 }} /><Btn title="Weekly review" small kind="ghost" onPress={() => router.push('/review')} style={{ flex: 1 }} /></Row>
-        <Row gap={8}><Btn title="Recovery check-in" small kind="ghost" onPress={() => router.push('/recovery')} style={{ flex: 1 }} /><Btn title="Customize Home" small kind="ghost" onPress={() => router.push('/home-settings')} style={{ flex: 1 }} /></Row>
-      </Card>
       {layout.order.filter((id) => !layout.hidden.includes(id)).map((id) => <View key={id} style={{ gap: 14 }}>{cards[id]}</View>)}
 
       <Sheet open={remOpen} onClose={() => setRemOpen(false)} title="Today's reminders">

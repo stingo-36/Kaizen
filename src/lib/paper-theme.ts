@@ -32,7 +32,7 @@ export const paperTheme: MD3Theme = {
     error: C.danger, onError: C.white, errorContainer: C.dangerSoft, onErrorContainer: C.danger,
     inverseSurface: C.ink, inverseOnSurface: C.white, inversePrimary: C.accentSoft,
     elevation: flat,
-    surfaceDisabled: 'rgba(17,24,39,0.08)', onSurfaceDisabled: 'rgba(17,24,39,0.38)',
-    backdrop: 'rgba(17,24,39,0.4)',
+    surfaceDisabled: 'rgba(16,16,16,0.08)', onSurfaceDisabled: 'rgba(16,16,16,0.38)',
+    backdrop: 'rgba(16,16,16,0.4)',
   },
 };
