@@ -11,9 +11,9 @@ export const paperTheme: MD3Theme = {
   roundness: R.btn / 4,
   fonts: configureFonts({
     config: {
-      displayLarge: { fontFamily: H.b }, displayMedium: { fontFamily: H.b }, displaySmall: { fontFamily: H.b },
-      headlineLarge: { fontFamily: H.b }, headlineMedium: { fontFamily: H.b }, headlineSmall: { fontFamily: H.b },
-      titleLarge: { fontFamily: H.b }, titleMedium: { fontFamily: H.s }, titleSmall: { fontFamily: F.s },
+      displayLarge: { fontFamily: H.s, fontWeight: 'normal' }, displayMedium: { fontFamily: H.s, fontWeight: 'normal' }, displaySmall: { fontFamily: H.s, fontWeight: 'normal' },
+      headlineLarge: { fontFamily: H.s, fontWeight: 'normal' }, headlineMedium: { fontFamily: H.s, fontWeight: 'normal' }, headlineSmall: { fontFamily: H.s, fontWeight: 'normal' },
+      titleLarge: { fontFamily: H.s, fontWeight: 'normal' }, titleMedium: { fontFamily: H.s, fontWeight: 'normal' }, titleSmall: { fontFamily: F.s, fontWeight: 'normal' },
       labelLarge: { fontFamily: F.s }, labelMedium: { fontFamily: F.s }, labelSmall: { fontFamily: F.m },
       bodyLarge: { fontFamily: F.r }, bodyMedium: { fontFamily: F.r }, bodySmall: { fontFamily: F.r },
     },

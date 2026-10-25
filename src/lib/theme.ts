@@ -34,16 +34,14 @@ export const scheme = (): Scheme => 'light';
 export function themed<T extends object>(make: () => T): T { return make(); }
 export function applyScheme(_requested: Scheme) { /* Always light. */ }
 
+/** One neutral family for screen titles, body copy, forms and chart labels. */
 export const F = {
-  r: 'Inter_400Regular',
-  m: 'Inter_500Medium',
-  s: 'Inter_600SemiBold',
-  b: 'Inter_700Bold',
+  r: 'Roboto_400Regular',
+  m: 'Roboto_500Medium',
+  s: 'Roboto_600SemiBold',
+  b: 'Roboto_700Bold',
 };
-export const H = {
-  r: 'PlusJakartaSans_400Regular', m: 'PlusJakartaSans_500Medium',
-  s: 'PlusJakartaSans_600SemiBold', b: 'PlusJakartaSans_700Bold',
-};
+export const H = F;
 
 export const R = { card: 20, pill: 999, tile: 18, btn: 13, field: 13 };
 

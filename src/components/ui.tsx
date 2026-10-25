@@ -26,9 +26,9 @@ export const haptic = (kind: 'light' | 'success' | 'select' = 'light') => {
 /* ---------- text ---------- */
 type TProps = TextProps & { size?: number; w?: keyof typeof F; color?: string; center?: boolean; style?: StyleProp<TextStyle> };
 export function T({ size = 15, w = 'r', color = C.ink, center, style, ...rest }: TProps) {
-  // Headings tighten and sit snug; body text gets room to breathe.
-  const ls = size >= 22 ? -0.025 * size : size >= 17 ? -0.01 * size : 0.1;
-  const lh = size >= 22 ? 1.15 : size >= 17 ? 1.25 : 1.4;
+  // Natural tracking and more line space keep the neutral font readable at every size.
+  const ls = size >= 24 ? -0.3 : 0;
+  const lh = size >= 22 ? 1.25 : size >= 17 ? 1.3 : 1.5;
   return <Text {...rest} style={[{ fontFamily: size >= 17 ? H[w] : F[w], fontSize: size, color, letterSpacing: ls, lineHeight: Math.round(size * lh) }, center && { textAlign: 'center' }, style]} />;
 }
 export const Label = ({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) => (
@@ -289,7 +289,7 @@ export function TabHeader({ title, subtitle, right, onAvatar, initial }: { title
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <View style={{ flex: 1, minWidth: 0 }}>
-        {subtitle ? <T size={11} w="m" color={C.muted} numberOfLines={1} style={{ letterSpacing: 0.8, marginBottom: 5 }}>{subtitle.toUpperCase()}</T> : null}
+        {subtitle ? <T size={12} color={C.muted} numberOfLines={1} style={{ marginBottom: 5 }}>{subtitle}</T> : null}
         <T size={TY.title} w="b" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ lineHeight: 34 }}>{title}</T>
       </View>
       {right}
