@@ -1,4 +1,4 @@
-/* AI calls go through Kaizen's own Neon Function (mobile/server/coach), which holds the OpenRouter key and
+/* AI calls go through Kaizen's own Neon Function (mobile/server/coach), which holds the Groq key and
    picks the models, so no key ships in the app. The function checks the signed-in user's token on every call. */
 import { fetch as streamFetch } from 'expo/fetch';
 
@@ -13,7 +13,7 @@ async function call(messages: Msg[], opts: { json?: boolean; temperature: number
   try { auth = await token(); } catch (e) {
     throw new Error((e as Error).message === 'signed-out' ? 'Sign in again to use the coach.' : 'No internet connection. Check your connection and try again.');
   }
-  // Free models can be slow; give up after 90 s so the app never waits forever.
+  // Allow time for a transient retry, then stop so the app never waits forever.
   const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 90000);
   try {
     const res = await streamFetch(URL, {

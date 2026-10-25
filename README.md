@@ -31,6 +31,6 @@ Run `npx tsc --noEmit` and `npx expo lint` before publishing.
 
 ## Environment
 
-`.env` holds `OPENROUTER_KEY` (server only, deployed into the coach function). `.env.local` holds the SpendWise
+`.env` holds `GROQ_API_KEY` (server only, deployed into the coach function). `.env.local` holds the SpendWise
 and WorkNest Vercel bypass keys and `DATABASE_URL` for scripts. Both are gitignored; the bypass keys are also set
 on EAS for builds.
