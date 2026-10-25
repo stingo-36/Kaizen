@@ -66,7 +66,7 @@ export function normExercise(e: any): PlanExercise {
     rest: kind === 'cardio' ? 0 : Math.max(15, parseInt(e?.rest) || 90),
     minutes: kind === 'cardio' ? Math.max(1, Math.min(180, Number(e?.minutes) || 20)) : 0,
     intensity: intensityOf(e?.intensity),
-    met: kind === 'cardio' ? Math.max(2, Math.min(16, Number(e?.met) || 0)) || 0 : 0,
+    met: kind === 'cardio' && Number.isFinite(Number(e?.met)) && Number(e.met) > 0 ? Math.max(2, Math.min(16, Number(e.met))) : 0,
   };
 }
 export function normPlan(p: any, keepId?: string): Plan {
@@ -170,6 +170,8 @@ export function repRange(r: string): [number, number] {
 export function timedSeconds(r: string) { const m = r.match(/(\d+)\s*(?:[-–]\s*(\d+))?\s*(?:s|sec|secs|seconds?)\b/i); return m ? +(m[2] || m[1]) : 0; }
 
 export function newSession(plan: Plan, dayIdx: number): Session {
+  if (!plan.days.length) throw new Error('Add a workout day before starting a session');
+  dayIdx = Number.isFinite(dayIdx) ? Math.max(0, Math.min(Math.trunc(dayIdx), plan.days.length - 1)) : 0;
   return {
     planId: plan.id, day: dayIdx, start: Date.now(), restEnd: 0,
     ex: plan.days[dayIdx].exercises.map((e) => ({
@@ -250,7 +252,8 @@ export function progressionFor(plan: Plan, log: SessionLog, feel: Feel, apply: b
     if (pe.kind === 'cardio') {
       if (x.cardio?.done && x.cardio.minutes >= pe.minutes && feel === 'easy') {
         const nm = Math.min(180, pe.minutes + 5);
-        out.push({ dir: 'up', text: `${pe.name} → ${nm} min (+5)` });
+        if (nm === pe.minutes) return;
+        out.push({ dir: 'up', text: `${pe.name} → ${nm} min (+${nm - pe.minutes})` });
         if (apply) pe.minutes = nm;
       }
       return;
@@ -259,7 +262,7 @@ export function progressionFor(plan: Plan, log: SessionLog, feel: Feel, apply: b
     if (!mx) return;
     const done = x.sets.filter((s) => s.done);
     if (!done.length) return; // skipped entirely: leave it
-    const hitAll = done.length === x.sets.length && done.every((s) => s.r >= mx);
+    const hitAll = done.length >= pe.sets && done.length === x.sets.length && done.every((s) => s.r >= mx && s.w >= pe.weight && Number.isFinite(s.w));
     const missed = x.sets.filter((s) => !s.done || s.r < mn).length;
     if (hitAll && feel !== 'hard') {
       if (pe.weight > 0) {
@@ -272,7 +275,7 @@ export function progressionFor(plan: Plan, log: SessionLog, feel: Feel, apply: b
         if (apply) pe.reps = nr;
       }
     } else if (missed >= 2 && pe.weight > 0) {
-      const step = pe.weight >= 20 ? 2.5 : 0.5, nw = Math.max(step, Math.round((pe.weight * 0.95) / step) * step);
+      const step = pe.weight >= 20 ? 2.5 : 0.5, nw = Math.max(0, Math.min(pe.weight - step, Math.floor((pe.weight * 0.95) / step) * step));
       out.push({ dir: 'down', text: `${pe.name} → ${nw} kg (missed ${missed} sets)` });
       if (apply) pe.weight = nw;
     }

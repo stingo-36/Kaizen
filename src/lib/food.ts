@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 
 import { restingKcalPerMin } from './calories';
+import type { MealTemplate } from './planning';
 import type { Profile } from './profile';
 
 import * as cloud from './cloud';
@@ -24,7 +25,7 @@ export type FoodItem = {
 export type Meal = 'breakfast' | 'lunch' | 'dinner' | 'snacks';
 export const MEALS: [Meal, string][] = [['breakfast', 'Breakfast'], ['lunch', 'Lunch'], ['dinner', 'Dinner'], ['snacks', 'Snacks']];
 export type FoodEntry = { id: string; meal: Meal; item: FoodItem; grams: number; at: number; qty?: number; unit?: string };
-export type FoodData = { days: Record<string, FoodEntry[]>; recent: FoodItem[] };
+export type FoodData = { days: Record<string, FoodEntry[]>; recent: FoodItem[]; templates?: MealTemplate[] };
 export const emptyFood = (): FoodData => ({ days: {}, recent: [] });
 
 export const mealFor = (h = new Date().getHours()): Meal => (h < 11 ? 'breakfast' : h < 16 ? 'lunch' : h < 21 ? 'dinner' : 'snacks');

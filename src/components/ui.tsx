@@ -11,7 +11,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import Reanimated, { useAnimatedProps, useAnimatedStyle, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
 import Svg, { Circle, Defs, G, LinearGradient, Rect, Stop } from 'react-native-svg';
 
-import { C, F, H, R, SP, themed, TY } from '@/lib/theme';
+import { C, F, R, SP, themed, TY } from '@/lib/theme';
 import { useKeyboardHeight } from '@/lib/useKeyboard';
 import { FocusReplay, Stagger, useVisit } from './motion';
 import { pi } from './paper-icons';
@@ -29,7 +29,7 @@ export function T({ size = 15, w = 'r', color = C.ink, center, style, ...rest }:
   // Natural tracking and more line space keep the neutral font readable at every size.
   const ls = size >= 24 ? -0.3 : 0;
   const lh = size >= 22 ? 1.25 : size >= 17 ? 1.3 : 1.5;
-  return <Text {...rest} style={[{ fontFamily: size >= 17 ? H[w] : F[w], fontSize: size, color, letterSpacing: ls, lineHeight: Math.round(size * lh) }, center && { textAlign: 'center' }, style]} />;
+  return <Text {...rest} style={[{ fontFamily: F[w], fontSize: size, color, letterSpacing: ls, lineHeight: Math.round(size * lh) }, center && { textAlign: 'center' }, style]} />;
 }
 export const Label = ({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) => (
   <T size={13} w="s" color={C.muted} style={style}>{children}</T>
@@ -67,7 +67,7 @@ export const Row = ({ children, style, gap = 12 }: { children: ReactNode; style?
 export function FeatureCard({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   const id = `feature-${useId().replace(/:/g, '')}`;
   return <View style={[s.feature, style]}>
-    <Svg width="100%" height="100%" style={StyleSheet.absoluteFill} pointerEvents="none" accessible={false}>
+    <Svg width="100%" height="100%" style={StyleSheet.absoluteFill} pointerEvents="none" accessible={Platform.OS === 'web' ? undefined : false} aria-hidden={Platform.OS === 'web' ? true : undefined}>
       <Defs><LinearGradient id={id} x1="0%" y1="0%" x2="100%" y2="100%"><Stop offset="0" stopColor={C.hero} /><Stop offset="1" stopColor={C.heroEnd} /></LinearGradient></Defs>
       <Rect width="100%" height="100%" fill={`url(#${id})`} />
     </Svg>

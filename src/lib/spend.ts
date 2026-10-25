@@ -79,7 +79,7 @@ async function call<T>(url: string, init: RequestInit = {}): Promise<T> {
   return body as T;
 }
 
-export async function connectSpendWise(rawUrl: string, email: string, password: string): Promise<SpendLink> {
+export async function connectSpendWise(rawUrl: string, email: string, password: string, isCurrent: () => boolean = () => true): Promise<SpendLink> {
   const url = normalizeUrl(rawUrl);
   if (!url) throw new Error('Enter your SpendWise address');
   try {
@@ -87,6 +87,7 @@ export async function connectSpendWise(rawUrl: string, email: string, password: 
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email.trim(), password }),
     });
     const link = { url, email: r.email, token: r.token };
+    if (!isCurrent()) throw new Error('Connection cancelled');
     await secure.set(LINK_KEY, JSON.stringify(link));
     return link;
   } catch (e) {

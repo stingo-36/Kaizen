@@ -48,6 +48,12 @@ function RootStack() {
         <Stack.Screen name="habit/[id]" />
         <Stack.Screen name="habit/edit" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="profile" />
+        <Stack.Screen name="day" />
+        <Stack.Screen name="review" />
+        <Stack.Screen name="recovery" />
+        <Stack.Screen name="home-settings" />
+        <Stack.Screen name="food/templates" />
+        <Stack.Screen name="workout/progression" />
         <Stack.Screen name="workout/new" />
         <Stack.Screen name="workout/plan" />
         <Stack.Screen name="workout/session" options={{ gestureEnabled: false }} />

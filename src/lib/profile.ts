@@ -1,4 +1,5 @@
 import { today } from './dates';
+import type { HomeLayout, Recovery } from './planning';
 
 export type Sex = 'male' | 'female';
 export type Goal = 'Build muscle' | 'Lose fat' | 'Get stronger' | 'Stay fit';
@@ -21,6 +22,9 @@ export type Profile = {
   weightLog: { date: string; kg: number }[];
   /** False only for a brand-new account that hasn't been through the setup form yet. */
   onboarded?: boolean;
+  homeLayout?: HomeLayout;
+  recovery?: Recovery[];
+  restDays?: string[];
 };
 
 export const GOALS: Goal[] = ['Build muscle', 'Lose fat', 'Get stronger', 'Stay fit'];

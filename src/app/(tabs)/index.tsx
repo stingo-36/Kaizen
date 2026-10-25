@@ -1,6 +1,6 @@
 import { Redirect, useRouter } from 'expo-router';
 import { Bell, CheckCircle2, Dumbbell, Flame, HeartPulse, Footprints, ListChecks, LucideIcon, Play, Sparkles, Wallet } from '@/components/ico';
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AppHeader } from '@/components/header';
@@ -8,13 +8,14 @@ import { HabitIcon } from '@/components/icons';
 import { InsightCard } from '@/components/insight-card';
 import { RecentResourcesCard } from '@/components/resources';
 import { TrackerCard } from '@/components/tracker-card';
-import { Bar, Btn, FeatureCard, IconBtn, Ring, Row, Screen, SectionTitle, Sheet, T, Tap } from '@/components/ui';
+import { Bar, Btn, Card, FeatureCard, IconBtn, Ring, Row, Screen, SectionTitle, Sheet, T, Tap } from '@/components/ui';
 import { kcalForPlanDay, logKcal } from '@/lib/calories';
 import { fmtTime, today } from '@/lib/dates';
 import { sumMacros, targets } from '@/lib/food';
 import { useFood } from '@/lib/food-store';
 import { useHealth } from '@/lib/health-store';
 import { dayStreak, dueOn, isDone, isScheduled, PASTEL, pastel } from '@/lib/habits';
+import { homeLayout, type HomeCardId } from '@/lib/planning';
 import { inr, thisMonth } from '@/lib/spend';
 import { useSpend } from '@/lib/spend-store';
 import { useStore } from '@/lib/store';
@@ -65,17 +66,9 @@ export default function Home() {
   const score = Math.round((rings.reduce((a, v) => a + v, 0) / (steps != null ? 4 : 3)) * 100);
   const streak = dayStreak(habits);
 
-  return (
-    <Screen tabs>
-      <AppHeader title={name ? `Hi, ${name}` : greeting()}
-        subtitle={new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' })}
-        right={(
-          <View>
-            <IconBtn icon={Bell} label="Today's reminders" onPress={() => setRemOpen(true)} />
-            {reminders.some((h) => !isDone(h, k)) && <View style={st.dot} />}
-          </View>
-        )} />
-
+  const layout = homeLayout(profile.homeLayout);
+  const cards: Record<HomeCardId, ReactNode> = {
+    overview: (<>
       <FeatureCard>
         <Row gap={14} style={{ alignItems: 'center' }}>
           <View style={{ flex: 1, minWidth: 0, gap: 9 }}>
@@ -94,6 +87,8 @@ export default function Home() {
         </Row>
       </FeatureCard>
 
+    </>),
+    snapshot: (<>
       <SectionTitle title="Your daily snapshot" />
       <Row gap={12} style={{ alignItems: 'stretch' }}>
         <Tap style={st.snapshot} onPress={() => router.navigate('/habits')} accessibilityLabel={`Habits: ${done} of ${due.length} complete. Open habits`}>
@@ -110,6 +105,8 @@ export default function Home() {
         </Tap>
       </Row>
 
+    </>),
+    workout: (<>
       <SectionTitle title="Your next session" action={plan ? 'View plan' : undefined} onAction={() => plan && router.push({ pathname: '/workout/plan', params: { id: plan.id } })} />
       {W.session ? (
         <View style={[st.hero, { backgroundColor: wBg }]}>
@@ -117,6 +114,8 @@ export default function Home() {
           <T size={20} w="b" color={wInk}>{W.plans.find((p) => p.id === W.session?.planId)?.days[W.session.day]?.title ?? 'Workout'}</T>
           <Btn title="Resume" icon={Play} small onPress={() => router.push('/workout/session')} style={{ minHeight: 42 }} />
         </View>
+      ) : profile.restDays?.includes(k) ? (
+        <Card style={{ backgroundColor: C.lavender, gap: 8 }}><T size={20} w="s">Recovery day</T><T color={C.muted}>Rest or gentle movement is on today’s plan.</T><Btn title="Review today’s plan" small kind="ghost" onPress={() => router.push('/day')} /></Card>
       ) : doneToday.length ? (
         <Tap onPress={() => router.navigate('/workouts')} style={[st.hero, { backgroundColor: wBg }]} accessibilityLabel="Today’s workout is done. Open workouts">
           <Row style={{ justifyContent: 'space-between' }}>
@@ -152,6 +151,8 @@ export default function Home() {
         </Tap>
       )}
 
+    </>),
+    integrations: (<>
       {/* Neutral metric cards with restrained icon accents. */}
       <Row gap={12} style={{ alignItems: 'stretch' }}>
         <Tile tone={PASTEL[0]} icon={Wallet} label="Spend" onPress={() => router.navigate('/spendwise')}
@@ -162,9 +163,36 @@ export default function Home() {
           sub={sleepMin != null ? `sleep${restingHr != null ? ` · ${restingHr} bpm resting` : ''}` : steps != null ? 'steps today' : 'Sleep, steps, heart rate'} />
       </Row>
 
+    </>),
+    tracker: (<>
       <TrackerCard />
+    </>),
+    resources: (<>
       <RecentResourcesCard />
+    </>),
+    insight: (<>
       <InsightCard />
+
+    </>),
+  };
+
+  return (
+    <Screen tabs>
+      <AppHeader title={name ? `Hi, ${name}` : greeting()}
+        subtitle={new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' })}
+        right={(
+          <View>
+            <IconBtn icon={Bell} label="Today's reminders" onPress={() => setRemOpen(true)} />
+            {reminders.some((h) => !isDone(h, k)) && <View style={st.dot} />}
+          </View>
+        )} />
+
+      <Card style={{ gap: 12 }}>
+        <T size={17} w="s">Make today yours</T>
+        <Row gap={8}><Btn title="Plan my day" small onPress={() => router.push('/day')} style={{ flex: 1 }} /><Btn title="Weekly review" small kind="ghost" onPress={() => router.push('/review')} style={{ flex: 1 }} /></Row>
+        <Row gap={8}><Btn title="Recovery check-in" small kind="ghost" onPress={() => router.push('/recovery')} style={{ flex: 1 }} /><Btn title="Customize Home" small kind="ghost" onPress={() => router.push('/home-settings')} style={{ flex: 1 }} /></Row>
+      </Card>
+      {layout.order.filter((id) => !layout.hidden.includes(id)).map((id) => <View key={id} style={{ gap: 14 }}>{cards[id]}</View>)}
 
       <Sheet open={remOpen} onClose={() => setRemOpen(false)} title="Today's reminders">
         {reminders.length ? reminders.map((h) => (
@@ -184,7 +212,6 @@ const st = themed(() => StyleSheet.create({
   dot: { position: 'absolute', top: 9, right: 10, width: 9, height: 9, borderRadius: 5, backgroundColor: C.accent, borderWidth: 2, borderColor: C.bg },
   overviewFoot: { justifyContent: 'space-between', paddingTop: 14, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.18)', flexWrap: 'wrap' },
   snapshot: { flex: 1, minWidth: 0, gap: 8, padding: 16, borderRadius: 18, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
-  streak: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 99, backgroundColor: C.card },
   next: { gap: 16, padding: 18, borderRadius: 22, backgroundColor: C.lavender },
   nextIc: { width: 52, height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   label: { letterSpacing: 0.6, textTransform: 'uppercase' },

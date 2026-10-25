@@ -52,6 +52,8 @@ export default function Workouts() {
   /* ---------- Today: the next workout and the week's days ---------- */
   const todayPage = () => (
     <>
+      <Row gap={8}><Btn title="Recovery check-in" kind="ghost" small onPress={() => router.push('/recovery')} style={{ flex: 1 }} /><Btn title="Next session targets" kind="ghost" small onPress={() => router.push('/workout/progression')} style={{ flex: 1 }} /></Row>
+      {profile.restDays?.includes(k) && <Card style={{ backgroundColor: C.lavender, gap: 6 }}><T w="s">Recovery day planned</T><T size={13} color={C.muted}>Take a rest or choose gentle movement. Your workout stays available if you change your mind.</T></Card>}
       {missing.length > 0 && (
         <Tap onPress={() => router.push('/profile')} style={[st.card, { backgroundColor: C.accentTint, borderColor: 'transparent' }]}>
           <T size={14} w="s">Add your {missing.join(', ')} in Profile</T>

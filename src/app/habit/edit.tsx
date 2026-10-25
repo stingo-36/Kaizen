@@ -131,6 +131,7 @@ export default function EditHabit() {
           </View>
         </>
       )}
+      {d.type === 'build' && d.reminder && <T size={12} color={C.muted}>Reminders stop for days you complete or skip. Open Kaizen regularly to refresh upcoming reminders (up to 14 days, with the nearest 60 alerts scheduled).</T>}
       <View style={{ gap: 10, marginTop: 8 }}>
         <Btn title={existing ? 'Save changes' : 'Create habit'} onPress={save} />
         {existing && <Btn title="Delete habit" kind="danger" onPress={() => setDelOpen(true)} />}

@@ -7,7 +7,7 @@ import { useStore } from './store';
 /* Food diary, saved on the phone per account. */
 const key = (u: string) => `kaizen.c.food.${u}`;
 
-type Ctx = { food: FoodData; setFood: (fn: (f: FoodData) => FoodData) => void };
+type Ctx = { ready: boolean; food: FoodData; setFood: (fn: (f: FoodData) => FoodData) => void };
 const FoodCtx = createContext<Ctx | null>(null);
 export const useFood = () => {
   const c = useContext(FoodCtx);
@@ -19,14 +19,15 @@ export function FoodProvider({ children }: { children: ReactNode }) {
   const { me } = useStore();
   const [food, setState] = useState<FoodData>(emptyFood());
   const cur = useRef(food);
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
   useEffect(() => {
     let alive = true;
-    cur.current = emptyFood(); setState(cur.current);
+    cur.current = emptyFood(); setState(cur.current); setLoadedFor(null);
     if (!me) return;
     AsyncStorage.getItem(key(me)).then((v) => {
       if (!alive || !v) return;
       try { cur.current = { ...emptyFood(), ...JSON.parse(v) }; setState(cur.current); } catch {}
-    }).catch(() => {});
+    }).catch(() => {}).finally(() => { if (alive) setLoadedFor(me); });
     return () => { alive = false; };
   }, [me]);
   const setFood = useCallback((fn: (f: FoodData) => FoodData) => {
@@ -34,5 +35,5 @@ export function FoodProvider({ children }: { children: ReactNode }) {
     setState(cur.current);
     if (me) AsyncStorage.setItem(key(me), JSON.stringify(cur.current)).catch(() => {});
   }, [me]);
-  return <FoodCtx.Provider value={{ food, setFood }}>{children}</FoodCtx.Provider>;
+  return <FoodCtx.Provider value={{ ready: !!me && loadedFor === me, food, setFood }}>{children}</FoodCtx.Provider>;
 }

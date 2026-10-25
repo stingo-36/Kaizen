@@ -27,12 +27,7 @@ export const TONES: [string, string][] = [
 ];
 export const toneOf = (n: number): [string, string] => TONES[((n % TONES.length) + TONES.length) % TONES.length];
 
-// A single appearance, regardless of the operating system's preference.
-export type Scheme = 'light';
-export type ThemeMode = Scheme;
-export const scheme = (): Scheme => 'light';
 export function themed<T extends object>(make: () => T): T { return make(); }
-export function applyScheme(_requested: Scheme) { /* Always light. */ }
 
 /** One neutral family for screen titles, body copy, forms and chart labels. */
 export const F = {
@@ -41,7 +36,6 @@ export const F = {
   s: 'Roboto_600SemiBold',
   b: 'Roboto_700Bold',
 };
-export const H = F;
 
 export const R = { card: 20, pill: 999, tile: 18, btn: 13, field: 13 };
 

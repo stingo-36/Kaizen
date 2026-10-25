@@ -91,12 +91,13 @@ const authed = (link: NestLink, init: RequestInit = {}): RequestInit => ({
   ...init, headers: { Authorization: `Bearer ${link.token}`, 'Content-Type': 'application/json', ...(init.headers as object) },
 });
 
-export async function connectWorkNest(email: string, password: string): Promise<NestLink> {
+export async function connectWorkNest(email: string, password: string, isCurrent: () => boolean = () => true): Promise<NestLink> {
   try {
     const r = await call<{ token: string; email: string }>(`${WORKNEST_URL}/api/mobile/connect`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email.trim(), password }),
     });
     const link = { url: WORKNEST_URL, email: r.email, token: r.token };
+    if (!isCurrent()) throw new Error('Connection cancelled');
     await secure.set(LINK_KEY, JSON.stringify(link));
     return link;
   } catch (e) {

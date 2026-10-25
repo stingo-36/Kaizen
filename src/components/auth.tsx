@@ -1,7 +1,7 @@
-import { AtSign, Eye, EyeOff, Lock, LucideIcon, Mail, Sparkles, User } from '@/components/ico';
+import { AtSign, Eye, EyeOff, Lock, LucideIcon, Mail, User } from '@/components/ico';
 import { ComponentRef, ReactNode, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { Button, TextInput } from 'react-native-paper';
+import { TextInput } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { C, F, R, themed } from '@/lib/theme';
@@ -74,25 +74,6 @@ export function AuthShell({ mode, children }: { mode: 'login' | 'register'; chil
   );
 }
 
-/** Quiet secondary option under the main button: fills in the shared demo account. */
-export function DemoCard({ onPress }: { onPress: () => void }) {
-  return (
-    <Button mode="contained-tonal" buttonColor={C.accentTint} icon={pi(Sparkles)} onPress={onPress} accessibilityLabel="Fill in the demo account"
-      style={{ borderRadius: R.btn }} contentStyle={{ minHeight: 52 }} labelStyle={{ fontFamily: F.s, fontSize: 15, color: C.ink, marginVertical: 0 }}>
-      Try the demo account
-    </Button>
-  );
-}
-
-/** "or" between the main action and the demo option. */
-export function OrRule() {
-  return (
-    <View style={st.or}>
-      <View style={st.rule} /><T size={12} color={C.faint}>or</T><View style={st.rule} />
-    </View>
-  );
-}
-
 export const AuthIcons = { AtSign, Lock, User, Mail };
 export { Btn };
 
@@ -100,6 +81,4 @@ const st = themed(() => StyleSheet.create({
   hero: { alignItems: 'center', gap: 12, paddingHorizontal: 24, paddingBottom: 22, maxWidth: 480, width: '100%', alignSelf: 'center' },
   mark: { width: 64, height: 64, borderRadius: 20, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' },
   page: { gap: 14, paddingHorizontal: 24, paddingTop: 12, maxWidth: 480, width: '100%', alignSelf: 'center' },
-  or: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 2 },
-  rule: { flex: 1, height: 1, backgroundColor: C.line },
 }));

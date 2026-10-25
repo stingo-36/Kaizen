@@ -3,15 +3,22 @@ import { AndroidImportance } from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import type { Habit } from './habits';
+import { reminderOccurrences } from './planning';
+import { serialTask } from './sync';
 
 const supported = Platform.OS !== 'web';
 const HABIT_CHANNEL = 'habits';
 const TIMER_CHANNEL = 'timers';
 
-let ready = false;
+let initialization: Promise<void> | null = null;
 export async function initNotifications() {
-  if (!supported || ready) return;
-  ready = true;
+  if (!supported) return;
+  if (initialization) return initialization;
+  initialization = initialize().catch((error) => { initialization = null; throw error; });
+  return initialization;
+}
+
+async function initialize() {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
   });
@@ -31,25 +38,22 @@ export async function ensurePermission() {
   return res.granted;
 }
 
-/** Re-create every habit reminder from scratch. Weekdays in Expo triggers are 1 (Sunday) … 7. */
-export async function syncHabitReminders(habits: Habit[]) {
-  if (!supported) return;
-  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-  await Promise.all(scheduled.filter((n) => (n.content.data as any)?.kind === 'habit').map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)));
-  const withReminders = habits.filter((h) => h.type === 'build' && h.reminder);
-  if (!withReminders.length) return;
-  if (!(await Notifications.getPermissionsAsync()).granted) return;
-  for (const h of withReminders) {
-    const [hour, minute] = (h.reminder as string).split(':').map(Number);
-    const content = { title: h.name, body: h.goal > 1 ? `Goal today: ${h.goal}. Tap to log progress.` : 'Time to check this off.', data: { kind: 'habit', id: h.id } };
-    if (h.days.length === 7) {
-      await Notifications.scheduleNotificationAsync({ content, trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute, channelId: HABIT_CHANNEL } as any });
-    } else {
-      for (const d of h.days) {
-        await Notifications.scheduleNotificationAsync({ content, trigger: { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: d + 1, hour, minute, channelId: HABIT_CHANNEL } as any });
-      }
+const runReminderSync = serialTask();
+/** Refresh the upcoming two weeks, capped at 60 alerts to leave room for rest timers on iOS. */
+export function syncHabitReminders(habits: Habit[]) {
+  return runReminderSync(async () => {
+    if (!supported) return;
+    await initNotifications();
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    await Promise.all(scheduled.filter((n) => n.content.data?.kind === 'habit').map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)));
+    if (!(await Notifications.getPermissionsAsync()).granted) return;
+    for (const { habit: h, date } of reminderOccurrences(habits, new Date())) {
+      await Notifications.scheduleNotificationAsync({
+        content: { title: h.name, body: h.goal > 1 ? `Goal today: ${h.goal}. Tap to log progress.` : 'Time to check this off.', data: { kind: 'habit', id: h.id } },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date, channelId: HABIT_CHANNEL },
+      });
     }
-  }
+  });
 }
 
 /** One-off alert when rest ends, so it fires even with the screen locked. Returns the id to cancel. */

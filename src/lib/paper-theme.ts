@@ -1,6 +1,6 @@
 import { configureFonts, MD3LightTheme, type MD3Theme } from 'react-native-paper';
 
-import { C, F, H, R } from './theme';
+import { C, F, R } from './theme';
 
 /* React Native Paper (Material 3) themed from Kaizen's own tokens, so Paper components and
    hand-built views share one palette, one font and flat (shadow-free) surfaces. */
@@ -11,9 +11,9 @@ export const paperTheme: MD3Theme = {
   roundness: R.btn / 4,
   fonts: configureFonts({
     config: {
-      displayLarge: { fontFamily: H.s, fontWeight: 'normal' }, displayMedium: { fontFamily: H.s, fontWeight: 'normal' }, displaySmall: { fontFamily: H.s, fontWeight: 'normal' },
-      headlineLarge: { fontFamily: H.s, fontWeight: 'normal' }, headlineMedium: { fontFamily: H.s, fontWeight: 'normal' }, headlineSmall: { fontFamily: H.s, fontWeight: 'normal' },
-      titleLarge: { fontFamily: H.s, fontWeight: 'normal' }, titleMedium: { fontFamily: H.s, fontWeight: 'normal' }, titleSmall: { fontFamily: F.s, fontWeight: 'normal' },
+      displayLarge: { fontFamily: F.s, fontWeight: 'normal' }, displayMedium: { fontFamily: F.s, fontWeight: 'normal' }, displaySmall: { fontFamily: F.s, fontWeight: 'normal' },
+      headlineLarge: { fontFamily: F.s, fontWeight: 'normal' }, headlineMedium: { fontFamily: F.s, fontWeight: 'normal' }, headlineSmall: { fontFamily: F.s, fontWeight: 'normal' },
+      titleLarge: { fontFamily: F.s, fontWeight: 'normal' }, titleMedium: { fontFamily: F.s, fontWeight: 'normal' }, titleSmall: { fontFamily: F.s, fontWeight: 'normal' },
       labelLarge: { fontFamily: F.s }, labelMedium: { fontFamily: F.s }, labelSmall: { fontFamily: F.m },
       bodyLarge: { fontFamily: F.r }, bodyMedium: { fontFamily: F.r }, bodySmall: { fontFamily: F.r },
     },

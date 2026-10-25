@@ -29,6 +29,7 @@ export function SpendProvider({ children }: { children: ReactNode }) {
   const [summaries, setSummaries] = useState<Ctx['summaries']>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const connectionVersion = useRef(0);
   const linkRef = useRef<SpendLink | null>(null);
 
   const load = useCallback(async (month = thisMonth()) => {
@@ -37,18 +38,22 @@ export function SpendProvider({ children }: { children: ReactNode }) {
     setBusy(true);
     try {
       const s = await fetchSummary(l, month);
+      if (linkRef.current !== l) return;
       setSummaries((p) => ({ ...p, [month]: { ...s, at: Date.now() } }));
       setStatus('on');
       setError('');
       writeCache(s);
     } catch (e) {
+      if (linkRef.current !== l) return;
       if (e instanceof SpendAuthError) setStatus('expired');
       else setError(e instanceof Error ? e.message : 'Couldn’t load your spending');
-    } finally { setBusy(false); }
+    } finally { if (linkRef.current === l) setBusy(false); }
   }, []);
 
   const connect = useCallback(async (url: string, email: string, password: string) => {
-    const l = await connectSpendWise(url, email, password);
+    const version = ++connectionVersion.current;
+    const l = await connectSpendWise(url, email, password, () => version === connectionVersion.current);
+    if (version !== connectionVersion.current) return;
     linkRef.current = l;
     setLink(l);
     setStatus('on');
@@ -56,7 +61,9 @@ export function SpendProvider({ children }: { children: ReactNode }) {
   }, [load]);
 
   const disconnect = useCallback(async () => {
+    connectionVersion.current++;
     linkRef.current = null;
+    setBusy(false);
     setLink(null);
     setSummaries({});
     setError('');
@@ -66,9 +73,10 @@ export function SpendProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let live = true;
+    const version = connectionVersion.current;
     (async () => {
       const [l, cache] = await Promise.all([loadLink(), readCache()]);
-      if (!live) return;
+      if (!live || version !== connectionVersion.current) return;
       linkRef.current = l;
       setLink(l);
       setSummaries(cache);
@@ -82,7 +90,7 @@ export function SpendProvider({ children }: { children: ReactNode }) {
   // The link belongs to whoever is signed in to Kaizen on this phone: drop it when they log out.
   const prevMe = useRef(me);
   useEffect(() => {
-    if (prevMe.current && !me) disconnect();
+    if (prevMe.current && prevMe.current !== me) disconnect();
     prevMe.current = me;
   }, [me, disconnect]);
 

@@ -53,6 +53,7 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
   const [at, setAt] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const connectionVersion = useRef(0);
   const linkRef = useRef<NestLink | null>(null);
   const [lib, setLib] = useState<ResourceList>({ resources: [], types: [] });
   const [resourcesError, setResourcesError] = useState('');
@@ -65,9 +66,14 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
   /** Runs a call that returns the new list; a dead token flips the screen to "sign in again". */
   const run = useCallback(async (fn: (l: NestLink) => Promise<NestEntry[]>) => {
     const l = linkRef.current;
-    if (!l) return;
-    try { fresh(await fn(l)); } catch (e) {
-      if (e instanceof NestAuthError) { setStatus('expired'); return; }
+    if (!l) throw new Error('Connect WorkNest first');
+    try {
+      const list = await fn(l);
+      if (linkRef.current !== l) return;
+      fresh(list);
+    } catch (e) {
+      if (linkRef.current !== l) throw e;
+      if (e instanceof NestAuthError) setStatus('expired');
       throw e;
     }
   }, [fresh]);
@@ -76,17 +82,27 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
     const l = linkRef.current;
     if (!l) return;
     setBusy(true);
-    try { const r = await fetchEntries(l); fresh(r.entries, r.options); } catch (e) {
+    try {
+      const r = await fetchEntries(l);
+      if (linkRef.current !== l) return;
+      fresh(r.entries, r.options);
+    } catch (e) {
+      if (linkRef.current !== l) return;
       if (e instanceof NestAuthError) setStatus('expired');
       else setError(e instanceof Error ? e.message : 'Couldn’t load your Tracker');
-    } finally { setBusy(false); }
+    } finally { if (linkRef.current === l) setBusy(false); }
   }, [fresh]);
 
   const freshLib = useCallback((list: ResourceList) => { setLib(list); setResourcesError(''); writeResourceCache(list); }, []);
   const loadResources = useCallback(async () => {
     const l = linkRef.current;
     if (!l) return;
-    try { freshLib(await fetchResources(l)); } catch (e) {
+    try {
+      const list = await fetchResources(l);
+      if (linkRef.current !== l) return;
+      freshLib(list);
+    } catch (e) {
+      if (linkRef.current !== l) return;
       if (e instanceof NestAuthError) { setStatus('expired'); return; }
       setResourcesError(e instanceof Error ? e.message : 'Couldn’t load your resources');
     }
@@ -96,14 +112,21 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
     if (!l) return;
     // The star flips at once; the server's library replaces it, or it flips back if that fails.
     setLib((x) => ({ ...x, resources: x.resources.map((r) => (r.id === id ? { ...r, favorite } : r)) }));
-    try { freshLib(await starResource(l, id, favorite)); } catch (e) {
+    try {
+      const list = await starResource(l, id, favorite);
+      if (linkRef.current !== l) return;
+      freshLib(list);
+    } catch (e) {
+      if (linkRef.current !== l) return;
       setLib((x) => ({ ...x, resources: x.resources.map((r) => (r.id === id ? { ...r, favorite: !favorite } : r)) }));
       if (e instanceof NestAuthError) { setStatus('expired'); return; }
       throw e;
     }
   }, [freshLib]);
   const connect = useCallback(async (email: string, password: string) => {
-    const l = await connectWorkNest(email, password);
+    const version = ++connectionVersion.current;
+    const l = await connectWorkNest(email, password, () => version === connectionVersion.current);
+    if (version !== connectionVersion.current) return;
     linkRef.current = l;
     setLink(l);
     setStatus('on');
@@ -111,7 +134,9 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
   }, [load, loadResources]);
 
   const disconnect = useCallback(async () => {
+    connectionVersion.current++;
     linkRef.current = null;
+    setBusy(false);
     setLink(null); setEntries([]); setAt(null); setError(''); setStatus('off');
     optionsRef.current = NO_OPTIONS; setOptions(NO_OPTIONS);
     setLib({ resources: [], types: [] }); setResourcesError('');
@@ -122,9 +147,14 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
 
   // Ticks show at once; the server's list replaces them, or the old state comes back if it fails.
   const setDone = useCallback(async (id: string, done: boolean) => {
-    const before = entries;
+    const l = linkRef.current;
+    if (!l) throw new Error('Connect WorkNest first');
+    const before = entries.find((e) => e.id === id);
     setEntries((list) => list.map((e) => (e.id === id ? { ...e, status: done ? 'Done' : 'Open', completedAt: done ? new Date().toISOString() : null } : e)));
-    try { await run((l) => patchEntry(l, id, { status: done ? 'Done' : 'Open' })); } catch (e) { setEntries(before); throw e; }
+    try { await run((l) => patchEntry(l, id, { status: done ? 'Done' : 'Open' })); } catch (e) {
+      if (linkRef.current === l && before) setEntries((list) => list.map((item) => item.id === id ? { ...item, status: before.status, completedAt: before.completedAt } : item));
+      throw e;
+    }
   }, [entries, run]);
 
   const edit = useCallback((id: string, subject: string) => run((l) => patchEntry(l, id, { subject })), [run]);
@@ -134,7 +164,12 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
   const one = useCallback(async (fn: (l: NestLink) => Promise<NestEntryDetail>) => {
     const l = linkRef.current;
     if (!l) throw new Error('Connect WorkNest first');
-    try { return await fn(l); } catch (e) {
+    try {
+      const entry = await fn(l);
+      if (linkRef.current !== l) throw new Error('WorkNest connection changed');
+      return entry;
+    } catch (e) {
+      if (linkRef.current !== l) throw e;
       if (e instanceof NestAuthError) { setStatus('expired'); throw new Error('Sign in to WorkNest again'); }
       throw e;
     }
@@ -149,7 +184,12 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
   const saveResource = useCallback(async (r: NewResource) => {
     const l = linkRef.current;
     if (!l) throw new Error('Connect WorkNest first');
-    try { freshLib(await addResource(l, r)); } catch (e) {
+    try {
+      const list = await addResource(l, r);
+      if (linkRef.current !== l) return;
+      freshLib(list);
+    } catch (e) {
+      if (linkRef.current !== l) return;
       if (e instanceof NestAuthError) { setStatus('expired'); throw new Error('Sign in to WorkNest again to save resources'); }
       throw e;
     }
@@ -157,9 +197,10 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let live = true;
+    const version = connectionVersion.current;
     (async () => {
       const [l, cache, libCache] = await Promise.all([loadLink(), readCache(), readResourceCache()]);
-      if (!live) return;
+      if (!live || version !== connectionVersion.current) return;
       linkRef.current = l;
       setLink(l);
       if (cache) {
@@ -177,7 +218,7 @@ export function WorkNestProvider({ children }: { children: ReactNode }) {
   // The link belongs to whoever is signed in to Kaizen on this phone: drop it when they log out.
   const prevMe = useRef(me);
   useEffect(() => {
-    if (prevMe.current && !me) disconnect();
+    if (prevMe.current && prevMe.current !== me) disconnect();
     prevMe.current = me;
   }, [me, disconnect]);
 

@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 
 import { connectHealth, grantedTypes, healthStatus, openHealthSettings, readHealthToday } from './health';
@@ -24,30 +24,42 @@ export function HealthProvider({ children }: { children: ReactNode }) {
   const [granted, setGranted] = useState<HealthType[]>([]);
   const [data, setData] = useState<HealthSummary>(emptySummary());
   const [busy, setBusy] = useState(false);
+  const request = useRef(0);
 
-  const load = useCallback(async (types: HealthType[]) => {
-    if (!types.length) return;
+  const load = useCallback(async (types: HealthType[], version: number) => {
+    if (version !== request.current) return;
+    if (!types.length) {
+      setData(emptySummary());
+      setBusy(false);
+      AsyncStorage.removeItem(CACHE).catch(() => {});
+      return;
+    }
     setBusy(true);
     try {
       const d = await readHealthToday(types);
+      if (version !== request.current) return;
       setData(d);
       AsyncStorage.setItem(CACHE, JSON.stringify(d)).catch(() => {});
-    } finally { setBusy(false); }
+    } finally { if (version === request.current) setBusy(false); }
   }, []);
 
   const refresh = useCallback(async () => {
+    const version = ++request.current;
     const s = await healthStatus();
+    if (version !== request.current) return;
     setStatus(s);
-    if (s !== 'ready') return;
-    const g = await grantedTypes().catch(() => [] as HealthType[]);
+    const g = s === 'ready' ? await grantedTypes().catch(() => [] as HealthType[]) : [];
+    if (version !== request.current) return;
     setGranted(g);
-    await load(g);
+    await load(g, version);
   }, [load]);
 
   const connect = useCallback(async () => {
+    const version = ++request.current;
     const g = await connectHealth().catch(() => [] as HealthType[]);
+    if (version !== request.current) return;
     setGranted(g);
-    await load(g);
+    await load(g, version);
   }, [load]);
 
   useEffect(() => {

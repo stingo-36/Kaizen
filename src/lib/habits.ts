@@ -25,7 +25,7 @@ export const ICONS = [
 ] as const;
 export const isQuitIcon = (i: number) => /-off$/.test(ICONS[i] ?? '');
 
-/** Pastel card tones (background, ink); they live in theme so dark mode can swap them. */
+/** Pastel card tones (background, ink) from the shared light palette. */
 export { PASTEL };
 /** Each habit's own colour, picked by its icon so the same kind of habit always looks the same. */
 export const pastel = (h: Pick<Habit, 'icon'>) => toneOf(h.icon ?? 0);

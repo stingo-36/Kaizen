@@ -39,8 +39,8 @@ function facts(habits: Habit[], W: WorkoutData, p: Profile, food: FoodData, h: H
 }
 
 export function useInsight(uid: string | null, habits: Habit[], W: WorkoutData, p: Profile, food: FoodData, h: HealthSummary) {
-  const [data, setData] = useState<Insight | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{ key: string; data: Insight } | null>(null);
+  const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const ready = habits.length > 0 || W.logs.length > 0 || Object.keys(food.days).length > 0 || h.at > 0;
   // A new day, or tracker data arriving for the first time today, makes a fresh review.
   const key = uid ? `kaizen.insight.${uid}.${today()}.${h.at ? 'fit' : 'nofit'}` : null;
@@ -50,8 +50,9 @@ export function useInsight(uid: string | null, habits: Habit[], W: WorkoutData, 
     let alive = true;
     (async () => {
       const cached = await AsyncStorage.getItem(key).catch(() => null);
-      if (cached) { try { if (alive) setData(JSON.parse(cached)); return; } catch {} }
-      if (alive) setLoading(true);
+      if (cached) { try { if (alive) { setResult({ key, data: JSON.parse(cached) }); setLoadingKey(null); } return; } catch {} }
+      if (!alive) return;
+      setLoadingKey(key);
       const f = facts(habits, W, p, food, h);
       try {
         const res = await ask([
@@ -63,15 +64,15 @@ Return JSON exactly like {"summary":"one sentence on how the week went","wins":[
           summary: String(res?.summary || ''), wins: (res?.wins ?? []).map(String).slice(0, 2), improve: (res?.improve ?? []).map(String).slice(0, 2),
           tomorrow: String(res?.tomorrow || ''), fromTracker: f.fromTracker,
         };
-        if (out.summary || out.tomorrow) { AsyncStorage.setItem(key, JSON.stringify(out)).catch(() => {}); if (alive) setData(out); }
+        if (out.summary || out.tomorrow) { AsyncStorage.setItem(key, JSON.stringify(out)).catch(() => {}); if (alive) setResult({ key, data: out }); }
       } catch {
-        if (alive) setData(null);
+        if (alive) setResult(null);
       } finally {
-        if (alive) setLoading(false);
+        if (alive) setLoadingKey(null);
       }
     })();
     return () => { alive = false; };
   }, [key, ready]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { insight: data, loading };
+  return { insight: ready && result?.key === key ? result.data : null, loading: ready && key !== null && loadingKey === key };
 }

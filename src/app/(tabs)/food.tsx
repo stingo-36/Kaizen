@@ -7,7 +7,7 @@ import { BarChart } from '@/components/charts';
 import { AppHeader } from '@/components/header';
 import { PagerScreen } from '@/components/pager';
 import { pi } from '@/components/paper-icons';
-import { Bar, Card, FeatureCard, IconBtn, Row, SectionTitle, Stat, T, useToast } from '@/components/ui';
+import { Bar, Btn, Card, FeatureCard, IconBtn, Row, SectionTitle, Stat, T, useToast } from '@/components/ui';
 import { logKcal } from '@/lib/calories';
 import { addDays, monIndex, parse, today, WEEK, ymd } from '@/lib/dates';
 import { amountText, Macros, macrosOf, Meal, mealFor, MEALS, sumMacros, targets } from '@/lib/food';
@@ -82,6 +82,7 @@ export default function Food() {
         {MACROS.map(({ key, label, grad }) => <MacroTile key={key} label={label} value={tot[key]} goal={goal[key]} grad={grad} />)}
       </Row>
 
+      <Btn title="Meal templates · log your usual" kind="ghost" onPress={() => router.push('/food/templates')} />
       <SectionTitle title="Meals" action="Add food" onAction={() => add()} />
       {MEALS.map(([m, label]) => {
         const list = entries.filter((e) => e.meal === m), mk = sumMacros(list).kcal, Icon = MEAL_ICON[m];
@@ -156,7 +157,6 @@ export default function Food() {
 
 const st = themed(() => StyleSheet.create({
   macro: { flex: 1, minWidth: 0, alignItems: 'center', gap: 6, paddingVertical: 14, paddingHorizontal: 8, borderRadius: 18, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 99, backgroundColor: C.accentTint, maxWidth: '100%' },
   mealIc: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: C.accentTint },
   entry: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.line },
   dot: { width: 7, height: 7, borderRadius: 4 },

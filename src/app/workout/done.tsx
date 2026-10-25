@@ -1,9 +1,9 @@
 import { useRouter } from 'expo-router';
 import { Flame, Medal, Minus, Sparkles, TrendingDown, TrendingUp, Trophy } from '@/components/ico';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Btn, Card, Chip, Label, Row, Screen, T, haptic, useToast } from '@/components/ui';
+import { Btn, Card, Chip, Label, Row, Screen, T, Tap, haptic, useToast } from '@/components/ui';
 import { today } from '@/lib/dates';
 import { PASTEL } from '@/lib/habits';
 import { useStore } from '@/lib/store';
@@ -14,6 +14,7 @@ export default function Done() {
   const router = useRouter();
   const toast = useToast();
   const { workout: W, setWorkout } = useStore();
+  const [applyProgression, setApplyProgression] = useState(true);
   const pnd = W.pending;
   const plan = pnd ? W.plans.find((p) => p.id === pnd.planId) : undefined;
   const preview = useMemo(() => (pnd && plan ? progressionFor(JSON.parse(JSON.stringify(plan)), pnd, pnd.feel, false) : []), [pnd, plan]);
@@ -29,13 +30,13 @@ export default function Done() {
       const plans = w.plans.map((p): Plan => {
         if (p.id !== log.planId) return p;
         const n: Plan = JSON.parse(JSON.stringify(p));
-        changes = progressionFor(n, log, log.feel, true);
+        changes = applyProgression ? progressionFor(n, log, log.feel, true) : [];
         return n;
       });
       return { ...w, plans, logs: [...w.logs, log], pending: null, lastChanges: changes.length ? { date: today(), items: changes.map((c) => c.text) } : w.lastChanges };
     });
     haptic('success');
-    toast(pnd.prs.length ? `New PR: ${pnd.prs[0]}` : preview.length ? `Plan updated: ${preview.length} change${preview.length > 1 ? 's' : ''}` : `Workout saved · ${pnd.kcal} kcal`);
+    toast(pnd.prs.length ? `New PR: ${pnd.prs[0]}` : preview.length && applyProgression ? `Plan updated: ${preview.length} change${preview.length > 1 ? 's' : ''}` : `Workout saved · ${pnd.kcal} kcal`);
     router.dismissTo('/workouts');
   };
   const discard = () => { setWorkout((w) => ({ ...w, pending: null })); toast('Workout discarded'); router.dismissTo('/workouts'); };
@@ -78,6 +79,9 @@ export default function Done() {
           </Row>
         )) : <T size={13} color={C.muted}>Same targets next time. Hit the top of each rep range to move up.</T>}
       </Card>
+      {preview.length > 0 && <Tap onPress={() => setApplyProgression((value) => !value)} accessibilityRole="checkbox" accessibilityState={{ checked: applyProgression }} style={{ padding: 16, backgroundColor: C.accentTint, borderRadius: 16 }}>
+        <T w="m">{applyProgression ? '✓' : '○'} Apply these targets to my next session</T>
+      </Tap>}
       <Row gap={10}>
         <Btn title="Discard" kind="ghost" onPress={discard} style={{ flex: 1 }} />
         <Btn title="Save workout" onPress={save} style={{ flex: 2 }} />

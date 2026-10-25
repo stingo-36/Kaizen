@@ -1,11 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
 import * as cloud from './cloud';
 import { CloudUser } from './cloud';
 import { Habit } from './habits';
 import { syncHabitReminders } from './notifications';
+import { mergeHabits, serialTask } from './sync';
 import { emptyProfile, migrateProfile, Profile } from './profile';
 import { emptyWorkout, migrateWorkout, SessionLog, WorkoutData } from './workout';
 
@@ -68,18 +69,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const cur = useRef<{ habits: Habit[]; workout: WorkoutData; profile: Profile }>({ habits: [], workout: emptyWorkout(), profile: emptyProfile() });
   const synced = useRef<Synced>(emptySynced());
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pushing = useRef(false);
+  const generation = useRef(0);
 
   const resetLocal = useCallback(() => {
+    generation.current++;
+    if (timer.current) clearTimeout(timer.current);
     uid.current = null; synced.current = emptySynced(); cur.current = { habits: [], workout: emptyWorkout(), profile: emptyProfile() };
     setUser(null); setHabitsState([]); setWorkoutState(emptyWorkout()); setProfileState(emptyProfile()); setSync('idle');
   }, []);
 
   /** Push everything that changed since the last successful sync. */
-  const push = useCallback(async () => {
-    const u = uid.current;
-    if (!u || pushing.current) return;
-    pushing.current = true;
+  const pushOnce = useCallback(async () => {
+    const u = uid.current, epoch = generation.current;
+    const current = () => uid.current === u && generation.current === epoch;
+    if (!u) return;
     setSync('syncing');
     try {
       const { habits: hs, workout: w, profile: p } = cur.current, s = synced.current;
@@ -87,13 +90,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const changed = hs.filter((h) => s.habits[h.id] !== JSON.stringify(h));
       const removed = Object.keys(s.habits).filter((id) => !hs.some((h) => h.id === id));
       if (changed.length) await cloud.upsert('habits', changed.map((h) => ({ id: h.id, data: h, deleted: false, updated_at: now })), 'id');
-      for (const id of removed) await cloud.update('habits', `id=eq.${encodeURIComponent(id)}`, { deleted: true, updated_at: now });
+      if (!current()) return;
+      for (const id of removed) {
+        await cloud.update('habits', `id=eq.${encodeURIComponent(id)}`, { deleted: true, updated_at: now });
+        if (!current()) return;
+      }
       const st = stateOf(w);
       if (st !== s.state) await cloud.upsert('workout_state', { ...JSON.parse(st), user_id: u, updated_at: now }, 'user_id');
+      if (!current()) return;
       const newLogs = w.logs.filter((l) => !s.sessions.includes(l.id));
       if (newLogs.length) await cloud.upsert('workout_sessions', newLogs.map((l) => ({ id: l.id, date: l.date, title: l.title, data: l })), 'id');
+      if (!current()) return;
       const pj = JSON.stringify(p);
       if (pj !== s.profile) await cloud.upsert('profiles', { user_id: u, name: p.name, data: p, updated_at: now }, 'user_id');
+      if (!current()) return;
       changed.forEach((h) => { s.habits[h.id] = JSON.stringify(h); });
       removed.forEach((id) => { delete s.habits[id]; });
       s.state = st; s.profile = pj;
@@ -101,13 +111,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       writeJSON(K.synced(u), s);
       setSync('synced');
     } catch (e) {
+      if (!current()) return;
       if (__DEV__) console.warn('Sync push failed:', (e as Error).message);
-      if ((e as Error).message === 'signed-out') { await cloud.signOut(); resetLocal(); }
+      if ((e as Error).message === 'signed-out') { await cloud.signOut(); if (current()) resetLocal(); }
       else setSync('offline');
-    } finally {
-      pushing.current = false;
     }
   }, [resetLocal]);
+  const runPush = useMemo(() => serialTask(), []);
+  const push = useCallback(() => runPush(pushOnce), [runPush, pushOnce]);
 
   const schedulePush = useCallback(() => {
     if (timer.current) clearTimeout(timer.current);
@@ -120,7 +131,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   /** Pull the user's rows. The cloud wins for anything not changed locally since the last sync. */
   const pull = useCallback(async () => {
-    const u = uid.current;
+    const u = uid.current, epoch = generation.current;
+    const current = () => uid.current === u && generation.current === epoch;
     if (!u) return;
     setSync('syncing');
     try {
@@ -130,15 +142,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         cloud.select<{ id: string; data: SessionLog }>('workout_sessions', 'select=id,data&order=date.asc,created_at.asc'),
         cloud.select<{ name: string; data: any }>('profiles', 'select=name,data'),
       ]);
+      if (!current()) return;
       const s = synced.current, local = cur.current;
 
-      // Habits: keep local edits that haven't been pushed yet.
-      const dirty = new Set(local.habits.filter((h) => s.habits[h.id] !== JSON.stringify(h)).map((h) => h.id));
-      const live = rows.filter((r) => !r.deleted);
-      applyHabits([
-        ...live.map((r) => (dirty.has(r.id) ? local.habits.find((h) => h.id === r.id)! : r.data)),
-        ...local.habits.filter((h) => dirty.has(h.id) && !rows.some((r) => r.id === h.id)),
-      ]);
+      const merged = mergeHabits(local.habits, rows, s.habits);
+      applyHabits(merged.habits);
 
       // Workout: plans and settings from the cloud unless changed here; logs are merged by id.
       const st = states[0];
@@ -160,7 +168,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       else if (!pr) applyProfile(migrateProfile(local.profile, local.profile.name, st?.prefs));
 
       synced.current = {
-        habits: Object.fromEntries(live.filter((r) => !dirty.has(r.id)).map((r) => [r.id, JSON.stringify(r.data)])),
+        habits: merged.baseline,
         state: cloudW && !localDirtyState ? stateOf(w) : s.state,
         sessions: sessions.map((x) => x.id),
         profile: pr && !localDirtyProfile ? JSON.stringify(cur.current.profile) : pr ? s.profile : '',
@@ -168,18 +176,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       writeJSON(K.synced(u), synced.current);
       setSync('synced');
       await push();
+      if (!current()) return;
       syncHabitReminders(cur.current.habits).catch(() => {});
     } catch (e) {
-      if ((e as Error).message === 'signed-out') { await cloud.signOut(); resetLocal(); }
+      if (!current()) return;
+      if ((e as Error).message === 'signed-out') { await cloud.signOut(); if (current()) resetLocal(); }
       else setSync('offline');
     }
   }, [applyHabits, applyWorkout, applyProfile, push, resetLocal]);
 
   const loadUser = useCallback(async (u: CloudUser) => {
+    const epoch = ++generation.current;
     uid.current = u.id;
     const [h, w, p, s] = await Promise.all([
       readJSON<Habit[]>(K.habits(u.id), []), readJSON<any>(K.workout(u.id), null), readJSON<any>(K.profile(u.id), null), readJSON<Synced>(K.synced(u.id), emptySynced()),
     ]);
+    if (epoch !== generation.current || uid.current !== u.id) return;
     synced.current = { ...emptySynced(), ...s };
     const wd = migrateWorkout(w), pd = migrateProfile(p, u.name);
     cur.current = { habits: h, workout: wd, profile: pd };
@@ -197,7 +209,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [loadUser]);
 
   useEffect(() => {
-    const sub = AppState.addEventListener('change', (st) => { if (st === 'active' && uid.current) pull(); });
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st === 'active' && uid.current) {
+        syncHabitReminders(cur.current.habits).catch(() => {});
+        pull();
+      }
+    });
     return () => sub.remove();
   }, [pull]);
 
@@ -229,7 +246,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     syncHabitReminders([]).catch(() => {});
   }, [push, resetLocal]);
 
-  const setHabits = useCallback((fn: (h: Habit[]) => Habit[]) => { applyHabits(fn(cur.current.habits)); schedulePush(); }, [applyHabits, schedulePush]);
+  const setHabits = useCallback((fn: (h: Habit[]) => Habit[]) => { applyHabits(fn(cur.current.habits)); schedulePush(); syncHabitReminders(cur.current.habits).catch(() => {}); }, [applyHabits, schedulePush]);
   const setWorkout = useCallback((fn: (w: WorkoutData) => WorkoutData) => { applyWorkout(fn(cur.current.workout)); schedulePush(); }, [applyWorkout, schedulePush]);
   const setProfile = useCallback((fn: (p: Profile) => Profile) => { applyProfile(fn(cur.current.profile)); schedulePush(); }, [applyProfile, schedulePush]);
 
