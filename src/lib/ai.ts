@@ -15,32 +15,48 @@ async function call(messages: Msg[], opts: { json?: boolean; temperature: number
   }
   // Allow time for a transient retry, then stop so the app never waits forever.
   const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 90000);
+  const streaming = !!opts.onText;
+  // Only streamed replies need expo/fetch; whole replies use the platform fetch, which is the most reliable on phones.
+  const doFetch = (streaming ? streamFetch : fetch) as typeof fetch;
+  let res: Response;
   try {
-    const res = await streamFetch(URL, {
+    res = await doFetch(URL, {
       method: 'POST', signal: ctrl.signal,
       headers: { Authorization: `Bearer ${auth}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages, temperature: opts.temperature, json: !!opts.json, stream: !!opts.onText }),
+      body: JSON.stringify({ messages, temperature: opts.temperature, json: !!opts.json, stream: streaming }),
     });
+  } catch {
+    clearTimeout(timer);
+    if (ctrl.signal.aborted) throw new Error('The AI coach took too long. Try again.');
+    // Streaming isn't supported everywhere: ask again for the whole reply at once.
+    if (streaming) return whole(messages, opts);
+    throw new Error('No internet connection. Check your connection and try again.');
+  }
+  try {
     if (!res.ok) {
       const data: any = await res.json().catch(() => ({}));
       throw new Error(data?.error || 'The AI coach is busy right now. Try again in a minute.');
     }
-    if (!opts.onText) {
+    if (!streaming) {
       const data: any = await res.json().catch(() => ({}));
       if (!data?.text) throw new Error('The AI coach is busy right now. Try again in a minute.');
       return data.text;
     }
-    // Streamed: plain text that grows as the model writes.
-    const reader = res.body!.getReader(), dec = new TextDecoder();
+    // Streamed: plain text that grows as the model writes. If the phone can't read the stream, fall back to a whole reply.
     let text = '';
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      text += dec.decode(value, { stream: true });
-      opts.onText(text);
+    try {
+      const reader = res.body!.getReader(), dec = new TextDecoder();
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        text += dec.decode(value, { stream: true });
+        opts.onText!(text);
+      }
+    } catch {
+      if (ctrl.signal.aborted) throw new Error('The AI coach took too long. Try again.');
+      text = '';
     }
-    if (!text.trim()) throw new Error('The AI coach is busy right now. Try again in a minute.');
-    return text;
+    return text.trim() ? text : whole(messages, opts);
   } catch (e) {
     if (ctrl.signal.aborted) throw new Error('The AI coach took too long. Try again.');
     if (e instanceof TypeError) throw new Error('No internet connection. Check your connection and try again.');
@@ -48,6 +64,13 @@ async function call(messages: Msg[], opts: { json?: boolean; temperature: number
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** Fallback for a stream that failed: the same question, answered in one piece. */
+async function whole(messages: Msg[], opts: { temperature: number; onText?: (soFar: string) => void }) {
+  const text = await call(messages, { temperature: opts.temperature });
+  opts.onText?.(text);
+  return text;
 }
 
 /** Ask for JSON and parse it (tolerates code fences and stray text around the object). */
