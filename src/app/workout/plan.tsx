@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, ArrowLeftRight, CheckCircle2, Ellipsis, HeartPulse, Pencil, Play, Plus, Sparkles, Trash2 } from '@/components/ico';
+import { ArrowLeft, ArrowLeftRight, CheckCircle2, CircleAlert, Ellipsis, HeartPulse, Pencil, Play, Plus, Sparkles, Trash2 } from '@/components/ico';
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, TextInput, View } from 'react-native';
 
@@ -10,7 +10,8 @@ import { kcalForPlanDay } from '@/lib/calories';
 import { PASTEL } from '@/lib/habits';
 import { useStore } from '@/lib/store';
 import { C, F, themed, toneOf } from '@/lib/theme';
-import { aiDescribeExercise, aiRetune, aiSuggestExercises, fmtKg, Intensity, keyPoints, Kind, normExercise, Plan, PlanDay, PlanExercise } from '@/lib/workout';
+import { cap } from '@/lib/exercises';
+import { aiDescribeExercise, aiRetune, aiSuggestExercises, coverageGaps, dayMinutes, dayMuscles, fmtKg, Intensity, keyPoints, Kind, normExercise, Plan, PlanDay, PlanExercise } from '@/lib/workout';
 import { goBack } from '@/lib/nav';
 
 type Suggestion = PlanExercise & { why: string };
@@ -53,6 +54,12 @@ export default function PlanScreen() {
     catch (e) { setSheetErr((e as Error).message); }
     setBusy('');
   };
+  /** Opens the add sheet on AI picks for the muscles this day doesn't train yet. */
+  const fillMissing = (gaps: string[]) => {
+    const h = gaps.join(', ');
+    openSheet('add', -1); setTab('ai'); setHint(h);
+    loadSuggestions('add', -1, h);
+  };
   const place = (ex: PlanExercise) => {
     if (!sheet) return;
     const fresh = ex; // normExercise always gives it an id
@@ -88,13 +95,26 @@ export default function PlanScreen() {
   };
 
   const points = keyPoints(plan);
-  const dayPage = (dd: PlanDay, di: number) => (
+  const dayPage = (dd: PlanDay, di: number) => {
+    const worked = dayMuscles(dd), gaps = coverageGaps(dd), mins = dayMinutes(dd, profile.minutes);
+    const lifts = dd.exercises.filter((e) => e.kind === 'strength').length, over = mins > profile.minutes + 10;
+    return (
     <>
       <Card style={{ paddingVertical: 6 }}>
         <Row style={{ justifyContent: 'space-between', paddingTop: 8 }}>
           <View style={{ flex: 1, minWidth: 0 }}><T size={16} w="s">{dd.title}</T><T size={12} color={C.muted} numberOfLines={1}>{dd.focus}</T></View>
           <View style={[st.badge, { backgroundColor: C.accentSoft }]}><T size={11} w="b" color={C.accent}>≈ {kcalForPlanDay(profile, dd.exercises)} kcal</T></View>
         </Row>
+        <T size={12} color={C.muted} style={{ paddingTop: 6 }}>
+          <T size={12} w="s" color={over ? C.danger : C.muted}>≈ {mins} min</T>{` incl. warm-up · ${lifts} strength exercises`}{worked.length ? ` · works ${cap(worked.join(', '))}` : ''}
+        </T>
+        {gaps.length > 0 && (
+          <Tap onPress={() => (di === d ? fillMissing(gaps) : setSel(di))} style={st.gap} accessibilityLabel={`Missing ${gaps.join(', ')}. Get AI picks to cover them`}>
+            <CircleAlert size={15} color={C.danger} />
+            <T size={12} w="s" color={C.danger} style={{ flex: 1 }}>Missing: {cap(gaps.join(', '))}</T>
+            <T size={12} w="s" color={C.accent}>Fix with AI</T>
+          </Tap>
+        )}
         {dd.exercises.map((e, i) => {
           const [bg, ink] = toneOf(i + 1);
           return (
@@ -122,7 +142,8 @@ export default function PlanScreen() {
         router.push({ pathname: '/workout/session', params: { day: String(di), plan: plan.id } });
       }} />
     </>
-  );
+    );
+  };
 
   return (
     <>
@@ -229,6 +250,7 @@ const st = themed(() => StyleSheet.create({
   badge: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: 99 },
   ex: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12 },
   n: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  gap: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8, marginBottom: 4, padding: 10, borderRadius: 12, backgroundColor: C.soft },
   add: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderTopWidth: 1, borderTopColor: C.line },
   opt: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, backgroundColor: C.soft },
   sug: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 16, backgroundColor: C.soft },

@@ -93,7 +93,7 @@ export function libToPlan(e: LibExercise): PlanExercise {
   const cardio = e.category === 'cardio', stretch = e.category === 'stretching';
   return normExercise({
     name: e.name, kind: cardio ? 'cardio' : 'strength', sets: stretch ? 2 : 3, reps: stretch ? '30s' : '8-12', weight: 0, rest: stretch ? 30 : 90,
-    minutes: 20, intensity: 'moderate', tip: '',
+    minutes: 20, intensity: 'moderate', tip: '', muscles: cardio ? [] : e.muscles,
   });
 }
 
